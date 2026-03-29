@@ -1,0 +1,8 @@
+Model Information:
+* title:	British Spitfire (Low Poly)
+* source:	https://sketchfab.com/3d-models/british-spitfire-low-poly-40599d6d75804fa692eb05352376a650
+* author:	AsherPasher (https://sketchfab.com/EvolutionaryEnthusiast)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

@@ -1,0 +1,8 @@
+Model Information:
+* title:	IL-28 soviet reconnaissance aircraft
+* source:	https://sketchfab.com/3d-models/il-28-soviet-reconnaissance-aircraft-5652bcf6d16f4088898b24bcb0141570
+* author:	radioape (https://sketchfab.com/radioape)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

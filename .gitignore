@@ -1,0 +1,25 @@
+node_modules
+dist
+*.local
+.env
+.env.*
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+*.tsbuildinfo
+
+# Test
+coverage
+
+# Lock files (pnpm only)
+package-lock.json

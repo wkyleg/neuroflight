@@ -1,0 +1,47 @@
+{
+  "name": "neuroflight",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@elata-biosciences/eeg-web": "^0.1.10",
+    "@elata-biosciences/eeg-web-ble": "^0.1.10",
+    "@elata-biosciences/rppg-web": "^0.1.10",
+    "@tailwindcss/vite": "^4.2.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "^7.13.2",
+    "recharts": "^3.8.1",
+    "tailwindcss": "^4.2.2",
+    "three": "^0.183.2",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.12.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.183.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "esbuild": "^0.27.4",
+    "jsdom": "^29.0.1",
+    "rollup": "^4.60.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.2"
+  }
+}
