@@ -68,9 +68,11 @@ export class Game {
   private bpmSamples = 0;
 
   private onSessionEnd: (() => void) | null = null;
+  private canvas: HTMLCanvasElement;
 
-  constructor(private canvas: HTMLCanvasElement) {
-    this.renderer = new Renderer(canvas);
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.renderer = new Renderer(this.canvas);
     this.scene = new THREE.Scene();
     this.cameraManager = new CameraManager();
     this.inputManager = new InputManager();
@@ -311,9 +313,11 @@ export class Game {
 
       this.weaponSystem.update(dt);
 
-      const targets = [{ position: this.planeController.flightModel.getPosition(), owner: 'player' as const }];
+      const targets: Array<{ position: THREE.Vector3; owner: 'player' | 'ai' }> = [
+        { position: this.planeController.flightModel.getPosition(), owner: 'player' },
+      ];
       if (!this.dogfightManager.isAiDead()) {
-        targets.push({ position: this.aiController.getPosition(), owner: 'ai' as const });
+        targets.push({ position: this.aiController.getPosition(), owner: 'ai' });
       }
 
       const hits = this.weaponSystem.checkHits(targets);

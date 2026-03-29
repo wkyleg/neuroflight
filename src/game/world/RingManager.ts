@@ -17,8 +17,10 @@ export class RingManager {
   private material: THREE.MeshStandardMaterial;
   private glowMaterial: THREE.MeshBasicMaterial;
   private passed = new Set<THREE.Mesh>();
+  private scene: THREE.Scene;
 
-  constructor(private scene: THREE.Scene) {
+  constructor(scene: THREE.Scene) {
+    this.scene = scene;
     this.geometry = new THREE.TorusGeometry(RING_RADIUS, RING_TUBE, RING_TUBE_SEGMENTS, RING_SEGMENTS);
     this.material = new THREE.MeshStandardMaterial({
       color: 0xffcc44,

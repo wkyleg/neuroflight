@@ -8,8 +8,11 @@ export class WorldManager {
   private groundMesh: THREE.Mesh | null = null;
   private landmarkObjects: THREE.Object3D[] = [];
   private gltfLoader = new GLTFLoader();
+  private scene: THREE.Scene;
 
-  constructor(private scene: THREE.Scene) {}
+  constructor(scene: THREE.Scene) {
+    this.scene = scene;
+  }
 
   loadMap(map: MapDefinition): void {
     this.clear();

@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('three', () => {
   class Vector3 {
-    constructor(
-      public x = 0,
-      public y = 0,
-      public z = 0,
-    ) {}
+    x = 0;
+    y = 0;
+    z = 0;
+
+    constructor(x = 0, y = 0, z = 0) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
 
     clone() {
       return new Vector3(this.x, this.y, this.z);
@@ -144,7 +148,7 @@ describe('WeaponSystem', () => {
     weapons.fire(origin, new THREE.Vector3(1, 0, 0), 'player');
     const mesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
       (p) => p.mesh.visible,
-    )?.mesh;
+    )!.mesh;
     const x0 = mesh.position.x;
     weapons.update(0.1);
     expect(mesh.position.x).toBeGreaterThan(x0);
@@ -156,7 +160,7 @@ describe('WeaponSystem', () => {
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
     const mesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
       (p) => p.mesh.visible,
-    )?.mesh;
+    )!.mesh;
     mesh.position.set(0, 0, 0);
     const aiPos = new THREE.Vector3(40, 0, 0);
     const hits = weapons.checkHits([{ position: aiPos, owner: 'ai' }]);
@@ -171,14 +175,14 @@ describe('WeaponSystem', () => {
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
     const playerMesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
       (p) => p.mesh.visible,
-    )?.mesh;
+    )!.mesh;
     playerMesh.position.set(0, 0, 0);
     expect(weapons.checkHits([{ position: aiAtPlayerRange, owner: 'ai' }])).toHaveLength(1);
 
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'ai');
     const aiMesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
       (p) => p.mesh.visible,
-    )?.mesh;
+    )!.mesh;
     aiMesh.position.set(0, 0, 0);
     expect(weapons.checkHits([{ position: aiAtPlayerRange, owner: 'player' }])).toHaveLength(0);
 

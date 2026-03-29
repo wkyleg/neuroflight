@@ -28,7 +28,6 @@ export class AIController {
   private state: AIState = 'pursue';
   private fireCooldown = 0;
   private wantsToFire = false;
-  private health = 100;
   private lastDistance = 0;
   private lastDotForward = 0;
   private speed = CRUISE_SPEED;
@@ -45,8 +44,8 @@ export class AIController {
     await this.planeController.loadModel(assetManager, scene);
   }
 
-  setHealth(h: number): void {
-    this.health = h;
+  setHealth(_h: number): void {
+    // Health is tracked by DogfightManager; kept for API compatibility
   }
 
   getPosition(): THREE.Vector3 {
@@ -73,7 +72,6 @@ export class AIController {
     this.object.position.copy(pos);
     this.object.quaternion.identity();
     this.state = 'pursue';
-    this.health = 100;
     this.strafeTimer = 0;
     this.speed = CRUISE_SPEED;
   }

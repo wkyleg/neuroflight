@@ -157,19 +157,19 @@ function buildEegTimeline(samples: FlightSample[]) {
 
 function buildAlphaPeakTimeline(samples: FlightSample[]) {
   return samples
-    .filter((s) => s.alphaPeakFreq !== null)
+    .filter((s) => s.alphaPeakFreq != null)
     .map((s) => ({
       time: Math.round(s.t),
-      freq: +s.alphaPeakFreq?.toFixed(1),
+      freq: +(s.alphaPeakFreq ?? 0).toFixed(1),
     }));
 }
 
 function buildRespirationTimeline(samples: FlightSample[]) {
   return samples
-    .filter((s) => s.respirationRate !== null)
+    .filter((s) => s.respirationRate != null)
     .map((s) => ({
       time: Math.round(s.t),
-      rate: +s.respirationRate?.toFixed(1),
+      rate: +(s.respirationRate ?? 0).toFixed(1),
     }));
 }
 

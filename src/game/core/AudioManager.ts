@@ -10,7 +10,6 @@ export class AudioManager {
 
   private lfo: OscillatorNode | null = null;
   private lfoGain: GainNode | null = null;
-  private currentBpm: number | null = null;
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
@@ -105,10 +104,8 @@ export class AudioManager {
     if (bpm && bpm > 30 && bpm < 220) {
       this.lfo.frequency.value = bpm / 60;
       this.lfoGain.gain.value = 0.008;
-      this.currentBpm = bpm;
     } else {
       this.lfoGain.gain.value = 0;
-      this.currentBpm = null;
     }
   }
 

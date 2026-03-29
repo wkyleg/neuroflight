@@ -21,9 +21,10 @@ export class SkySystem {
   private ambient: THREE.HemisphereLight;
   private skyMesh: THREE.Mesh | null = null;
   private sky: Sky | null = null;
-  private config: SkyConfig;
+  private scene: THREE.Scene;
 
-  constructor(private scene: THREE.Scene) {
+  constructor(scene: THREE.Scene) {
+    this.scene = scene;
     const defaultConfig: SkyConfig = {
       topColor: new THREE.Color(0x2266bb),
       bottomColor: new THREE.Color(0x88bbee),
@@ -36,14 +37,13 @@ export class SkySystem {
       fogFar: 15000,
       useAtmosphericSky: true,
     };
-    this.config = defaultConfig;
 
     this.sun = new THREE.DirectionalLight(defaultConfig.sunColor, defaultConfig.sunIntensity);
     this.sun.position.copy(defaultConfig.sunDirection).multiplyScalar(500);
-    scene.add(this.sun);
+    this.scene.add(this.sun);
 
     this.ambient = new THREE.HemisphereLight(0x8ec5f0, 0x5a6b3a, defaultConfig.ambientIntensity);
-    scene.add(this.ambient);
+    this.scene.add(this.ambient);
   }
 
   setRenderer(_renderer: THREE.WebGLRenderer): void {
@@ -51,7 +51,6 @@ export class SkySystem {
   }
 
   setConfig(config: SkyConfig): void {
-    this.config = config;
     this.sun.color.copy(config.sunColor);
     this.sun.intensity = config.sunIntensity;
     this.sun.position.copy(config.sunDirection).multiplyScalar(500);

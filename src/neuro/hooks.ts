@@ -14,6 +14,7 @@ export function useNeuroSignals() {
       calm: s.calm,
       arousal: s.arousal,
       bpm: s.bpm,
+      bpmQuality: s.bpmQuality,
       hrvRmssd: s.hrvRmssd,
       signalQuality: s.signalQuality,
       source: s.source,

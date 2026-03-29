@@ -51,8 +51,10 @@ export class CloudSystem {
   private material: THREE.MeshBasicMaterial;
   private geometry: THREE.PlaneGeometry;
   private cloudTexture: THREE.CanvasTexture;
+  private scene: THREE.Scene;
 
-  constructor(private scene: THREE.Scene) {
+  constructor(scene: THREE.Scene) {
+    this.scene = scene;
     this.cloudTexture = createCloudTexture();
     this.geometry = new THREE.PlaneGeometry(1, 1);
     this.material = new THREE.MeshBasicMaterial({
@@ -75,7 +77,7 @@ export class CloudSystem {
       );
       (cloud.material as THREE.MeshBasicMaterial).opacity = THREE.MathUtils.randFloat(0.15, 0.35);
       cloud.renderOrder = -1;
-      scene.add(cloud);
+      this.scene.add(cloud);
       this.clouds.push(cloud);
     }
   }
