@@ -80,6 +80,10 @@ Both sensors are optional. You can fly and fight without any hardware. Add biome
 
 Pushes to `main` trigger the CI/CD pipeline which runs lint, typecheck, and tests, then deploys to GitHub Pages.
 
+## App store listing assets
+
+Marketing copy and image exports for store listings (icon, banner, desktop/mobile previews, expansion art) live in [`docs/store-assets/`](docs/store-assets/). Start with `listing.json`. The PNG icon is also at [`public/favicon.png`](public/favicon.png) alongside the SVG favicon.
+
 ## Related Projects
 
 NeuroFlight is part of the [Elata Biosciences](https://elata.bio) neurotech app ecosystem. Other apps in the series:

@@ -1,0 +1,16 @@
+{
+  "name": "NeuroFlight",
+  "symbol": "NFLY",
+  "category": "GAMES",
+  "tags": ["flight sim", "dogfighting", "neurotech", "EEG", "3D"],
+  "description": "Fly combat missions in a 3D flight sim while your brain activity and heart rate shape the experience. Engage AI opponents across procedural skies, then review post-flight reports that map your neural state to every maneuver.",
+  "longDescription": "NeuroFlight is a browser-based 3D flight simulator where your cognitive state is part of the cockpit.\n\nTake off into procedurally generated environments (desert, ocean, cloudscapes) and engage an AI opponent in real-time dogfights. The flight model is responsive and forgiving enough for newcomers but has enough depth for experienced sim players. Keyboard, mouse, and on-screen controls all work.\n\nWhat makes NeuroFlight different: connect an EEG headband or webcam and your brain waves, heart rate, and arousal level are tracked throughout the flight. The post-session analytics screen shows time-series charts correlating your neural state with flight metrics like altitude, speed, throttle input, and combat events. See exactly when your calm dropped during a tight turn or when focus peaked before a kill shot.\n\nThe renderer uses Three.js with bloom post-processing and a dynamic sky system. Web Audio handles spatial engine sounds and weapon effects. Everything runs in the browser with no downloads or plugins.\n\nBuilt with the Elata SDK for EEG (Muse headband via Web Bluetooth) and rPPG (webcam heart rate). Both are optional. You can fly without sensors and add biofeedback whenever you're ready.",
+  "purchaseDescription": "Expansion content for NeuroFlight:\n\n- New Theaters: Arctic tundra, volcanic islands, night city, canyon runs, and orbital environments\n- Aircraft Pack: Additional flyable craft with unique flight characteristics and weapon loadouts\n- Campaign Mode: Structured mission sequences with escalating AI difficulty and narrative briefings\n- Multiplayer Dogfights: 1v1 real-time combat against other pilots with neural leaderboards\n- Replay System: Record flights with full neural telemetry overlay and share highlights",
+  "tokenomicsDescription": "Token details and allocation specifics are being finalized. More information coming soon.",
+  "socialLinks": {
+    "twitter": "https://x.com/Elata_Bio",
+    "discord": "https://discord.gg/8UdPKztc6u",
+    "github": "https://github.com/Elata-Biosciences",
+    "website": "https://elata.bio"
+  }
+}
