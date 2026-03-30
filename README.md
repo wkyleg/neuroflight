@@ -8,6 +8,14 @@
 
 A neuroadaptive 3D flight simulator built with Three.js and React. Engage in AI dogfights while EEG and webcam heart rate biofeedback track your cognitive state in real time. After each session, review an in-depth neurological performance analysis correlated with in-game flight activity.
 
+## Gameplay preview
+
+| Desktop | Mobile |
+| --- | --- |
+| ![NeuroFlight desktop gameplay](docs/store-assets/preview-desktop-01-1200w.webp) | ![NeuroFlight mobile](docs/store-assets/preview-mobile-01-800w.webp) |
+
+More sizes and store metadata: [`docs/store-assets/`](docs/store-assets/).
+
 ## Features
 
 - **AI Dogfighting** -- Chase and shoot down an AI opponent in procedurally generated environments (desert, ocean, clouds)
