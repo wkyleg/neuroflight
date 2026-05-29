@@ -217,6 +217,20 @@ export function MainMenu() {
         >
           SETTINGS
         </button>
+        <button
+          type="button"
+          onClick={() => navigate('/assets')}
+          className="border rounded-lg text-sm tracking-wide transition-all duration-200 hover:scale-105 cursor-pointer"
+          style={{
+            fontFamily: 'var(--font-body)',
+            borderColor: 'rgba(0,204,204,0.45)',
+            color: 'var(--color-accent-cyan)',
+            background: 'rgba(0,204,204,0.06)',
+            padding: '16px 32px',
+          }}
+        >
+          ASSET LAB
+        </button>
       </div>
     </div>
   );

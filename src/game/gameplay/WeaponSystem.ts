@@ -20,6 +20,7 @@ interface Projectile {
 export interface HitResult {
   targetIndex: number;
   owner: 'player' | 'ai';
+  position: THREE.Vector3;
 }
 
 const _magnetDir = new THREE.Vector3();
@@ -146,7 +147,7 @@ export class WeaponSystem {
         // Player shooting AI gets a larger hit radius
         const hitRadius = proj.owner === 'player' ? PLAYER_HIT_RADIUS : AI_HIT_RADIUS;
         if (dist < hitRadius) {
-          hits.push({ targetIndex: ti, owner: proj.owner });
+          hits.push({ targetIndex: ti, owner: proj.owner, position: proj.mesh.position.clone() });
           proj.active = false;
           proj.mesh.visible = false;
           break;

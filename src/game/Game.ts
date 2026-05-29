@@ -4,6 +4,7 @@ import type { SessionSummary } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { AssetManager } from './core/AssetManager.ts';
 import { AudioManager } from './core/AudioManager.ts';
+import { AudioPolishSystem } from './core/AudioPolishSystem.ts';
 import { CameraManager } from './core/CameraManager.ts';
 import { eventBus } from './core/EventBus.ts';
 import { InputManager } from './core/InputManager.ts';
@@ -12,15 +13,20 @@ import { getNextPresetId, getPreset } from './dev/EnvironmentPresets.ts';
 import { AIController } from './flight/AIController.ts';
 import { getAircraft, getNextAircraftId } from './flight/AircraftRegistry.ts';
 import { PlaneController } from './flight/PlaneController.ts';
+import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { WeaponSystem } from './gameplay/WeaponSystem.ts';
 import type { GameMode } from './types.ts';
+import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
 import { getMap } from './world/MapRegistry.ts';
 import { RingManager } from './world/RingManager.ts';
+import { SkyObjectSystem } from './world/SkyObjectSystem.ts';
 import { SkySystem } from './world/SkySystem.ts';
+import { WeatherIdentitySystem } from './world/WeatherIdentitySystem.ts';
+import { WorldLandmarkSystem } from './world/WorldLandmarkSystem.ts';
 import { WorldManager } from './world/WorldManager.ts';
 
 export class Game {
@@ -32,6 +38,12 @@ export class Game {
   private scene: THREE.Scene;
   private skySystem: SkySystem | null = null;
   private cloudSystem: CloudSystem | null = null;
+  private skyObjectSystem: SkyObjectSystem | null = null;
+  private atmosphereVfxSystem: AtmosphereVfxSystem | null = null;
+  private worldLandmarkSystem: WorldLandmarkSystem | null = null;
+  private weatherIdentitySystem: WeatherIdentitySystem | null = null;
+  private combatVfxSystem: CombatVfxSystem | null = null;
+  private audioPolishSystem: AudioPolishSystem | null = null;
   private ringManager: RingManager | null = null;
   private worldManager: WorldManager | null = null;
   private scoreManager: ScoreManager;
@@ -91,6 +103,7 @@ export class Game {
     const startAudio = () => {
       if (!this.audioStarted) {
         this.audioManager.start();
+        this.audioPolishSystem?.start();
         this.audioStarted = true;
       }
     };
@@ -155,6 +168,14 @@ export class Game {
     this.skySystem.setRenderer(this.renderer.renderer);
     this.skySystem.setConfig(preset.sky);
     this.cloudSystem = new CloudSystem(this.scene);
+    this.skyObjectSystem = new SkyObjectSystem(this.scene);
+    await this.skyObjectSystem.load(map.skyObjectLayers ?? []);
+    this.atmosphereVfxSystem = new AtmosphereVfxSystem(this.scene, map.atmosphere);
+    this.worldLandmarkSystem = new WorldLandmarkSystem(this.scene);
+    await this.worldLandmarkSystem.load(map.worldLandmarkLayers ?? []);
+    this.weatherIdentitySystem = new WeatherIdentitySystem(this.scene, map.weatherIdentity);
+    this.audioPolishSystem = new AudioPolishSystem(map.audioPolish);
+    if (this.audioStarted) this.audioPolishSystem.start();
 
     this.worldManager = new WorldManager(this.scene);
     this.worldManager.loadMap(map);
@@ -165,6 +186,7 @@ export class Game {
 
     if (mode === 'dogfight') {
       this.weaponSystem = new WeaponSystem(this.scene);
+      this.combatVfxSystem = new CombatVfxSystem(this.scene, map.combatVfx);
       this.dogfightManager = new DogfightManager();
 
       const aiAircraft = getAircraft('spitfire');
@@ -254,6 +276,11 @@ export class Game {
 
     this.skySystem?.followCamera(this.cameraManager.camera.position);
     this.cloudSystem?.update(this.cameraManager.camera.position);
+    this.skyObjectSystem?.update(dt, this.cameraManager.camera.position);
+    this.atmosphereVfxSystem?.update(dt, this.cameraManager.camera.position);
+    this.worldLandmarkSystem?.update(dt, this.cameraManager.camera.position);
+    this.weatherIdentitySystem?.update(dt, this.cameraManager.camera.position);
+    this.combatVfxSystem?.update(dt);
 
     // Track session metrics
     const pos = this.planeController.flightModel.getPosition();
@@ -281,6 +308,8 @@ export class Game {
           const aiPos = this.aiController.getPosition().clone();
           const aiDir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.aiController.getQuaternion());
           this.weaponSystem.fire(aiPos, aiDir, 'ai');
+          this.combatVfxSystem?.spawnShot(aiPos, aiDir, 'ai');
+          this.audioPolishSystem?.playWeapon();
         }
       }
 
@@ -323,7 +352,17 @@ export class Game {
       const hits = this.weaponSystem.checkHits(targets);
       for (const hit of hits) {
         const target = targets[hit.targetIndex];
+        const before = this.dogfightManager.getState();
+        const wasAiDead = this.dogfightManager.isAiDead();
+        this.combatVfxSystem?.spawnHit(hit.position);
+        this.audioPolishSystem?.playImpact();
         this.dogfightManager.applyDamage(target.owner);
+        const aiJustDied = target.owner === 'ai' && !wasAiDead && this.dogfightManager.isAiDead();
+        const playerJustDied = target.owner === 'player' && before.playerHealth <= 10;
+        if (aiJustDied || playerJustDied) {
+          this.combatVfxSystem?.spawnExplosion(target.position);
+          this.audioPolishSystem?.playExplosion();
+        }
       }
 
       const shouldRespawn = this.dogfightManager.update(dt);
@@ -354,6 +393,7 @@ export class Game {
 
     this.audioManager.updateEngine(speed, 200);
     this.audioManager.updateWind(speed, 200);
+    this.audioPolishSystem?.update(speed, 200);
 
     // BPM sync
     this.hudUpdateTimer += dt;
@@ -474,8 +514,10 @@ export class Game {
     const origin = this.planeController.flightModel.getPosition().clone();
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.object.quaternion);
     this.weaponSystem.fire(origin, dir, 'player');
+    this.combatVfxSystem?.spawnShot(origin, dir, 'player');
     this.dogfightManager.recordPlayerShot();
     this.audioManager.playGunshot();
+    this.audioPolishSystem?.playWeapon();
     this.sessionRecorder.recordEvent('shot_fired');
   }
 
@@ -653,6 +695,12 @@ export class Game {
     this.audioManager.destroy();
     this.skySystem?.destroy();
     this.cloudSystem?.destroy();
+    this.skyObjectSystem?.destroy();
+    this.atmosphereVfxSystem?.destroy();
+    this.worldLandmarkSystem?.destroy();
+    this.weatherIdentitySystem?.destroy();
+    this.combatVfxSystem?.destroy();
+    this.audioPolishSystem?.destroy();
     this.ringManager?.destroy();
     this.worldManager?.destroy();
     this.weaponSystem?.destroy();

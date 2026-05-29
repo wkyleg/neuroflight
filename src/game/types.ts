@@ -86,6 +86,106 @@ export interface LandmarkConfig {
   rotationY?: number;
 }
 
+export interface SkyObjectLayerConfig {
+  assetPath: string;
+  count: number;
+  radius: number;
+  minDistance?: number;
+  altitudeRange: [number, number];
+  /** Target max model dimension in world units after source GLB normalization. */
+  scaleRange: [number, number];
+  driftSpeedRange?: [number, number];
+  rotationSpeedRange?: [number, number];
+}
+
+export interface AtmosphereVfxConfig {
+  radius: number;
+  hazeTexturePath: string;
+  hazeCount: number;
+  hazeColor: number;
+  hazeOpacityRange: [number, number];
+  hazeScaleRange: [number, number];
+  hazeAltitudeRange: [number, number];
+  hazeDriftSpeed: number;
+  rainTexturePath?: string;
+  rainCount: number;
+  rainColor: number;
+  rainOpacityRange: [number, number];
+  rainScaleRange: [number, number];
+  rainAltitudeRange: [number, number];
+  rainFallSpeed: number;
+  rainDriftSpeed: number;
+  lightning?: boolean;
+  lightningTexturePath: string;
+  lightningColor: number;
+}
+
+export interface WorldLandmarkLayerConfig {
+  assetPath: string;
+  count: number;
+  radius: number;
+  minDistance?: number;
+  altitudeRange: [number, number];
+  /** Target max model dimension in world units after source GLB normalization. */
+  scaleRange: [number, number];
+  driftSpeedRange?: [number, number];
+  rotationSpeedRange?: [number, number];
+  groundY?: number;
+  faceCenter?: boolean;
+}
+
+export interface WeatherBillboardLayerConfig {
+  texturePath: string;
+  count: number;
+  radius: number;
+  altitudeRange: [number, number];
+  widthRange: [number, number];
+  heightRange?: [number, number];
+  opacityRange: [number, number];
+  color: number;
+  driftSpeedRange?: [number, number];
+  fallSpeedRange?: [number, number];
+  rotationRange?: [number, number];
+  additive?: boolean;
+  renderOrder?: number;
+}
+
+export interface WeatherIdentityConfig {
+  billboardLayers: WeatherBillboardLayerConfig[];
+  lightning?: {
+    texturePath: string;
+    color: number;
+    distanceRange: [number, number];
+    altitudeRange: [number, number];
+    scaleRange: [number, number];
+    intervalRange: [number, number];
+    intensity?: number;
+  };
+}
+
+export interface CombatVfxConfig {
+  muzzleTexturePath: string;
+  hitTexturePath: string;
+  explosionTexturePath: string;
+  smokeTexturePath: string;
+  tracerColor: number;
+  aiTracerColor: number;
+}
+
+export interface AudioPolishClip {
+  path: string;
+  volume?: number;
+  rateRange?: [number, number];
+}
+
+export interface AudioPolishConfig {
+  ambientLoops?: AudioPolishClip[];
+  weaponOneShots?: AudioPolishClip[];
+  impactOneShots?: AudioPolishClip[];
+  explosionOneShots?: AudioPolishClip[];
+  uiOneShots?: AudioPolishClip[];
+}
+
 export interface MapDefinition {
   id: string;
   name: string;
@@ -93,6 +193,12 @@ export interface MapDefinition {
   environmentPresetId: string;
   playerSpawn: [number, number, number];
   scatterLayers: ScatterLayerConfig[];
+  skyObjectLayers?: SkyObjectLayerConfig[];
+  atmosphere?: AtmosphereVfxConfig;
+  worldLandmarkLayers?: WorldLandmarkLayerConfig[];
+  weatherIdentity?: WeatherIdentityConfig;
+  combatVfx?: CombatVfxConfig;
+  audioPolish?: AudioPolishConfig;
   landmarks?: LandmarkConfig[];
   groundPlane?: GroundPlaneConfig;
   ringBehavior: 'aheadPath' | 'arena';

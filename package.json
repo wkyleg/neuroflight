@@ -11,6 +11,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "assets:harvest": "node scripts/harvest-assets.mjs",
+    "assets:audit": "node scripts/harvest-assets.mjs --audit",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },

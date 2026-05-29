@@ -1,0 +1,240 @@
+# NeuroFlight Asset Attribution
+
+Generated: 2026-05-29T04:41:33.611Z
+
+Assets listed here are staged for evaluation only. Before any CC-BY asset is shipped in-game, copy the relevant credit line into the production credits UI or documentation.
+
+- Freesound search: desert wind gust by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=desert%20wind%20gust&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: explosion distant by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=explosion%20distant&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: gunfire burst by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=gunfire%20burst&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: missile whoosh by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=missile%20whoosh&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: ocean waves wind by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=ocean%20waves%20wind&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: propeller aircraft flyby by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=propeller%20aircraft%20flyby&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: radio beep ui by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=radio%20beep%20ui&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: rain squall wind by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=rain%20squall%20wind&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: thunder distant storm by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=thunder%20distant%20storm&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Freesound search: wind altitude loop by Freesound contributors, CC0 or CC-BY. Source: https://freesound.org/search/?q=wind%20altitude%20loop&f=license:%22Creative+Commons+0%22+license:%22Attribution%22
+- Airship PNG by natebot13, CC-BY 3.0. Source: https://opengameart.org/content/airship
+- Electricity Game Sound Pack by OpenGameArt contributor, CC0 or CC-BY. Source: https://opengameart.org/content/electricity-game-sound-pack
+- Interface Sounds by OpenGameArt contributor, CC0 or CC-BY. Source: https://opengameart.org/content/interface-sounds
+- Wind 1 by OpenGameArt contributor, CC0 or CC-BY. Source: https://opengameart.org/content/wind1
+- Zeppelin PNG by Jean Alvin, CC-BY 3.0. Source: https://opengameart.org/content/zeppelin
+- Lost by Matt Connors, CC-BY 3.0. Source: https://poly.pizza/m/0_XjVBgta31
+- Gate by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/07oA3gKcvLt
+- Mountain by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/099f6GxB1bj
+- Radar dish by Paul Spooner, CC-BY 3.0. Source: https://poly.pizza/m/0A3nGf2__Mt
+- Mountain by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/0Fl55ZzsVzT
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/0GU9i_dtwb0
+- Tower of babel by Thomas de Rivaz, CC-BY 3.0. Source: https://poly.pizza/m/0MmIbleQag8
+- Mount Fuji by Aya Kawa, CC-BY 3.0. Source: https://poly.pizza/m/0sbo0giRpnM
+- Lighthouse by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/0SWQTv1whoA
+- Lighthouse by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/0t2ZYRBsqX-
+- Castle by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/0TfSw65gU2G
+- Monument.1 by Yogoshimo 2.0, CC-BY 3.0. Source: https://poly.pizza/m/0un2vO8OCLn
+- Table by CMHT Oculus, CC-BY 3.0. Source: https://poly.pizza/m/0WwhayzV52T
+- Soil mount by apelab, CC-BY 3.0. Source: https://poly.pizza/m/0ycSG7vDLMm
+- Seaport and roads by Andrew Ferreira, CC-BY 3.0. Source: https://poly.pizza/m/0ZQ5ktu5CuN
+- Cactus by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/1_3Ur2-LAs8
+- Whale by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/15cXqVGk0jA
+- Winter Island by SharkFin, CC-BY 3.0. Source: https://poly.pizza/m/1a1z56n7u67
+- Satellite by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/1C3zb8Q9USk
+- Small Island with Fox by Sebastian Böck, CC-BY 3.0. Source: https://poly.pizza/m/1Cp7gi2Q8FL
+- Sailboat by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/1d76pfN4Dne
+- Table by CMHT Oculus, CC-BY 3.0. Source: https://poly.pizza/m/1IZ8Y6MfHRO
+- Lighthouse scene by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/1O6BWfUB6ta
+- bird by Kelli Ray, CC-BY 3.0. Source: https://poly.pizza/m/1TjSVf4Yl79
+- Floating Island by Corey Daniels, CC-BY 3.0. Source: https://poly.pizza/m/1tmAsnTMZnw
+- Eagle by Robert Mirabelle, CC-BY 3.0. Source: https://poly.pizza/m/1Z5L1v0bfu7
+- Pagoda by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/1zS7ucaAd4J
+- Rock bridge and environment by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/2-0i7skA6uW
+- Beacon by sugamo, CC-BY 3.0. Source: https://poly.pizza/m/21ZcU9kfuL8
+- Cumulus Clouds 5 by S. Paul Michael, CC-BY 3.0. Source: https://poly.pizza/m/25RmW99gwuv
+- temple for tilt integration by kris pilcher, CC-BY 3.0. Source: https://poly.pizza/m/2c77k-iimuh
+- broken bookshelf by Justin Randall, CC-BY 3.0. Source: https://poly.pizza/m/2euDqAnJpQn
+- Balloon Dog by Carlos Maciel, CC-BY 3.0. Source: https://poly.pizza/m/2FdWP453B1g
+- Bot Drone by Dave404, CC-BY 3.0. Source: https://poly.pizza/m/2iyQx2YscRq
+- valley by Zaw Imagineering, CC-BY 3.0. Source: https://poly.pizza/m/2KMb5_givgt
+- Green Cactus by Daniel Melchior, CC-BY 3.0. Source: https://poly.pizza/m/2Kng1KnfMEc
+- Mayan Temple by Vivien Lightfoot, CC-BY 3.0. Source: https://poly.pizza/m/2L1BNfBSXrP
+- Parachute by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/2QKxlN6I5VE
+- Canyon by Maciek Krol, CC-BY 3.0. Source: https://poly.pizza/m/2rLxi17B3vf
+- Mount Fuji by sugamo, CC-BY 3.0. Source: https://poly.pizza/m/2sPka6T7BqR
+- Drone by Silly Fear, CC-BY 3.0. Source: https://poly.pizza/m/3Ae_y67lzvd
+- Container Ship by Alex Safayan, CC-BY 3.0. Source: https://poly.pizza/m/3AmDGcCu6Ll
+- Telescope by Don Carson, CC-BY 3.0. Source: https://poly.pizza/m/3HJCpDzBQEw
+- Pyramid by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/3pabPM-VTTH
+- Sparrow by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/3rTjKefT184
+- very cute airplane by Akash Rudra, CC-BY 3.0. Source: https://poly.pizza/m/3UtIosDm9u-
+- Cumuls Clouds 3 by S. Paul Michael, CC-BY 3.0. Source: https://poly.pizza/m/3wzu2FRYXUi
+- Inflatable water tube by Franco Ricci, CC-BY 3.0. Source: https://poly.pizza/m/3xMFo1NeFvx
+- Parachute by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/3Z7vJ96JIEB
+- Cloud by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/44cGXp6_8WD
+- Radio tower by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/44JZ7nNNy_x
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/45-KKnBcxvE
+- Airship by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/4A1v8V9-_-R
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/4LmJSWyBRMd
+- Rock by Danni Bittman, CC-BY 3.0. Source: https://poly.pizza/m/4TpBWdzKDf2
+- Open umbrella by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/4uOho8GeU_w
+- Hang glider by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/4WmEAyjrvW5
+- Volcano by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/4xoTMiF0D5J
+- Barrel cactus by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5-hrumGDq1K
+- Floating place by Ben Desai, CC-BY 3.0. Source: https://poly.pizza/m/56MpFBKMbjD
+- VR DRONE by Dave404, CC-BY 3.0. Source: https://poly.pizza/m/580fbWUqqbh
+- Radio tower by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5c41ysnNFio
+- Cumulus Clouds 2 by S. Paul Michael, CC-BY 3.0. Source: https://poly.pizza/m/5ckRCisrnXh
+- Paper airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5Dzvrp9lvtN
+- Balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5eJ1LoekHuW
+- Satellite dish by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5iVbfDhRnN7
+- Ship by Krzysztof Gryzka, CC-BY 3.0. Source: https://poly.pizza/m/5n3aojUq2Bq
+- Radio tower by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/5qe3Ddnvmr_
+- Sailboat by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/5u49Hzbo5WH
+- Secret Camping spot by Jake Blakeley, CC-BY 3.0. Source: https://poly.pizza/m/5UNRssoJeqR
+- Sea Plane by Neil M (monkeymad2), CC-BY 3.0. Source: https://poly.pizza/m/5xG_QGFWF99
+- Cloud Set by Matt Schaefer, CC-BY 3.0. Source: https://poly.pizza/m/5XVdqjUIXLR
+- Hubble telescope by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/61JbLjEpcJT
+- Table by CMHT Oculus, CC-BY 3.0. Source: https://poly.pizza/m/66i_WBdHAN5
+- Stinger Drone by Aaron Clifford, CC-BY 3.0. Source: https://poly.pizza/m/6CUQX98vha4
+- Airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6D4MwQoxK-K
+- Ruin by nha pham, CC-BY 3.0. Source: https://poly.pizza/m/6eGK7_Kbswf
+- Flying saucer by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6hu2h8v78mO
+- Blocks Trailer Map by Danni Bittman, CC-BY 3.0. Source: https://poly.pizza/m/6jGuvmwkDly
+- Table by Zoe XR, CC-BY 3.0. Source: https://poly.pizza/m/6K7cCtQAkY0
+- Door by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6sqMmqfwKip
+- Flying seagull by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6Tpj_vcWP3f
+- Helicopter by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6U2H_0VSAXY
+- Whale by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7-TgeTuwbzw
+- old lamp by Justin Randall, CC-BY 3.0. Source: https://poly.pizza/m/73r4EQM-Z8e
+- Paper airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/75WQH5E29tF
+- Pirate Ship by Braden Brunk, CC-BY 3.0. Source: https://poly.pizza/m/7aHmBgTur3V
+- Sailboat by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7AOnch2wREC
+- Fountain by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7AydBrjR2Ss
+- The portal door by Dying Yoda, CC-BY 3.0. Source: https://poly.pizza/m/7eqEmHxIA_7
+- Hot air balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7eSQwXI898e
+- Hot air balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7Fej0Jd3_Di
+- Lighthouse by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7H8is9jrGeB
+- Mountain by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7Jhw3p6TusU
+- Floaty Island by Justin Hsu, CC-BY 3.0. Source: https://poly.pizza/m/7l60DZ3xC7A
+- Temple of Prophecy: Ruined by Duncan Anderson, CC-BY 3.0. Source: https://poly.pizza/m/7LV6QMkGBNo
+- Life preserver by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/7n1vrlFN0GH
+- Refracting Telescope by Jon Wiley, CC-BY 3.0. Source: https://poly.pizza/m/7QMEqafOyI4
+- Castle Tower by sirkitree, CC-BY 3.0. Source: https://poly.pizza/m/7ZiHr3enyWJ
+- Hot air balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8azSIUgP0ow
+- Airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8ciDd9k8wha
+- Table by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/8cnrwlAWqx7
+- Cloud by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/8CXbPO6p0n2
+- Volcano by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8gkFBBcS6aM
+- Table by Sebastiano Todaro, CC-BY 3.0. Source: https://poly.pizza/m/8HyHn6oFW1P
+- Hot air balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8k-_dqRf1C2
+- Garbage Space Ship by Jacob Cherchio, CC-BY 3.0. Source: https://poly.pizza/m/8l4pCzNvmLQ
+- Mountaintop by Matthew Burdette, CC-BY 3.0. Source: https://poly.pizza/m/8mWDJgGcXSH
+- Parachute by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8otDbaIqkhU
+- Bird by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8Ph79kHbt9s
+- Kite by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8Qq-NaPoBt6
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8sJEPmTfvA9
+- Iceberg by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8sqTOfIjWml
+- Jetpack by Roman Miller, CC-BY 3.0. Source: https://poly.pizza/m/8VafbXInymc
+- Airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8VysVKMXN2J
+- Gate by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/9cZfjTYRbiM
+- Airplane by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/9Ev6pklkSYp
+- Tower by Anonymous, CC-BY 3.0. Source: https://poly.pizza/m/9jli-2CSYS-
+- Gate by Julien Kleber (Juliusprod), CC-BY 3.0. Source: https://poly.pizza/m/9T0BSYTGJAo
+- Cactus by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/9UCcl_W0Xq3
+- Aeroplane by Gilang Romadhan, CC-BY 3.0. Source: https://poly.pizza/m/9VeIc0cybp4
+- balloon by M Smith Jonn, CC-BY 3.0. Source: https://poly.pizza/m/9x7F2FaiIHl
+- Jetpack by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/a19dX3Vgo3S
+- Desert by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/a1HnTCHfE34
+- Airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/a3XrQkLNna9
+- Shrine by Aidan K McLaughlin, CC-BY 3.0. Source: https://poly.pizza/m/a68qNnAC4m-
+- Castle by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/aG0AF5d-zbY
+- Roman Arch by Icawfype, CC-BY 3.0. Source: https://poly.pizza/m/agiRDMN0VR
+- Temple Entrance by Steingrímur Jónsson, CC-BY 3.0. Source: https://poly.pizza/m/ajef1XE6Dwm
+- Drill bit by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/aKe_b2jujys
+- plane 2 by Jake Blakeley, CC-BY 3.0. Source: https://poly.pizza/m/amIu9ua-L0A
+- Cloud by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/aQl2tRgDupm
+- Door by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/aQp17eqOPFn
+- Hot Air Balloon by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/ascrGCCFjFx
+- Walkie talkie by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/aYdn7ZZaYqa
+- Flying saucer by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/b0N_HeT_Ttb
+- Clouds by Jarlan Perez, CC-BY 3.0. Source: https://poly.pizza/m/b3Kia9N2fS2
+- Jet by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bgUY8zN2Bq9
+- Low poly floating islands by vanAchen, CC-BY 3.0. Source: https://poly.pizza/m/bH724asZeAh
+- Hang glider by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bIRUD686yoA
+- Hill by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/biVS28j2w4g
+- Low-poly landscape by sirkitree, CC-BY 3.0. Source: https://poly.pizza/m/bjsNFfddgOv
+- Hot air balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bK-kUCyS7os
+- Lighthouse by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bk72ChfpGo-
+- Cockpit control center by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bm3pR6gG11N
+- Cliff by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bN-rWrWm3mC
+- Richie by joney_lol, CC-BY 3.0. Source: https://poly.pizza/m/BwaLw2Olre
+- Island by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/bzLVwG4AzvA
+- Storage Ship by Alex Safayan, CC-BY 3.0. Source: https://poly.pizza/m/bzRjbJ74JCr
+- Island by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/C03O8OQq6O
+- Lighthouse by CG ART Creation, CC-BY 3.0. Source: https://poly.pizza/m/c1-hm3Zs-8U
+- Portal: Companion Cube by Prateek Karajgikar, CC-BY 3.0. Source: https://poly.pizza/m/ccQRPuBwXrU
+- Western bluebird by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/cdcl5UwlYWd
+- Greek Temple by Alexandre Thomas (Ashtom), CC-BY 3.0. Source: https://poly.pizza/m/cdMQnl19MB9
+- Mayan Temple by Steve Atkins, CC-BY 3.0. Source: https://poly.pizza/m/cf3QwX0JqGN
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/cGHU2Pu0Ytf
+- Table by CMHT Oculus, CC-BY 3.0. Source: https://poly.pizza/m/cIogKnGAeII
+- Airship by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/cr7RPZ4RfGM
+- Swamp Island by zeoxo, CC-BY 3.0. Source: https://poly.pizza/m/cSCAtmKKFuy
+- Mountain Cabin by Alex Safayan, CC-BY 3.0. Source: https://poly.pizza/m/cspkBmqAq8g
+- Oil Barrels by Robert Schlyter, CC-BY 3.0. Source: https://poly.pizza/m/cSXe7zbSSAL
+- Helicopter by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/cTzINMr0WdS
+- Floating City by Mikael Ganehag Brorsson, CC-BY 3.0. Source: https://poly.pizza/m/cUH5C6XcOhz
+- Sea environment by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/cwgynO_e6F5
+- Balloon by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/d1gDDhM7pTf
+- Pagoda by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/d1M5ncMBUDi
+- Radio tower by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/d1zYJG7rJGY
+- Cumulus Clouds6 by S. Paul Michael, CC-BY 3.0. Source: https://poly.pizza/m/d2BnV2aOq8r
+- Archway by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/d6lqRR2TU0i
+- Table by CMHT Oculus, CC-BY 3.0. Source: https://poly.pizza/m/dawBNnFWHja
+- Cruise ship by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/dgLCxDWhnZQ
+- Telescope by Jarlan Perez, CC-BY 3.0. Source: https://poly.pizza/m/dIskMlGkiHR
+- Little Drone by Nick Olson, CC-BY 3.0. Source: https://poly.pizza/m/dJ9mjQQqDQJ
+- Rope by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/dkNzi6oDQj
+- castle 1234 by felix stief, CC-BY 3.0. Source: https://poly.pizza/m/dmP1nRE_2GM
+- Rock by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/dmRuyy1VXEv
+- Drone by NateGazzard, CC-BY 3.0. Source: https://poly.pizza/m/DNbUoMtG3H
+- Parrot by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/dpl7B31PqWX
+- Airship by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/dRpj4_t2keh
+- wings by Michael Fuchs, CC-BY 3.0. Source: https://poly.pizza/m/dw-IMS0xk71
+- Volcano by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/dwSigTeSMCo
+- StoneMesaValley by Nathan DiPietro, CC-BY 3.0. Source: https://poly.pizza/m/e2k4fpJJbml
+- Helicopter by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/eb7b31pjGtQ
+- Hang glider by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/eejEK4uR2XO
+- Volcano by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/ehL08wrtLCN
+- Flying gull by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/eMNhHDZakYp
+- UFO by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/eohMeC0WMlM
+- Balloons by Jarlan Perez, CC-BY 3.0. Source: https://poly.pizza/m/eRag_AC3KiS
+- Archway by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/erbvRcGd7YA
+- Blimp by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/eUzYtv-FRrl
+- Radio tower by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/eWEYV9ppUjv
+- Empty Island by Cheryl Fong, CC-BY 3.0. Source: https://poly.pizza/m/f-xl-C5VBuo
+- Palace by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/f5wb0x6Qk3j
+- Building frame by VR XRTIST, CC-BY 3.0. Source: https://poly.pizza/m/f6IpG9b27Eo
+- Rock bridge and environment by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/f9mrad5zXbF
+- Blimp by jeremy, CC-BY 3.0. Source: https://poly.pizza/m/feHtwreC3bX
+- Island by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fG9iP5afr7U
+- Queen Palm Tree by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/ficLBIjGliK
+- Anti-Gravity Drone by Adam Marc Williams, CC-BY 3.0. Source: https://poly.pizza/m/fiYuC73Xlwp
+- Satellite by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fmYHY1leH_P
+- Whale by sirkitree, CC-BY 3.0. Source: https://poly.pizza/m/fo1MBzTFRZ3
+- Flying saucer by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fojR5i3h_nh
+- Airship by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fpnP17sKSIo
+- Airplane by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fzIXe2paBN9
+- Oil pump by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/fZykGFywa5D
+- Fantasy Castle Prototype by burunduk, CC-BY 3.0. Source: https://poly.pizza/m/ge5Re3P9Ke
+- Helicopter and Helipad by Arif, CC-BY 3.0. Source: https://poly.pizza/m/goudZAiTcJ
+- Helicopter by Zsky, CC-BY 3.0. Source: https://poly.pizza/m/hG2Qr0A3zR
+- Floating Island by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/HnfcEtSmUC
+- Large Island by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/jLjH1jMIpH
+- Air Platform by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/kjqhm16wjv
+- Grave by Zsky, CC-BY 3.0. Source: https://poly.pizza/m/LncsMrbixY
+- ricks ufo by eeee, CC-BY 3.0. Source: https://poly.pizza/m/q6vNUoHZXr
+- Smashed Glass by AlexCrean, CC-BY 3.0. Source: https://poly.pizza/m/s5z0Wvs1Wi
+- Oil Drum by Zsky, CC-BY 3.0. Source: https://poly.pizza/m/TLsXd9efLC
+- Wizard Shop by Zsky, CC-BY 3.0. Source: https://poly.pizza/m/tWJBgjK0mU
+- Valley Terrain by Zsky, CC-BY 3.0. Source: https://poly.pizza/m/u78ByZHYB2
+- Floating Island by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/uacRjkWA4q
+- Medium Island by J-Toastie, CC-BY 3.0. Source: https://poly.pizza/m/YFs6J9xPdZ

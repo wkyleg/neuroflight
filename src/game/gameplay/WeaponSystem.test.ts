@@ -129,6 +129,14 @@ describe('WeaponSystem', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
+  function getVisibleProjectileMesh(weapons: WeaponSystem): THREE.Mesh {
+    const projectile = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
+      (p) => p.mesh.visible,
+    );
+    if (!projectile) throw new Error('Expected a visible projectile');
+    return projectile.mesh;
+  }
+
   it('fire() creates a visible projectile', () => {
     const weapons = new WeaponSystem(scene);
     const origin = new THREE.Vector3(0, 0, 0);
@@ -146,9 +154,7 @@ describe('WeaponSystem', () => {
     const weapons = new WeaponSystem(scene);
     const origin = new THREE.Vector3(0, 0, 0);
     weapons.fire(origin, new THREE.Vector3(1, 0, 0), 'player');
-    const mesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
-      (p) => p.mesh.visible,
-    )!.mesh;
+    const mesh = getVisibleProjectileMesh(weapons);
     const x0 = mesh.position.x;
     weapons.update(0.1);
     expect(mesh.position.x).toBeGreaterThan(x0);
@@ -158,13 +164,13 @@ describe('WeaponSystem', () => {
   it('checkHits() returns hit info for opposing owner in range', () => {
     const weapons = new WeaponSystem(scene);
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
-    const mesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
-      (p) => p.mesh.visible,
-    )!.mesh;
+    const mesh = getVisibleProjectileMesh(weapons);
     mesh.position.set(0, 0, 0);
     const aiPos = new THREE.Vector3(40, 0, 0);
     const hits = weapons.checkHits([{ position: aiPos, owner: 'ai' }]);
-    expect(hits).toEqual([{ targetIndex: 0, owner: 'player' }]);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({ targetIndex: 0, owner: 'player' });
+    expect(hits[0].position).toEqual(new THREE.Vector3(0, 0, 0));
     weapons.destroy();
   });
 
@@ -173,21 +179,20 @@ describe('WeaponSystem', () => {
     const aiAtPlayerRange = new THREE.Vector3(40, 0, 0);
 
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
-    const playerMesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
-      (p) => p.mesh.visible,
-    )!.mesh;
+    const playerMesh = getVisibleProjectileMesh(weapons);
     playerMesh.position.set(0, 0, 0);
     expect(weapons.checkHits([{ position: aiAtPlayerRange, owner: 'ai' }])).toHaveLength(1);
 
     weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'ai');
-    const aiMesh = (weapons as unknown as { projectiles: { mesh: THREE.Mesh }[] }).projectiles.find(
-      (p) => p.mesh.visible,
-    )!.mesh;
+    const aiMesh = getVisibleProjectileMesh(weapons);
     aiMesh.position.set(0, 0, 0);
     expect(weapons.checkHits([{ position: aiAtPlayerRange, owner: 'player' }])).toHaveLength(0);
 
     const playerClose = new THREE.Vector3(10, 0, 0);
-    expect(weapons.checkHits([{ position: playerClose, owner: 'player' }])).toEqual([{ targetIndex: 0, owner: 'ai' }]);
+    const hits = weapons.checkHits([{ position: playerClose, owner: 'player' }]);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({ targetIndex: 0, owner: 'ai' });
+    expect(hits[0].position).toEqual(new THREE.Vector3(0, 0, 0));
     weapons.destroy();
   });
 
