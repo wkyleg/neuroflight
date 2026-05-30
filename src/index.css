@@ -36,6 +36,25 @@ button {
   min-height: 2.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: 0.5rem;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(0.98);
+}
+
+button:focus-visible {
+  outline: 2px solid rgba(94, 234, 212, 0.72);
+  outline-offset: 3px;
 }
 
 canvas {

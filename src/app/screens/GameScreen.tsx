@@ -79,7 +79,7 @@ export function GameScreen() {
           </p>
           <p
             className="text-xs"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', opacity: 0.6 }}
+            style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)', opacity: 0.6 }}
           >
             {aircraft.name} &middot; {modeMeta.title} &middot; {difficulty.toUpperCase()}
           </p>

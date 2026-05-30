@@ -38,12 +38,12 @@ const COLORS = {
   axisStroke: 'rgba(0,204,204,0.2)',
 };
 
-const axisTick = { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-mono)' };
+const axisTick = { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-body)' };
 
 const tooltipStyle = {
   background: 'rgba(0,5,15,0.95)',
   border: '1px solid rgba(0,204,204,0.3)',
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--font-body)',
   fontSize: 11,
   color: COLORS.cyan,
 };
@@ -62,7 +62,7 @@ function StatBox({ label, value, color, sub }: { label: string; value: string | 
     >
       <span
         className="tracking-[0.2em] uppercase block"
-        style={{ fontFamily: 'var(--font-mono)', color: `${color}90`, fontSize: 10, marginBottom: 8 }}
+        style={{ fontFamily: 'var(--font-body)', color: `${color}90`, fontSize: 10, marginBottom: 8 }}
       >
         {label}
       </span>
@@ -435,7 +435,7 @@ export function SummaryScreen() {
   return (
     <div
       className="fixed inset-0 flex flex-col items-center overflow-y-auto"
-      style={{ background: 'var(--color-bg-primary)', fontFamily: 'var(--font-mono)', padding: '140px 64px' }}
+      style={{ background: 'var(--color-bg-primary)', fontFamily: 'var(--font-body)', padding: '140px 64px' }}
     >
       {/* Header */}
       <p className="tracking-[0.3em] uppercase" style={{ color: COLORS.textDim, fontSize: 13, marginBottom: 16 }}>
@@ -1035,7 +1035,7 @@ export function SummaryScreen() {
                       label={{
                         value: 'High Load',
                         position: 'right',
-                        style: { fill: `${COLORS.red}60`, fontSize: 9, fontFamily: 'var(--font-mono)' },
+                        style: { fill: `${COLORS.red}60`, fontSize: 9, fontFamily: 'var(--font-body)' },
                       }}
                     />
                     <Area
@@ -1098,7 +1098,7 @@ export function SummaryScreen() {
                       label={{
                         value: '10Hz',
                         position: 'right',
-                        style: { fill: `${COLORS.green}50`, fontSize: 9, fontFamily: 'var(--font-mono)' },
+                        style: { fill: `${COLORS.green}50`, fontSize: 9, fontFamily: 'var(--font-body)' },
                       }}
                     />
                     <Line
@@ -1156,7 +1156,7 @@ export function SummaryScreen() {
                         value: 'Calm %',
                         position: 'insideBottom',
                         offset: -5,
-                        style: { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-mono)' },
+                        style: { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-body)' },
                       }}
                     />
                     <YAxis
@@ -1168,7 +1168,7 @@ export function SummaryScreen() {
                         value: 'Stability',
                         position: 'insideLeft',
                         angle: -90,
-                        style: { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-mono)' },
+                        style: { fill: COLORS.textDim, fontSize: 10, fontFamily: 'var(--font-body)' },
                       }}
                     />
                     <Tooltip

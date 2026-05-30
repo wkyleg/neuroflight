@@ -85,7 +85,7 @@ export function MainMenu() {
           <div>
             <p
               className="text-xs uppercase tracking-widest"
-              style={{ color: 'rgba(240,236,224,0.72)', fontFamily: 'var(--font-mono)' }}
+              style={{ color: 'rgba(240,236,224,0.72)', fontFamily: 'var(--font-body)' }}
             >
               Neuroadaptive storybook aviation
             </p>
@@ -153,7 +153,7 @@ export function MainMenu() {
                   >
                     <span
                       className="block text-xs uppercase tracking-widest"
-                      style={{ color: active ? item.accent : 'rgba(240,236,224,0.58)', fontFamily: 'var(--font-mono)' }}
+                      style={{ color: active ? item.accent : 'rgba(240,236,224,0.58)', fontFamily: 'var(--font-body)' }}
                     >
                       {item.scoreLabel}
                     </span>
@@ -206,7 +206,7 @@ export function MainMenu() {
             >
               <p
                 className="text-xs uppercase tracking-widest"
-                style={{ color: '#5eead4', fontFamily: 'var(--font-mono)' }}
+                style={{ color: '#5eead4', fontFamily: 'var(--font-body)' }}
               >
                 Aircraft
               </p>
@@ -254,7 +254,7 @@ export function MainMenu() {
             >
               <p
                 className="text-xs uppercase tracking-widest"
-                style={{ color: '#facc15', fontFamily: 'var(--font-mono)' }}
+                style={{ color: '#facc15', fontFamily: 'var(--font-body)' }}
               >
                 Challenge
               </p>
@@ -296,7 +296,7 @@ export function MainMenu() {
             >
               <p
                 className="text-xs uppercase tracking-widest"
-                style={{ color: '#facc15', fontFamily: 'var(--font-mono)' }}
+                style={{ color: '#facc15', fontFamily: 'var(--font-body)' }}
               >
                 Route
               </p>
@@ -344,7 +344,7 @@ export function MainMenu() {
             >
               <p
                 className="text-xs uppercase tracking-widest"
-                style={{ color: '#7dd3fc', fontFamily: 'var(--font-mono)' }}
+                style={{ color: '#7dd3fc', fontFamily: 'var(--font-body)' }}
               >
                 Biofeedback
               </p>

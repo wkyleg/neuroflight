@@ -53,7 +53,7 @@ export function SettingsScreen() {
       >
         <h3
           className="text-xs tracking-widest uppercase font-semibold"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: 18 }}
+          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 18 }}
         >
           Simulated Signal Presets
         </h3>
@@ -93,7 +93,7 @@ export function SettingsScreen() {
       >
         <h3
           className="text-xs tracking-widest uppercase font-semibold"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: 20 }}
+          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20 }}
         >
           In-Game Controls
         </h3>
