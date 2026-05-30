@@ -73,6 +73,13 @@ describe('MapRegistry', () => {
     }
   });
 
+  it('adds soft music loops and playful tag sounds per map', () => {
+    for (const map of MAPS) {
+      expect(map.audioPolish?.musicLoops?.some((clip) => clip.path.includes('music-jingles-preview'))).toBe(true);
+      expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('music-tag-sparkle'))).toBe(true);
+    }
+  });
+
   it('authors hero landmarks near mission route set pieces', () => {
     const desert = getMap('desert_expanse');
     const ocean = getMap('ocean_islands');

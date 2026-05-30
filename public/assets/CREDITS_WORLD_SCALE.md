@@ -225,3 +225,10 @@ These runtime assets were copied from `asset-inbox` after preview for the world-
 - License: CC0 1.0
 - Author: Kenney
 - Attribution: UI Audio by Kenney, CC0 1.0.
+
+## Music Jingles
+- Runtime files: /assets/audio/music-jingles-preview-01.ogg, /assets/audio/music-tag-sparkle-01.ogg
+- Source: Kenney (https://kenney.nl/assets/music-jingles)
+- License: CC0 1.0
+- Author: Kenney
+- Attribution: Music Jingles by Kenney, CC0 1.0.

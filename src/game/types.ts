@@ -340,6 +340,7 @@ export interface AudioPolishClip {
 
 export interface AudioPolishConfig {
   ambientLoops?: AudioPolishClip[];
+  musicLoops?: AudioPolishClip[];
   weaponOneShots?: AudioPolishClip[];
   impactOneShots?: AudioPolishClip[];
   explosionOneShots?: AudioPolishClip[];

@@ -503,6 +503,7 @@ export function FlightHud() {
   const hud = useGameStore((s) => s.hud);
   const game = useGameStore((s) => s.game);
   const [showControls, setShowControls] = useState(() => shouldShowInitialHelp());
+  const [musicEnabled, setMusicEnabled] = useState(() => game?.isMusicEnabled() ?? true);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -523,6 +524,14 @@ export function FlightHud() {
 
   const handleEndFlight = useCallback(() => {
     game?.endSession();
+  }, [game]);
+
+  useEffect(() => {
+    setMusicEnabled(game?.isMusicEnabled() ?? true);
+  }, [game]);
+
+  const handleToggleMusic = useCallback(() => {
+    setMusicEnabled(game?.toggleMusic() ?? false);
   }, [game]);
 
   const setThrottle = useCallback(
@@ -751,6 +760,27 @@ export function FlightHud() {
           </div>
 
           <div className="grid gap-2">
+            <button
+              type="button"
+              aria-label="Toggle music"
+              onPointerDown={stopHudPointer}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleMusic();
+              }}
+              className="rounded-xl text-xs font-black tracking-widest"
+              style={{
+                minHeight: 40,
+                padding: 0,
+                background: musicEnabled
+                  ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
+                  : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
+                border: musicEnabled ? '1px solid rgba(102,183,255,0.5)' : '1px solid rgba(255,255,255,0.16)',
+                color: musicEnabled ? '#9bd8ff' : 'rgba(255,246,220,0.5)',
+              }}
+            >
+              {musicEnabled ? 'MUSIC' : 'QUIET'}
+            </button>
             <button
               type="button"
               aria-label="Throttle up"

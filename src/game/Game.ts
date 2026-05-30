@@ -266,6 +266,14 @@ export class Game {
     this.onSessionEnd = cb;
   }
 
+  toggleMusic(): boolean {
+    return this.audioPolishSystem?.toggleMusic() ?? false;
+  }
+
+  isMusicEnabled(): boolean {
+    return this.audioPolishSystem?.isMusicEnabled() ?? true;
+  }
+
   async init(
     mode: GameMode,
     mapId = 'desert_expanse',
