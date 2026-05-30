@@ -84,6 +84,26 @@ describe('MapRegistry', () => {
     );
   });
 
+  it('organizes maps into readable storybook districts', () => {
+    const desertLabels = new Set(getMap('desert_expanse').worldLandmarkLayers?.map((layer) => layer.label));
+    const oceanLabels = new Set(getMap('ocean_islands').worldLandmarkLayers?.map((layer) => layer.label));
+
+    for (const label of ['pyramid', 'sun plaza', 'canyon wall', 'mesa wall', 'radar tower', 'floating island']) {
+      expect(desertLabels.has(label)).toBe(true);
+    }
+
+    for (const label of [
+      'lighthouse',
+      'harbor island',
+      'shipwreck',
+      'pier island',
+      'fishing dock island',
+      'dock island',
+    ]) {
+      expect(oceanLabels.has(label)).toBe(true);
+    }
+  });
+
   it('uses distant ocean mist curtains instead of near falling rain streaks', () => {
     const ocean = getMap('ocean_islands');
     expect(ocean.atmosphere?.rainCount).toBe(0);
