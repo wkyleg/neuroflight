@@ -31,4 +31,13 @@ describe('MapRegistry', () => {
       expect(collidableLayers.every((layer) => layer.collision?.minScale && layer.collision.minScale > 0)).toBe(true);
     }
   });
+
+  it('keeps Stormglass island composition tropical and lighthouse grounded', () => {
+    const ocean = getMap('ocean_islands');
+    expect(ocean.scatterLayers.some((layer) => layer.type === 'pine_tree')).toBe(false);
+    expect(ocean.scatterLayers.some((layer) => layer.type === 'palm_tree' && layer.scaleRange[0] >= 18)).toBe(true);
+    expect(ocean.worldLandmarkLayers?.some((layer) => layer.label === 'lighthouse' && layer.islandBase?.radius)).toBe(
+      true,
+    );
+  });
 });

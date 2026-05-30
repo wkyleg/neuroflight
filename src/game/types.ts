@@ -206,6 +206,12 @@ export interface WorldLandmarkLayerConfig {
   groundY?: number;
   faceCenter?: boolean;
   collisionRadius?: number;
+  islandBase?: {
+    radius: number;
+    height?: number;
+    color?: number;
+    flatten?: number;
+  };
 }
 
 export interface WeatherBillboardLayerConfig {

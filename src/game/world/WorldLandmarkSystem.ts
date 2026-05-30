@@ -88,6 +88,24 @@ export class WorldLandmarkSystem {
         const root = new THREE.Group();
         root.add(clone);
 
+        if (layer.islandBase) {
+          const baseHeight = layer.islandBase.height ?? 18;
+          const baseRadius = layer.islandBase.radius;
+          const baseGeometry = new THREE.CylinderGeometry(1, 1.28, 1, 18);
+          const baseMaterial = new THREE.MeshStandardMaterial({
+            color: layer.islandBase.color ?? 0xd9c294,
+            roughness: 0.92,
+            metalness: 0.02,
+            flatShading: true,
+          });
+          const base = new THREE.Mesh(baseGeometry, baseMaterial);
+          base.name = `${layer.label ?? 'landmark'} island base`;
+          base.scale.set(baseRadius, baseHeight, baseRadius * (layer.islandBase.flatten ?? 0.72));
+          base.position.y = -baseHeight * 0.5;
+          base.receiveShadow = true;
+          root.add(base);
+        }
+
         clone.scale.setScalar(scale);
         const anchorToGround = layer.groundY !== undefined || layer.altitudeRange[0] === 0;
         clone.position.set(

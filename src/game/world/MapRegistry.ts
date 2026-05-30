@@ -670,8 +670,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [15, 50],
         collision: { radiusMultiplier: 0.9, minScale: 28, label: 'island rock' },
       },
-      { type: 'palm_tree', count: 65, radius: 6000, minDistance: 28, scaleRange: [7, 18] },
-      { type: 'pine_tree', count: 45, radius: 6000, minDistance: 32, scaleRange: [9, 22] },
+      { type: 'palm_tree', count: 42, radius: 6200, minDistance: 220, scaleRange: [20, 44] },
       { type: 'sailboat', count: 18, radius: 7000, minDistance: 250, scaleRange: [4, 10] },
       {
         type: 'cargo_ship',
@@ -872,8 +871,10 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [250, 360],
         groundY: 0,
         collisionRadius: 130,
+        islandBase: { radius: 260, height: 18, color: 0xe1c891, flatten: 0.76 },
       },
       {
+        label: 'harbor island',
         assetPath: '/assets/world/ocean-port-01.glb',
         count: 1,
         radius: 9000,
@@ -881,8 +882,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [900, 1350],
         groundY: 0,
+        islandBase: { radius: 620, height: 22, color: 0xd6bd84, flatten: 0.68 },
       },
       {
+        label: 'seaport island',
         assetPath: '/assets/world/ocean-seaport-01.glb',
         count: 1,
         radius: 9400,
@@ -890,6 +893,7 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [1050, 1500],
         groundY: 0,
+        islandBase: { radius: 720, height: 24, color: 0xd4b77a, flatten: 0.66 },
       },
       {
         label: 'shipwreck',
@@ -901,6 +905,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [360, 620],
         groundY: 0,
         collisionRadius: 190,
+        islandBase: { radius: 420, height: 14, color: 0xcab07d, flatten: 0.6 },
       },
       {
         label: 'cruise ship',
@@ -912,8 +917,10 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [650, 1000],
         groundY: 0,
         collisionRadius: 260,
+        islandBase: { radius: 520, height: 16, color: 0xcbb382, flatten: 0.58 },
       },
       {
+        label: 'dock island',
         assetPath: '/assets/world/ocean-docks-03.glb',
         count: 1,
         radius: 7800,
@@ -921,6 +928,7 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [520, 780],
         groundY: 0,
+        islandBase: { radius: 460, height: 16, color: 0xd8bf87, flatten: 0.7 },
       },
       {
         label: 'floating island',
