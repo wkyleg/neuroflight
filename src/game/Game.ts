@@ -25,6 +25,7 @@ import { getModeMeta } from './modes.ts';
 import type { GameMode, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
+import { LivingWorldDirector } from './world/LivingWorldDirector.ts';
 import { getMap } from './world/MapRegistry.ts';
 import { RingManager } from './world/RingManager.ts';
 import { SkyObjectSystem } from './world/SkyObjectSystem.ts';
@@ -46,6 +47,7 @@ export class Game {
   private atmosphereVfxSystem: AtmosphereVfxSystem | null = null;
   private worldLandmarkSystem: WorldLandmarkSystem | null = null;
   private weatherIdentitySystem: WeatherIdentitySystem | null = null;
+  private livingWorldDirector: LivingWorldDirector | null = null;
   private combatVfxSystem: CombatVfxSystem | null = null;
   private audioPolishSystem: AudioPolishSystem | null = null;
   private ringManager: RingManager | null = null;
@@ -190,6 +192,8 @@ export class Game {
     this.worldLandmarkSystem = new WorldLandmarkSystem(this.scene);
     await this.worldLandmarkSystem.load(map.worldLandmarkLayers ?? []);
     this.weatherIdentitySystem = new WeatherIdentitySystem(this.scene, map.weatherIdentity);
+    this.livingWorldDirector = new LivingWorldDirector(this.scene, map.livingWorld, mode, map.id);
+    await this.livingWorldDirector.load();
     this.audioPolishSystem = new AudioPolishSystem(map.audioPolish);
     if (this.audioStarted) this.audioPolishSystem.start();
 
@@ -363,6 +367,7 @@ export class Game {
     this.atmosphereVfxSystem?.update(dt, this.cameraManager.camera.position);
     this.worldLandmarkSystem?.update(dt, this.cameraManager.camera.position);
     this.weatherIdentitySystem?.update(dt, this.cameraManager.camera.position);
+    this.livingWorldDirector?.update(dt, this.cameraManager.camera.position);
     this.combatVfxSystem?.update(dt);
 
     // Track session metrics
@@ -912,6 +917,7 @@ export class Game {
     this.atmosphereVfxSystem?.destroy();
     this.worldLandmarkSystem?.destroy();
     this.weatherIdentitySystem?.destroy();
+    this.livingWorldDirector?.destroy();
     this.combatVfxSystem?.destroy();
     this.audioPolishSystem?.destroy();
     this.ringManager?.destroy();

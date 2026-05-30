@@ -125,6 +125,38 @@ export interface SkyObjectLayerConfig {
   rotationSpeedRange?: [number, number];
 }
 
+export type LivingWorldBehavior =
+  | 'balloon-hover'
+  | 'airship-pass'
+  | 'plane-pass'
+  | 'bird-pass'
+  | 'ufo-dart'
+  | 'kite-drift';
+
+export interface LivingWorldEventConfig {
+  id: string;
+  label: string;
+  assetPath: string;
+  behavior: LivingWorldBehavior;
+  weight: number;
+  chance?: number;
+  maxActive?: number;
+  countRange: [number, number];
+  radiusRange: [number, number];
+  altitudeRange: [number, number];
+  /** Target max model dimension in world units after source GLB normalization. */
+  scaleRange: [number, number];
+  speedRange?: [number, number];
+  durationRange?: [number, number];
+  rotationOffset?: [number, number, number];
+}
+
+export interface LivingWorldConfig {
+  seed?: number;
+  eventIntervalRange: [number, number];
+  events: LivingWorldEventConfig[];
+}
+
 export interface AtmosphereVfxConfig {
   radius: number;
   hazeTexturePath: string;
@@ -227,6 +259,7 @@ export interface MapDefinition {
   skyObjectLayers?: SkyObjectLayerConfig[];
   atmosphere?: AtmosphereVfxConfig;
   worldLandmarkLayers?: WorldLandmarkLayerConfig[];
+  livingWorld?: LivingWorldConfig;
   weatherIdentity?: WeatherIdentityConfig;
   combatVfx?: CombatVfxConfig;
   audioPolish?: AudioPolishConfig;

@@ -16,6 +16,13 @@ These runtime assets were copied from `asset-inbox` after preview for the world-
 - Author: Steve Atkins
 - Attribution: Mayan Temple by Steve Atkins, CC-BY 3.0. Source: https://poly.pizza/m/cf3QwX0JqGN
 
+## Pyramid
+- Runtime files: /assets/world/desert-pyramid-01.glb
+- Source: Poly Pizza (https://poly.pizza/m/3pabPM-VTTH)
+- License: CC-BY 3.0
+- Author: Poly by Google
+- Attribution: Pyramid by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/3pabPM-VTTH
+
 ## Greek Temple
 - Runtime files: /assets/world/desert-temple-03.glb
 - Source: Poly Pizza (https://poly.pizza/m/cdMQnl19MB9)

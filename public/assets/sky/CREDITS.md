@@ -16,5 +16,6 @@ These assets are staged in `public/assets/sky/` for the NeuroFlight sky-object p
 - Floating Island by Corey Daniels, CC-BY 3.0. Source: https://poly.pizza/m/1tmAsnTMZnw
 - Kite by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8Qq-NaPoBt6
 - Bird by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/8Ph79kHbt9s
+- Flying saucer by Poly by Google, CC-BY 3.0. Source: https://poly.pizza/m/6hu2h8v78mO
 - Particle Pack by Kenney, CC0 1.0.
 - Cloudy Skyboxes Panorama by Screaming Brain Studios, CC0.
