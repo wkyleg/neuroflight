@@ -28,15 +28,63 @@ export class InputManager {
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.clearInput);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
+    if (this.shouldIgnoreKeyboardEvent(e)) return;
+    if (this.isFlightKey(e.code)) e.preventDefault();
     this.keys.add(e.code);
-    this.devCallbacks.forEach((cb) => cb(e.code));
+    if (!e.repeat) {
+      this.devCallbacks.forEach((cb) => cb(e.code));
+    }
   };
 
   private onKeyUp = (e: KeyboardEvent): void => {
     this.keys.delete(e.code);
+  };
+
+  private onVisibilityChange = (): void => {
+    if (document.hidden) this.clearInput();
+  };
+
+  private shouldIgnoreKeyboardEvent(e: KeyboardEvent): boolean {
+    const target = e.target as HTMLElement | null;
+    if (!(target instanceof HTMLElement)) return false;
+    return !!target.closest('input, textarea, select, button, a, [contenteditable="true"]');
+  }
+
+  private isFlightKey(code: string): boolean {
+    return (
+      code.startsWith('Arrow') ||
+      code === 'Space' ||
+      code === 'Enter' ||
+      code === 'KeyW' ||
+      code === 'KeyA' ||
+      code === 'KeyS' ||
+      code === 'KeyD' ||
+      code === 'KeyQ' ||
+      code === 'KeyE' ||
+      code === 'KeyB' ||
+      code === 'KeyF' ||
+      code === 'ShiftLeft' ||
+      code === 'ShiftRight' ||
+      code === 'ControlLeft' ||
+      code === 'ControlRight'
+    );
+  }
+
+  clearInput = (): void => {
+    this.keys.clear();
+    this.smoothPitch = 0;
+    this.smoothRoll = 0;
+    this.smoothYaw = 0;
+    this.uiThrottleUp = false;
+    this.uiThrottleDown = false;
+    this.uiBrake = false;
+    this.uiBoost = false;
+    this.uiFire = false;
   };
 
   onDevKey(cb: (key: string) => void): void {
@@ -116,5 +164,8 @@ export class InputManager {
   destroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.clearInput);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.clearInput();
   }
 }

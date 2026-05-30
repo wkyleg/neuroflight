@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
 import type { GameMode } from '@/game/types.ts';
@@ -106,7 +107,7 @@ const DEFAULT_HUD: FlightHudState = {
   elapsedMs: 0,
   mode: 'zen',
   paused: false,
-  aircraftId: 'spitfire',
+  aircraftId: DEFAULT_AIRCRAFT_ID,
   nextRingDir: null,
   playerHealth: 100,
   aiHealth: 100,

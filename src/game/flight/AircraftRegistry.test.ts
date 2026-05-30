@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { AIRCRAFT, getAircraft, getNextAircraftId } from './AircraftRegistry.ts';
+import {
+  AIRCRAFT,
+  DEFAULT_AIRCRAFT_ID,
+  getAircraft,
+  getAvailableAircraft,
+  getNextAircraftId,
+} from './AircraftRegistry.ts';
 
 describe('AircraftRegistry', () => {
+  it('defaults to the available storybook flyer', () => {
+    const plane = getAircraft(DEFAULT_AIRCRAFT_ID);
+    expect(plane.id).toBe('wright_flyer');
+    expect(plane.available).toBe(true);
+  });
+
   it('getAircraft("spitfire") returns the Spitfire definition', () => {
     const plane = getAircraft('spitfire');
     expect(plane.id).toBe('spitfire');
@@ -9,10 +21,11 @@ describe('AircraftRegistry', () => {
   });
 
   it('getNextAircraftId() cycles through the catalog', () => {
-    const first = AIRCRAFT[0].id;
+    const available = getAvailableAircraft();
+    const first = available[0].id;
     const second = getNextAircraftId(first);
-    expect(second).toBe(AIRCRAFT[1].id);
-    const last = AIRCRAFT[AIRCRAFT.length - 1].id;
+    expect(second).toBe(available[1].id);
+    const last = available[available.length - 1].id;
     expect(getNextAircraftId(last)).toBe(first);
   });
 

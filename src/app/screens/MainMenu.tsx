@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { DEFAULT_AIRCRAFT_ID, getAircraft, getAvailableAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { getModeMeta, MODE_META } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
 import { MAPS } from '@/game/world/MapRegistry.ts';
@@ -12,14 +13,20 @@ export function MainMenu() {
   const navigate = useNavigate();
   const [selectedMap, setSelectedMap] = useState(MAPS[0].id);
   const [selectedMode, setSelectedMode] = useState<GameMode>('zen');
+  const [selectedAircraft, setSelectedAircraft] = useState(DEFAULT_AIRCRAFT_ID);
   const { eegConnected, cameraActive, connecting, mockEnabled } = useNeuroConnection();
 
   const map = useMemo(() => MAPS.find((m) => m.id === selectedMap) ?? MAPS[0], [selectedMap]);
   const mode = getModeMeta(selectedMode);
+  const aircraftOptions = useMemo(() => getAvailableAircraft(), []);
+  const aircraft =
+    aircraftOptions.find((option) => option.id === selectedAircraft) ??
+    aircraftOptions[0] ??
+    getAircraft(DEFAULT_AIRCRAFT_ID);
   const sensorReady = eegConnected || cameraActive || mockEnabled;
 
   const launchGame = () => {
-    navigate(`/fly?mode=${selectedMode}&map=${selectedMap}`);
+    navigate(`/fly?mode=${selectedMode}&map=${selectedMap}&aircraft=${aircraft.id}`);
   };
 
   const connectHeadband = async () => {
@@ -178,6 +185,54 @@ export function MainMenu() {
             <div
               className="rounded-lg border"
               style={{
+                borderColor: 'rgba(94,234,212,0.22)',
+                background: 'rgba(4,28,32,0.58)',
+                backdropFilter: 'blur(12px)',
+                padding: 24,
+              }}
+            >
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: '#5eead4', fontFamily: 'var(--font-mono)' }}
+              >
+                Aircraft
+              </p>
+              <h2 className="mt-2 text-2xl font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
+                {aircraft.name}
+              </h2>
+              <p className="mt-2 text-sm leading-6" style={{ color: 'rgba(240,236,224,0.68)' }}>
+                {aircraft.handlingLabel ?? 'Verified flight profile'} · {aircraft.difficulty ?? 'standard'}
+              </p>
+              <div className="mt-4 grid gap-2">
+                {aircraftOptions.map((option) => {
+                  const active = option.id === aircraft.id;
+                  return (
+                    <button
+                      type="button"
+                      key={option.id}
+                      onClick={() => setSelectedAircraft(option.id)}
+                      className="cursor-pointer rounded-lg border text-left transition-transform hover:translate-x-1"
+                      style={{
+                        borderColor: active ? '#5eead4' : 'rgba(255,255,255,0.14)',
+                        background: active ? 'rgba(94,234,212,0.12)' : 'rgba(255,255,255,0.04)',
+                        padding: '12px 14px',
+                      }}
+                    >
+                      <span className="block text-sm font-bold" style={{ color: '#fff8e2' }}>
+                        {option.name}
+                      </span>
+                      <span className="mt-1 block text-xs" style={{ color: 'rgba(240,236,224,0.58)' }}>
+                        {option.handlingLabel ?? option.era}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className="rounded-lg border"
+              style={{
                 borderColor: 'rgba(255,244,202,0.18)',
                 background: 'rgba(5,14,18,0.62)',
                 backdropFilter: 'blur(12px)',
@@ -241,20 +296,6 @@ export function MainMenu() {
               <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 <button
                   type="button"
-                  onClick={connectHeadband}
-                  disabled={connecting.eeg || eegConnected}
-                  className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{
-                    borderColor: eegConnected ? '#5eead4' : 'rgba(255,255,255,0.18)',
-                    color: eegConnected ? '#5eead4' : '#dbeafe',
-                    background: eegConnected ? 'rgba(45,212,191,0.12)' : 'rgba(255,255,255,0.04)',
-                    fontFamily: 'var(--font-heading)',
-                  }}
-                >
-                  {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
-                </button>
-                <button
-                  type="button"
                   onClick={enableCamera}
                   disabled={connecting.camera || cameraActive}
                   className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
@@ -266,6 +307,20 @@ export function MainMenu() {
                   }}
                 >
                   {connecting.camera ? 'Starting' : cameraActive ? 'Camera Ready' : 'Camera'}
+                </button>
+                <button
+                  type="button"
+                  onClick={connectHeadband}
+                  disabled={connecting.eeg || eegConnected}
+                  className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    borderColor: eegConnected ? '#5eead4' : 'rgba(255,255,255,0.18)',
+                    color: eegConnected ? '#5eead4' : '#dbeafe',
+                    background: eegConnected ? 'rgba(45,212,191,0.12)' : 'rgba(255,255,255,0.04)',
+                    fontFamily: 'var(--font-heading)',
+                  }}
+                >
+                  {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
                 </button>
                 <button
                   type="button"

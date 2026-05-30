@@ -7,8 +7,10 @@ interface SkyObjectInstance {
   layer: SkyObjectLayerConfig;
   drift: THREE.Vector3;
   rotationSpeed: number;
+  baseY: number;
   bobPhase: number;
   bobSpeed: number;
+  bobAmplitude: number;
 }
 
 function seededRng(seed: number) {
@@ -36,15 +38,17 @@ export class SkyObjectSystem {
   update(dt: number, cameraPos: THREE.Vector3): void {
     for (const instance of this.instances) {
       instance.object.position.addScaledVector(instance.drift, dt);
-      instance.object.position.y +=
-        Math.sin(performance.now() * 0.001 * instance.bobSpeed + instance.bobPhase) * dt * 1.5;
+      instance.object.position.y =
+        instance.baseY +
+        Math.sin(performance.now() * 0.001 * instance.bobSpeed + instance.bobPhase) * instance.bobAmplitude;
       instance.object.rotation.y += instance.rotationSpeed * dt;
 
       const dx = instance.object.position.x - cameraPos.x;
       const dz = instance.object.position.z - cameraPos.z;
       const distance = Math.sqrt(dx * dx + dz * dz);
       if (distance > instance.layer.radius * 1.2) {
-        this.placeObject(instance.object, instance.layer, cameraPos);
+        instance.baseY = this.placeObject(instance.object, instance.layer, cameraPos);
+        instance.drift = this.makeDrift(instance.layer);
       }
     }
   }
@@ -74,7 +78,7 @@ export class SkyObjectSystem {
         const object = gltf.scene.clone(true);
         const targetSize = THREE.MathUtils.lerp(layer.scaleRange[0], layer.scaleRange[1], this.rng());
         object.scale.setScalar(targetSize / sourceSize);
-        this.placeObject(object, layer, new THREE.Vector3());
+        const baseY = this.placeObject(object, layer, new THREE.Vector3());
         object.traverse((child) => {
           if (!(child instanceof THREE.Mesh)) return;
           child.castShadow = false;
@@ -91,8 +95,10 @@ export class SkyObjectSystem {
             layer.rotationSpeedRange?.[1] ?? 0.05,
             this.rng(),
           ),
+          baseY,
           bobPhase: this.rng() * Math.PI * 2,
-          bobSpeed: THREE.MathUtils.lerp(0.2, 0.7, this.rng()),
+          bobSpeed: THREE.MathUtils.lerp(0.2, layer.behavior === 'balloon' ? 0.45 : 0.7, this.rng()),
+          bobAmplitude: layer.bobAmplitude ?? this.defaultBobAmplitude(layer),
         });
       }
     } catch (error) {
@@ -100,16 +106,15 @@ export class SkyObjectSystem {
     }
   }
 
-  private placeObject(object: THREE.Object3D, layer: SkyObjectLayerConfig, center: THREE.Vector3): void {
+  private placeObject(object: THREE.Object3D, layer: SkyObjectLayerConfig, center: THREE.Vector3): number {
     const angle = this.rng() * Math.PI * 2;
     const minDistance = layer.minDistance ?? layer.radius * 0.35;
     const distance = THREE.MathUtils.lerp(minDistance, layer.radius, Math.sqrt(this.rng()));
-    object.position.set(
-      center.x + Math.cos(angle) * distance,
-      THREE.MathUtils.lerp(layer.altitudeRange[0], layer.altitudeRange[1], this.rng()),
-      center.z + Math.sin(angle) * distance,
-    );
-    object.rotation.set(0, this.rng() * Math.PI * 2, 0);
+    const y = THREE.MathUtils.lerp(layer.altitudeRange[0], layer.altitudeRange[1], this.rng());
+    object.position.set(center.x + Math.cos(angle) * distance, y, center.z + Math.sin(angle) * distance);
+    const rotationOffset = layer.rotationOffset ?? [0, 0, 0];
+    object.rotation.set(rotationOffset[0], rotationOffset[1] + this.rng() * Math.PI * 2, rotationOffset[2]);
+    return y;
   }
 
   private getSourceSize(object: THREE.Object3D): number {
@@ -122,5 +127,22 @@ export class SkyObjectSystem {
     const angle = this.rng() * Math.PI * 2;
     const speed = THREE.MathUtils.lerp(layer.driftSpeedRange?.[0] ?? 2, layer.driftSpeedRange?.[1] ?? 12, this.rng());
     return new THREE.Vector3(Math.cos(angle) * speed, 0, Math.sin(angle) * speed);
+  }
+
+  private defaultBobAmplitude(layer: SkyObjectLayerConfig): number {
+    switch (layer.behavior) {
+      case 'balloon':
+        return 18;
+      case 'airship':
+        return 10;
+      case 'bird':
+        return 8;
+      case 'cloud':
+        return 6;
+      case 'floating-island':
+        return 5;
+      default:
+        return 8;
+    }
   }
 }

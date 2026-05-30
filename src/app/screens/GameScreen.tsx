@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { FlightHud } from '@/app/ui/hud/FlightHud.tsx';
-import { getAircraft } from '@/game/flight/AircraftRegistry.ts';
+import { DEFAULT_AIRCRAFT_ID, getAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { Game } from '@/game/Game.ts';
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
@@ -15,10 +15,11 @@ export function GameScreen() {
   const navigate = useNavigate();
   const mode = (searchParams.get('mode') ?? 'dogfight') as GameMode;
   const mapId = searchParams.get('map') ?? 'desert_expanse';
+  const aircraftId = searchParams.get('aircraft') ?? DEFAULT_AIRCRAFT_ID;
   const [loading, setLoading] = useState(true);
 
   const map = getMap(mapId);
-  const aircraft = getAircraft('spitfire');
+  const aircraft = getAircraft(aircraftId);
 
   const modeMeta = getModeMeta(mode);
 
@@ -32,12 +33,12 @@ export function GameScreen() {
       navigate('/summary');
     });
 
-    await game.init(mode, mapId);
+    await game.init(mode, mapId, aircraft.id);
     game.start();
 
     useGameStore.getState().setGame(game);
     setLoading(false);
-  }, [mode, mapId, navigate]);
+  }, [mode, mapId, aircraft.id, navigate]);
 
   useEffect(() => {
     initGame();

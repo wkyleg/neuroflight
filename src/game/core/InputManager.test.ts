@@ -72,6 +72,23 @@ describe('InputManager', () => {
     expect(input.wantsFire()).toBe(true);
   });
 
+  it('clears held controls when the window loses focus', () => {
+    keyDown('KeyW');
+    input.update(0.2);
+    expect(input.isKeyDown('KeyW')).toBe(true);
+    window.dispatchEvent(new Event('blur'));
+    expect(input.isKeyDown('KeyW')).toBe(false);
+    expect(input.getInput().pitch).toBe(0);
+  });
+
+  it('ignores gameplay key presses from focused buttons', () => {
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    button.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+    expect(input.wantsFire()).toBe(false);
+    button.remove();
+  });
+
   it('isUiFiring() reflects setUiFire()', () => {
     expect(input.isUiFiring()).toBe(false);
     input.setUiFire(true);
@@ -86,6 +103,7 @@ describe('InputManager', () => {
     input.destroy();
     expect(remove).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(remove).toHaveBeenCalledWith('keyup', expect.any(Function));
+    expect(remove).toHaveBeenCalledWith('blur', expect.any(Function));
     remove.mockRestore();
 
     keyDown('KeyX');

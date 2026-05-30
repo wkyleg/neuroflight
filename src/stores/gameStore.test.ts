@@ -11,7 +11,7 @@ const DEFAULT_HUD = {
   elapsedMs: 0,
   mode: 'zen' as const,
   paused: false,
-  aircraftId: 'spitfire',
+  aircraftId: 'wright_flyer',
   nextRingDir: null,
   playerHealth: 100,
   aiHealth: 100,
@@ -45,7 +45,7 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
   return {
     mode: 'zen',
     mapId: 'test-map',
-    aircraftId: 'spitfire',
+    aircraftId: 'wright_flyer',
     durationMs: 1000,
     ringsPassed: 0,
     score: 0,
@@ -108,7 +108,7 @@ describe('gameStore', () => {
     expect(hud.score).toBe(50);
     expect(hud.paused).toBe(true);
     expect(hud.altitude).toBe(0);
-    expect(hud.aircraftId).toBe('spitfire');
+    expect(hud.aircraftId).toBe('wright_flyer');
   });
 
   it('setLastSession() persists to sessionStorage', () => {

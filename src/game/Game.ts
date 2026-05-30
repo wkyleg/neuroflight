@@ -11,7 +11,7 @@ import { InputManager } from './core/InputManager.ts';
 import { Renderer } from './core/Renderer.ts';
 import { getNextPresetId, getPreset } from './dev/EnvironmentPresets.ts';
 import { AIController } from './flight/AIController.ts';
-import { getAircraft, getNextAircraftId } from './flight/AircraftRegistry.ts';
+import { DEFAULT_AIRCRAFT_ID, getAircraft } from './flight/AircraftRegistry.ts';
 import { PlaneController } from './flight/PlaneController.ts';
 import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
@@ -58,7 +58,7 @@ export class Game {
   private running = false;
   private rafId = 0;
   private lastTime = 0;
-  private currentAircraftId = 'spitfire';
+  private currentAircraftId = DEFAULT_AIRCRAFT_ID;
   private currentPresetId = 'nevada';
   private currentMapId = 'desert_expanse';
   private hudUpdateTimer = 0;
@@ -105,7 +105,6 @@ export class Game {
     this.neuroAdaptationSystem = new NeuroAdaptationSystem();
 
     this.inputManager.onDevKey((key) => {
-      if (key === 'BracketRight') this.switchAircraft();
       if (key === 'BracketLeft') this.switchEnvironment();
       if (key === 'Escape') this.togglePause();
       if (key === 'KeyR') this.restart();
@@ -169,9 +168,10 @@ export class Game {
     this.onSessionEnd = cb;
   }
 
-  async init(mode: GameMode, mapId = 'desert_expanse'): Promise<void> {
+  async init(mode: GameMode, mapId = 'desert_expanse', aircraftId = DEFAULT_AIRCRAFT_ID): Promise<void> {
     this.mode = mode;
     this.currentMapId = mapId;
+    this.currentAircraftId = getAircraft(aircraftId).id;
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -261,6 +261,7 @@ export class Game {
     }
 
     this.renderer.initPostProcessing(this.scene, this.cameraManager.camera);
+    this.applyVisualGrade(mapId);
 
     const modeMeta = getModeMeta(mode);
     useGameStore.getState().updateHud({
@@ -678,28 +679,31 @@ export class Game {
     this.sessionRecorder.recordEvent('shot_fired');
   }
 
-  private render(): void {
-    this.renderer.render(this.scene, this.cameraManager.camera);
+  private applyVisualGrade(mapId: string): void {
+    if (mapId === 'ocean_islands') {
+      this.renderer.setVisualGrade({
+        saturation: 1.2,
+        contrast: 1.05,
+        warmth: 0.005,
+        vignette: 0.14,
+        exposure: 1.05,
+        bloomStrength: 0.1,
+      });
+      return;
+    }
+
+    this.renderer.setVisualGrade({
+      saturation: 1.18,
+      contrast: 1.08,
+      warmth: 0.04,
+      vignette: 0.16,
+      exposure: 1.04,
+      bloomStrength: 0.11,
+    });
   }
 
-  private async switchAircraft(): Promise<void> {
-    if (!this.planeController) return;
-
-    this.planeController.removeFromScene(this.scene);
-    this.currentAircraftId = getNextAircraftId(this.currentAircraftId);
-
-    const aircraft = getAircraft(this.currentAircraftId);
-    const oldPos = this.planeController.flightModel.getPosition().clone();
-    const oldQuat = this.planeController.flightModel.getQuaternion().clone();
-
-    this.planeController = new PlaneController(aircraft);
-    this.planeController.flightModel.object.position.copy(oldPos);
-    this.planeController.flightModel.object.quaternion.copy(oldQuat);
-    await this.planeController.loadModel(this.assetManager, this.scene);
-
-    this.cameraManager.setConfig(aircraft.camera);
-    this.cameraManager.snapTo(this.planeController.getObject());
-    useGameStore.getState().updateHud({ aircraftId: this.currentAircraftId });
+  private render(): void {
+    this.renderer.render(this.scene, this.cameraManager.camera);
   }
 
   private switchEnvironment(): void {

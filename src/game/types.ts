@@ -18,6 +18,11 @@ export interface AircraftDefinition {
   id: string;
   name: string;
   era: 'ww1' | 'ww2' | 'coldwar' | 'modern' | 'experimental' | 'scifi';
+  displayRole?: 'default' | 'exploration' | 'speed' | 'novelty' | 'dev';
+  handlingLabel?: string;
+  difficulty?: 'gentle' | 'standard' | 'ace';
+  available?: boolean;
+  previewImage?: string;
   modelPath: string;
   scale: number;
   modelRotationY: number;
@@ -113,6 +118,9 @@ export interface SkyObjectLayerConfig {
   altitudeRange: [number, number];
   /** Target max model dimension in world units after source GLB normalization. */
   scaleRange: [number, number];
+  behavior?: 'balloon' | 'airship' | 'cloud' | 'bird' | 'floating-island' | 'traffic' | 'ufo';
+  rotationOffset?: [number, number, number];
+  bobAmplitude?: number;
   driftSpeedRange?: [number, number];
   rotationSpeedRange?: [number, number];
 }

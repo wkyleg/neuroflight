@@ -59,7 +59,8 @@ export class FlightModel {
     // --- Rotation from player input ---
     const pitchDelta = input.pitch * t.pitchRate * dt;
     const rollDelta = effectiveRoll * t.rollRate * dt;
-    const yawDelta = input.yaw * t.yawRate * dt;
+    const assistedYaw = input.yaw + effectiveRoll * 0.42;
+    const yawDelta = assistedYaw * t.yawRate * dt;
 
     if (Math.abs(pitchDelta) > 1e-6) {
       _tmpQ.setFromAxisAngle(_right.set(1, 0, 0), pitchDelta);

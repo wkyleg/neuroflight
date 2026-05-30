@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useState } from 'react';
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
@@ -334,7 +334,7 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
 
   useEffect(() => {
     if (kills > lastKills) {
-      setMessage('VICTORY — ENEMY DOWN');
+      setMessage('RIVAL TAGGED');
       setLastKills(kills);
       const t = setTimeout(() => setMessage(null), 2000);
       return () => clearTimeout(t);
@@ -343,7 +343,7 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
 
   useEffect(() => {
     if (deaths > lastDeaths) {
-      setMessage('DEFEATED — YOU WENT DOWN');
+      setMessage('RESET AND RALLY');
       setLastDeaths(deaths);
       const t = setTimeout(() => setMessage(null), 2000);
       return () => clearTimeout(t);
@@ -356,9 +356,9 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
     <div
       className="absolute top-24 left-1/2 -translate-x-1/2 text-sm font-bold tracking-widest px-6 py-3 rounded-lg"
       style={{
-        color: message.includes('VICTORY') ? '#4ade80' : '#ff4444',
+        color: message.includes('TAGGED') ? '#4ade80' : '#ffb86b',
         background: 'rgba(0,0,0,0.6)',
-        border: `1px solid ${message.includes('VICTORY') ? 'rgba(74,222,128,0.3)' : 'rgba(255,68,68,0.3)'}`,
+        border: `1px solid ${message.includes('TAGGED') ? 'rgba(74,222,128,0.3)' : 'rgba(255,184,107,0.3)'}`,
       }}
     >
       {message}
@@ -412,6 +412,11 @@ export function FlightHud() {
     [game],
   );
 
+  const stopHudPointer = useCallback((e: PointerEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
   const speedKnots = Math.round(hud.speed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
   const modeMeta = getModeMeta(hud.mode);
@@ -424,7 +429,7 @@ export function FlightHud() {
 
       {/* Top bar: speed, altitude, heading */}
       <div
-        className="absolute top-0 left-0 right-0 flex justify-between items-start px-24 pt-8 pb-6"
+        className="absolute top-0 left-0 right-0 flex justify-between items-start px-20 pt-6 pb-5"
         style={{
           background: 'linear-gradient(to bottom, rgba(0,5,15,0.85) 0%, rgba(0,5,15,0.55) 60%, transparent 100%)',
         }}
@@ -494,22 +499,30 @@ export function FlightHud() {
           <div className="flex items-center" style={{ gap: 10 }}>
             <button
               type="button"
-              onClick={() => setShowControls(true)}
+              onPointerDown={stopHudPointer}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowControls(true);
+              }}
               className="tracking-widest rounded-lg cursor-pointer transition-all hover:scale-105 active:scale-95 font-bold"
               style={{
                 fontFamily: 'var(--font-heading)',
                 color: 'var(--color-accent-gold)',
                 background: 'rgba(0,10,20,0.7)',
                 border: '1px solid rgba(255,200,100,0.4)',
-                padding: '14px 20px',
-                fontSize: 13,
+                padding: '10px 16px',
+                fontSize: 12,
               }}
             >
               HOW TO FLY
             </button>
             <button
               type="button"
-              onClick={handleEndFlight}
+              onPointerDown={stopHudPointer}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEndFlight();
+              }}
               className="tracking-widest rounded-lg cursor-pointer transition-all hover:scale-105 hover:brightness-110 active:scale-95 font-bold"
               style={{
                 fontFamily: 'var(--font-heading)',
@@ -517,8 +530,8 @@ export function FlightHud() {
                 background: 'rgba(180,40,30,0.9)',
                 border: 'none',
                 boxShadow: '0 2px 8px rgba(180,40,30,0.4)',
-                padding: '14px 32px',
-                fontSize: 16,
+                padding: '10px 24px',
+                fontSize: 14,
               }}
             >
               END FLIGHT
@@ -608,11 +621,11 @@ export function FlightHud() {
             }}
           >
             <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" large />
-            <HealthBar value={hud.aiHealth} max={100} label="ENEMY" color="#ff4444" large />
+            <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff4444" large />
           </div>
 
           {/* Enemy direction compass */}
-          {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff4444" label="ENEMY" />}
+          {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff4444" label="RIVAL" />}
         </>
       )}
 
@@ -644,16 +657,22 @@ export function FlightHud() {
       </div>
 
       {/* On-screen control buttons (bottom-right) */}
-      <div className="absolute flex flex-col pointer-events-auto" style={{ right: 40, bottom: 200, gap: 10 }}>
+      <div className="absolute flex flex-col pointer-events-auto" style={{ right: 36, bottom: 156, gap: 8 }}>
         <button
           type="button"
-          onPointerDown={() => setThrottle(true, false)}
-          onPointerUp={() => setThrottle(false, false)}
+          onPointerDown={(e) => {
+            stopHudPointer(e);
+            setThrottle(true, false);
+          }}
+          onPointerUp={(e) => {
+            stopHudPointer(e);
+            setThrottle(false, false);
+          }}
           onPointerLeave={() => setThrottle(false, false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 72,
-            height: 56,
+            width: 58,
+            height: 44,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(0,204,204,0.5)',
             color: 'var(--color-accent-cyan)',
@@ -664,13 +683,19 @@ export function FlightHud() {
         </button>
         <button
           type="button"
-          onPointerDown={() => setThrottle(false, true)}
-          onPointerUp={() => setThrottle(false, false)}
+          onPointerDown={(e) => {
+            stopHudPointer(e);
+            setThrottle(false, true);
+          }}
+          onPointerUp={(e) => {
+            stopHudPointer(e);
+            setThrottle(false, false);
+          }}
           onPointerLeave={() => setThrottle(false, false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 72,
-            height: 56,
+            width: 58,
+            height: 44,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(0,204,204,0.4)',
             color: 'var(--color-accent-cyan)',
@@ -681,13 +706,19 @@ export function FlightHud() {
         </button>
         <button
           type="button"
-          onPointerDown={() => setBoost(true)}
-          onPointerUp={() => setBoost(false)}
+          onPointerDown={(e) => {
+            stopHudPointer(e);
+            setBoost(true);
+          }}
+          onPointerUp={(e) => {
+            stopHudPointer(e);
+            setBoost(false);
+          }}
           onPointerLeave={() => setBoost(false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 72,
-            height: 56,
+            width: 58,
+            height: 44,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(255,200,100,0.5)',
             color: 'var(--color-accent-gold)',
@@ -698,13 +729,19 @@ export function FlightHud() {
         </button>
         <button
           type="button"
-          onPointerDown={() => setBrake(true)}
-          onPointerUp={() => setBrake(false)}
+          onPointerDown={(e) => {
+            stopHudPointer(e);
+            setBrake(true);
+          }}
+          onPointerUp={(e) => {
+            stopHudPointer(e);
+            setBrake(false);
+          }}
           onPointerLeave={() => setBrake(false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 72,
-            height: 56,
+            width: 58,
+            height: 44,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(255,80,60,0.5)',
             color: '#ff6644',
@@ -716,13 +753,19 @@ export function FlightHud() {
         {isDogfight && (
           <button
             type="button"
-            onPointerDown={() => setFire(true)}
-            onPointerUp={() => setFire(false)}
+            onPointerDown={(e) => {
+              stopHudPointer(e);
+              setFire(true);
+            }}
+            onPointerUp={(e) => {
+              stopHudPointer(e);
+              setFire(false);
+            }}
             onPointerLeave={() => setFire(false)}
             className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
             style={{
-              width: 72,
-              height: 56,
+              width: 58,
+              height: 44,
               background: 'rgba(255,30,30,0.3)',
               border: '2px solid rgba(255,60,60,0.7)',
               color: '#ff4444',
@@ -739,9 +782,8 @@ export function FlightHud() {
         className="absolute text-[10px] leading-relaxed"
         style={{ left: 40, bottom: 170, color: 'rgba(255,255,255,0.25)' }}
       >
-        <div>] switch aircraft</div>
         <div>[ switch environment</div>
-        <div>R restart{isDogfight ? ' · Space / Enter / Click to fire' : ''}</div>
+        <div>R restart{isDogfight ? ' · Space / F to tag' : ''}</div>
       </div>
 
       {/* Bottom neuro cockpit panel */}

@@ -1,10 +1,41 @@
 import type { AircraftDefinition } from '@/game/types.ts';
 
+export const DEFAULT_AIRCRAFT_ID = 'wright_flyer';
+
 export const AIRCRAFT: AircraftDefinition[] = [
+  {
+    id: 'wright_flyer',
+    name: 'Sunrise Flyer',
+    era: 'ww1',
+    displayRole: 'default',
+    handlingLabel: 'Gentle vintage lift',
+    difficulty: 'gentle',
+    available: true,
+    modelPath: '/assets/aircraft/1903_wright_flyer/scene.gltf',
+    scale: 0.1,
+    modelRotationY: 0,
+    tuning: {
+      minSpeed: 18,
+      maxSpeed: 105,
+      acceleration: 24,
+      drag: 0.9,
+      pitchRate: 0.78,
+      rollRate: 0.9,
+      yawRate: 0.72,
+      liftFactor: 0.82,
+      stability: 0.74,
+      autoLevelStrength: 3.4,
+    },
+    camera: { chaseDistance: 15, chaseHeight: 5, lookAhead: 9, fov: 58 },
+  },
   {
     id: 'spitfire',
     name: 'Spitfire',
     era: 'ww2',
+    displayRole: 'speed',
+    handlingLabel: 'Fast ace run',
+    difficulty: 'standard',
+    available: true,
     modelPath: '/assets/aircraft/british_spitfire_low_poly/scene.gltf',
     scale: 5.0,
     modelRotationY: -Math.PI / 2,
@@ -23,30 +54,13 @@ export const AIRCRAFT: AircraftDefinition[] = [
     camera: { chaseDistance: 16, chaseHeight: 6, lookAhead: 12, fov: 62 },
   },
   {
-    id: 'wright_flyer',
-    name: '1903 Wright Flyer',
-    era: 'ww1',
-    modelPath: '/assets/aircraft/1903_wright_flyer/scene.gltf',
-    scale: 0.1,
-    modelRotationY: 0,
-    tuning: {
-      minSpeed: 15,
-      maxSpeed: 80,
-      acceleration: 20,
-      drag: 0.9,
-      pitchRate: 0.8,
-      rollRate: 1.0,
-      yawRate: 0.4,
-      liftFactor: 0.75,
-      stability: 0.4,
-      autoLevelStrength: 2.0,
-    },
-    camera: { chaseDistance: 18, chaseHeight: 6, lookAhead: 8, fov: 58 },
-  },
-  {
     id: 'cessna',
     name: 'Cessna 172',
     era: 'modern',
+    displayRole: 'exploration',
+    handlingLabel: 'Unavailable asset',
+    difficulty: 'standard',
+    available: false,
     modelPath: '/assets/aircraft/cessna_172/scene.gltf',
     scale: 0.012,
     modelRotationY: 0,
@@ -68,6 +82,10 @@ export const AIRCRAFT: AircraftDefinition[] = [
     id: 'celera',
     name: 'Celera 500L',
     era: 'experimental',
+    displayRole: 'speed',
+    handlingLabel: 'Unavailable asset',
+    difficulty: 'ace',
+    available: false,
     modelPath: '/assets/aircraft/celera_500l/scene.gltf',
     scale: 5.0,
     modelRotationY: 0,
@@ -89,6 +107,10 @@ export const AIRCRAFT: AircraftDefinition[] = [
     id: 'il28',
     name: 'IL-28 Reconnaissance',
     era: 'coldwar',
+    displayRole: 'speed',
+    handlingLabel: 'Heavy recon',
+    difficulty: 'ace',
+    available: true,
     modelPath: '/assets/aircraft/il-28_soviet_reconnaissance_aircraft/scene.gltf',
     scale: 0.3,
     modelRotationY: Math.PI,
@@ -111,6 +133,10 @@ export const AIRCRAFT: AircraftDefinition[] = [
     id: 'ufo',
     name: 'Blue UFO',
     era: 'scifi',
+    displayRole: 'novelty',
+    handlingLabel: 'Unavailable asset',
+    difficulty: 'ace',
+    available: false,
     modelPath: '/assets/aircraft/blue_ufo/scene.gltf',
     scale: 0.15,
     modelRotationY: 0,
@@ -132,6 +158,10 @@ export const AIRCRAFT: AircraftDefinition[] = [
     id: 'scifi_plane',
     name: 'Sci-Fi Plane',
     era: 'scifi',
+    displayRole: 'novelty',
+    handlingLabel: 'Unavailable asset',
+    difficulty: 'ace',
+    available: false,
     modelPath: '/assets/aircraft/sci-fi_plane_i_made_for_a_render/scene.gltf',
     scale: 0.35,
     modelRotationY: 0,
@@ -153,6 +183,10 @@ export const AIRCRAFT: AircraftDefinition[] = [
     id: 'boeing737',
     name: 'Boeing 737-200',
     era: 'modern',
+    displayRole: 'dev',
+    handlingLabel: 'Unavailable asset',
+    difficulty: 'ace',
+    available: false,
     modelPath: '/assets/aircraft/boeing_737-200_white/scene.gltf',
     scale: 0.06,
     modelRotationY: 0,
@@ -172,16 +206,26 @@ export const AIRCRAFT: AircraftDefinition[] = [
   },
 ];
 
+export function getAvailableAircraft(): AircraftDefinition[] {
+  return AIRCRAFT.filter((a) => a.available === true);
+}
+
 export function getAircraft(id: string): AircraftDefinition {
-  return AIRCRAFT.find((a) => a.id === id) ?? AIRCRAFT[0];
+  return (
+    AIRCRAFT.find((a) => a.id === id && a.available !== false) ??
+    AIRCRAFT.find((a) => a.id === DEFAULT_AIRCRAFT_ID) ??
+    AIRCRAFT[0]
+  );
 }
 
 export function getNextAircraftId(currentId: string): string {
-  const idx = AIRCRAFT.findIndex((a) => a.id === currentId);
-  return AIRCRAFT[(idx + 1) % AIRCRAFT.length].id;
+  const available = getAvailableAircraft();
+  const idx = available.findIndex((a) => a.id === currentId);
+  return available[(idx + 1) % available.length].id;
 }
 
 export function getPrevAircraftId(currentId: string): string {
-  const idx = AIRCRAFT.findIndex((a) => a.id === currentId);
-  return AIRCRAFT[(idx - 1 + AIRCRAFT.length) % AIRCRAFT.length].id;
+  const available = getAvailableAircraft();
+  const idx = available.findIndex((a) => a.id === currentId);
+  return available[(idx - 1 + available.length) % available.length].id;
 }

@@ -66,6 +66,9 @@ function neuroStateChanged(prev: NeuroStoreState, next: NeuroState): boolean {
     prev.gammaPower !== next.gammaPower ||
     prev.alphaBump !== next.alphaBump ||
     prev.hrvRmssd !== next.hrvRmssd ||
+    prev.respirationRate !== next.respirationRate ||
+    prev.baselineBpm !== next.baselineBpm ||
+    prev.baselineDelta !== next.baselineDelta ||
     prev.calmnessState !== next.calmnessState ||
     prev.alphaPeakFreq !== next.alphaPeakFreq ||
     prev.alphaBumpState !== next.alphaBumpState
