@@ -39,6 +39,8 @@ export type FlightEventType =
   | 'landmark_discovered'
   | 'postcard'
   | 'near_miss'
+  | 'hard_landing'
+  | 'crash'
   | 'neuro_recovery'
   | 'kill'
   | 'death'

@@ -26,7 +26,7 @@ export class ScoreManager {
   }
 
   addBonus(points: number): void {
-    this.score += Math.round(points);
+    this.score = Math.max(0, this.score + Math.round(points));
   }
 
   breakCombo(): void {

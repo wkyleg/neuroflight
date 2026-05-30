@@ -15,6 +15,7 @@ import { DEFAULT_AIRCRAFT_ID, getAircraft } from './flight/AircraftRegistry.ts';
 import { PlaneController } from './flight/PlaneController.ts';
 import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
+import { FlightSafetySystem } from './gameplay/FlightSafetySystem.ts';
 import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
 import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
@@ -53,6 +54,7 @@ export class Game {
   private scoreManager: ScoreManager;
   private sessionRecorder: SessionRecorder;
   private neuroAdaptationSystem: NeuroAdaptationSystem;
+  private flightSafetySystem: FlightSafetySystem;
   private planeController: PlaneController | null = null;
   private mode: GameMode = 'zen';
   private running = false;
@@ -103,6 +105,7 @@ export class Game {
     this.scoreManager = new ScoreManager();
     this.sessionRecorder = new SessionRecorder();
     this.neuroAdaptationSystem = new NeuroAdaptationSystem();
+    this.flightSafetySystem = new FlightSafetySystem();
 
     this.inputManager.onDevKey((key) => {
       if (key === 'BracketLeft') this.switchEnvironment();
@@ -247,6 +250,7 @@ export class Game {
 
     this.planeController.flightModel.object.position.set(...map.playerSpawn);
     this.lastPosition.set(...map.playerSpawn);
+    this.flightSafetySystem.reset(map);
 
     this.cameraManager.snapTo(this.planeController.getObject());
 
@@ -314,10 +318,28 @@ export class Game {
 
     this.inputManager.update(dt);
     const input = this.inputManager.getInput();
+    const map = getMap(this.currentMapId);
     this.planeController.flightModel.update(dt, input);
     const speed = this.planeController.flightModel.getSpeed();
     const maxSpd = getAircraft(this.currentAircraftId)?.tuning?.maxSpeed ?? 200;
     this.planeController.update(dt, speed, maxSpd);
+
+    const safetyEvent = this.flightSafetySystem.update(dt, this.planeController.flightModel, map);
+    if (safetyEvent) {
+      this.flightSafetySystem.applyRespawn(this.planeController.flightModel, safetyEvent);
+      this.inputManager.clearInput();
+      this.scoreManager.addBonus(safetyEvent.scorePenalty);
+      this.scoreManager.breakCombo();
+      this.sessionRecorder.recordEvent(safetyEvent.type, {
+        label: safetyEvent.label,
+        score: safetyEvent.scorePenalty,
+      });
+      this.audioManager.playExplosion();
+      this.audioPolishSystem?.playImpact();
+      this.cameraManager.snapTo(this.planeController.getObject());
+      this.lastPosition.copy(this.planeController.flightModel.getPosition());
+    }
+
     const neuroState = useNeuroStore.getState();
     const objectiveGoal =
       this.mode === 'free' ? (this.missionObjectiveSystem?.getTotalCount() ?? 0) : this.ringManager ? 6 : 0;
@@ -526,8 +548,7 @@ export class Game {
         objectiveProgress:
           this.mode === 'free'
             ? completedObjectives / Math.max(1, totalObjectives)
-            : this.scoreManager.getRingsPassed() /
-              Math.max(1, getMap(this.currentMapId).missionRoutes?.zen.length ?? 6),
+            : this.scoreManager.getRingsPassed() / Math.max(1, map.missionRoutes?.zen.length ?? 6),
         composure: adaptation.composure,
         neuroLoad: adaptation.load,
         recovery: adaptation.recovery,
@@ -604,7 +625,7 @@ export class Game {
       const dfState = this.dogfightManager?.getState();
 
       const aiDebug = this.aiController?.getDebugInfo();
-      const currentMap = getMap(this.currentMapId);
+      const currentMap = map;
       const modeMeta = getModeMeta(this.mode);
       const hudActiveObjective = this.missionObjectiveSystem?.getActiveWaypoint();
       const expeditionGoal = this.missionObjectiveSystem?.getTotalCount() ?? 0;
@@ -722,6 +743,7 @@ export class Game {
     if (this.planeController) {
       this.planeController.flightModel.object.position.set(...map.playerSpawn);
       this.planeController.flightModel.object.quaternion.identity();
+      this.flightSafetySystem.reset(map);
       this.cameraManager.snapTo(this.planeController.getObject());
 
       if (this.ringManager) {
