@@ -54,14 +54,14 @@ export class WeaponSystem {
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
-    this.geometry = new THREE.CylinderGeometry(0.4, 0.4, 4.0, 6);
+    this.geometry = new THREE.CylinderGeometry(0.32, 0.32, 4.0, 8);
     this.geometry.rotateX(Math.PI / 2);
-    this.aiGeometry = new THREE.CylinderGeometry(0.7, 0.7, 5.0, 6);
+    this.aiGeometry = new THREE.CylinderGeometry(0.46, 0.46, 5.0, 8);
     this.aiGeometry.rotateX(Math.PI / 2);
-    this.playerMaterial = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
-    this.aiMaterial = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+    this.playerMaterial = new THREE.MeshBasicMaterial({ color: 0x8bf8ff });
+    this.aiMaterial = new THREE.MeshBasicMaterial({ color: 0xff9c7a });
 
-    this.muzzleLight = new THREE.PointLight(0xffcc44, 0, 30);
+    this.muzzleLight = new THREE.PointLight(0xffdc7a, 0, 30);
     scene.add(this.muzzleLight);
 
     for (let i = 0; i < POOL_SIZE; i++) {

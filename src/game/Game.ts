@@ -20,7 +20,7 @@ import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
 import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
-import { WeaponSystem, type WeaponDifficultySettings } from './gameplay/WeaponSystem.ts';
+import { type WeaponDifficultySettings, WeaponSystem } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
@@ -236,14 +236,14 @@ export class Game {
     });
 
     eventBus.on('dogfight:ai_kill', () => {
-      this.audioManager.playExplosion();
+      this.audioManager.playChime();
       const points = Math.round(550 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.scoreManager.addBonus(points);
       this.sessionRecorder.recordEvent('kill', { label: 'Rival tagged', score: points });
     });
 
     eventBus.on('dogfight:player_death', () => {
-      this.audioManager.playExplosion();
+      this.audioManager.playHit();
       this.sessionRecorder.recordEvent('death', { label: 'Reset and rally' });
     });
   }
@@ -395,7 +395,7 @@ export class Game {
 
   private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
     if (mode === 'free') return expeditionRoute?.[0]?.label ?? 'Find the first expedition beacon';
-    if (mode === 'dogfight') return 'Acquire the patrol target';
+    if (mode === 'dogfight') return 'Find the rival tag plane';
     return 'Follow the glowing route';
   }
 
@@ -849,7 +849,7 @@ export class Game {
     this.weaponSystem.fire(origin, dir, 'player');
     this.combatVfxSystem?.spawnShot(origin, dir, 'player');
     this.dogfightManager.recordPlayerShot();
-    this.audioManager.playGunshot();
+    this.audioManager.playTagLaunch();
     this.audioPolishSystem?.playWeapon();
     this.sessionRecorder.recordEvent('shot_fired');
   }

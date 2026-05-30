@@ -129,8 +129,8 @@ export function MainMenu() {
         <section className="grid flex-1 items-start gap-8 pb-16 pt-9 lg:grid-cols-[1fr_0.92fr] lg:pt-12">
           <div>
             <p className="max-w-2xl text-base leading-7 md:text-lg" style={{ color: 'rgba(255,248,226,0.86)' }}>
-              Choose a quiet route, a landmark expedition, or a full dogfight. Sensors are optional; when they are on,
-              the world responds gently to composure, recovery, and signal confidence.
+              Choose a quiet route, a landmark expedition, or a playful dogfight. Sensors are optional; when they are
+              on, the world responds gently to composure, recovery, and signal confidence.
             </p>
 
             <div className="mt-7 grid gap-3 md:grid-cols-3">

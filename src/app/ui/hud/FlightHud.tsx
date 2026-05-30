@@ -88,10 +88,10 @@ function ControlsLegend({ mode, onDismiss }: { mode: GameMode; onDismiss: () => 
           {mode === 'dogfight' && (
             <>
               <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
-                <span style={{ color: '#ff8888' }}>Space / Enter</span> - Fire
+                <span style={{ color: '#ffb86b' }}>Space / Enter</span> - Tag
               </div>
               <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
-                <span style={{ color: 'var(--color-text-primary)' }}>Click</span> - Fire
+                <span style={{ color: 'var(--color-text-primary)' }}>Click</span> - Tag
               </div>
             </>
           )}
@@ -797,7 +797,7 @@ export function FlightHud() {
         {isDogfight && (
           <button
             type="button"
-            aria-label="Fire"
+            aria-label="Tag rival"
             onPointerDown={(e) => {
               stopHudPointer(e);
               setFire(true);
@@ -813,13 +813,13 @@ export function FlightHud() {
               height: 38,
               minHeight: 38,
               padding: 0,
-              background: 'rgba(255,30,30,0.3)',
-              border: '2px solid rgba(255,60,60,0.7)',
-              color: '#ff4444',
+              background: 'linear-gradient(180deg, rgba(255,230,144,0.28), rgba(94,234,212,0.16))',
+              border: '2px solid rgba(255,184,107,0.66)',
+              color: '#ffdc7a',
               backdropFilter: 'blur(4px)',
             }}
           >
-            FIRE
+            TAG
           </button>
         )}
       </div>

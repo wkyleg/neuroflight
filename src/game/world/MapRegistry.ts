@@ -127,7 +127,7 @@ export const MAPS: MapDefinition[] = [
       dogfight: [
         {
           id: 'desert-dogfight-arch',
-          label: 'Arch Patrol',
+          label: 'Arch Tag Lane',
           description: 'Keep the rival framed near the stone gate.',
           kind: 'combat_anchor',
           position: [600, 360, -1500],
@@ -137,7 +137,7 @@ export const MAPS: MapDefinition[] = [
         },
         {
           id: 'desert-dogfight-radar',
-          label: 'Radar Duel',
+          label: 'Radar Ribbon Turn',
           description: 'Use the tower as a visual anchor during turns.',
           kind: 'combat_anchor',
           position: [-920, 420, -3600],
@@ -504,11 +504,11 @@ export const MAPS: MapDefinition[] = [
         { path: '/assets/audio/thruster-fire-01.ogg', volume: 0.012 },
       ],
       weaponOneShots: [
-        { path: '/assets/audio/laser-small-01.ogg', volume: 0.08, rateRange: [0.9, 1.08] },
-        { path: '/assets/audio/laser-large-01.ogg', volume: 0.055, rateRange: [0.92, 1.02] },
+        { path: '/assets/audio/laser-small-01.ogg', volume: 0.04, rateRange: [1.02, 1.16] },
+        { path: '/assets/audio/laser-large-01.ogg', volume: 0.03, rateRange: [1.02, 1.12] },
       ],
-      impactOneShots: [{ path: '/assets/audio/impact-metal-01.ogg', volume: 0.09, rateRange: [0.88, 1.08] }],
-      explosionOneShots: [{ path: '/assets/audio/explosion-crunch-01.ogg', volume: 0.12, rateRange: [0.86, 1.02] }],
+      impactOneShots: [{ path: '/assets/audio/impact-metal-01.ogg', volume: 0.04, rateRange: [1.02, 1.18] }],
+      explosionOneShots: [{ path: '/assets/audio/explosion-crunch-01.ogg', volume: 0.055, rateRange: [1.08, 1.22] }],
       uiOneShots: [{ path: '/assets/audio/radio-switch-01.ogg', volume: 0.05 }],
     },
     ringBehavior: 'aheadPath',
@@ -639,8 +639,8 @@ export const MAPS: MapDefinition[] = [
       dogfight: [
         {
           id: 'ocean-dogfight-lighthouse',
-          label: 'Lighthouse Duel',
-          description: 'Use the lighthouse beam to orient the fight.',
+          label: 'Lighthouse Tag Loop',
+          description: 'Use the lighthouse beam to orient the chase.',
           kind: 'combat_anchor',
           position: [520, 420, -1200],
           radius: 480,
@@ -1031,11 +1031,11 @@ export const MAPS: MapDefinition[] = [
         { path: '/assets/audio/thruster-fire-01.ogg', volume: 0.012 },
       ],
       weaponOneShots: [
-        { path: '/assets/audio/laser-small-01.ogg', volume: 0.08, rateRange: [0.9, 1.08] },
-        { path: '/assets/audio/laser-large-01.ogg', volume: 0.055, rateRange: [0.92, 1.02] },
+        { path: '/assets/audio/laser-small-01.ogg', volume: 0.04, rateRange: [1.02, 1.16] },
+        { path: '/assets/audio/laser-large-01.ogg', volume: 0.03, rateRange: [1.02, 1.12] },
       ],
-      impactOneShots: [{ path: '/assets/audio/impact-metal-01.ogg', volume: 0.09, rateRange: [0.88, 1.08] }],
-      explosionOneShots: [{ path: '/assets/audio/explosion-crunch-01.ogg', volume: 0.12, rateRange: [0.86, 1.02] }],
+      impactOneShots: [{ path: '/assets/audio/impact-metal-01.ogg', volume: 0.04, rateRange: [1.02, 1.18] }],
+      explosionOneShots: [{ path: '/assets/audio/explosion-crunch-01.ogg', volume: 0.055, rateRange: [1.08, 1.22] }],
       uiOneShots: [{ path: '/assets/audio/radio-switch-01.ogg', volume: 0.05 }],
     },
     ringBehavior: 'arena',

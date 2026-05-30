@@ -307,7 +307,7 @@ function generateInsights(session: SessionSummary): string[] {
 
   if (session.arousalTrend === 'increased') {
     insights.push(
-      'Arousal proxy increased over the session, especially useful to compare against combat or route events.',
+      'Arousal proxy increased over the session, especially useful to compare against tag or route events.',
     );
   } else if (session.arousalTrend === 'decreased') {
     insights.push('Arousal proxy decreased over time, suggesting the route became easier to settle into.');
@@ -322,18 +322,18 @@ function generateInsights(session: SessionSummary): string[] {
   }
 
   if (session.mode === 'dogfight' && session.kills > 0) {
-    const combatEvents = session.events.filter((e) => e.type === 'kill' || e.type === 'death');
-    if (combatEvents.length > 0) {
-      const calmDuringCombat =
-        combatEvents
+    const tagEvents = session.events.filter((e) => e.type === 'kill' || e.type === 'death');
+    if (tagEvents.length > 0) {
+      const calmDuringTags =
+        tagEvents
           .map((ev) => {
             const closest = s.reduce((best, pt) => (Math.abs(pt.t - ev.t) < Math.abs(best.t - ev.t) ? pt : best), s[0]);
             return closest.calm;
           })
-          .reduce((a, b) => a + b, 0) / combatEvents.length;
+          .reduce((a, b) => a + b, 0) / tagEvents.length;
 
-      if (session.avgCalm !== null && calmDuringCombat < session.avgCalm * 0.8) {
-        insights.push('Duel moments lined up with lower calm proxy readings than the flight average.');
+      if (session.avgCalm !== null && calmDuringTags < session.avgCalm * 0.8) {
+        insights.push('Tag moments lined up with lower calm proxy readings than the flight average.');
       }
     }
   }

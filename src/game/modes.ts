@@ -44,10 +44,10 @@ export const MODE_META: Record<GameMode, ModeMeta> = {
     shortTitle: 'Dogfight',
     scoreLabel: 'Ace Score',
     objectiveLabel: 'Wins',
-    menuDescription: 'Duel above the same storybook world with clearer tracers, hits, and recoveries.',
+    menuDescription: 'Play aerial tag above the same storybook world with glowing ribbons and quick recoveries.',
     loadingLine: 'The patrol route is opening around the landmarks.',
     summaryTitle: 'Dogfight Debrief',
-    summaryLead: 'A review of combat timing, flight control, and composure under pressure.',
+    summaryLead: 'A review of tag timing, flight control, and composure under playful pressure.',
     accent: '#fb7185',
   },
 };

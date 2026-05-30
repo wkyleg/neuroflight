@@ -138,27 +138,65 @@ export class AudioManager {
     osc2.stop(ctx.currentTime + 0.4);
   }
 
-  playGunshot(): void {
+  playTagLaunch(): void {
     const ctx = this.ensureContext();
-    const bufferSize = Math.floor(ctx.sampleRate * 0.05);
+    const osc = ctx.createOscillator();
+    const sparkle = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const sparkleGain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(420, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(760, ctx.currentTime + 0.12);
+    sparkle.type = 'sine';
+    sparkle.frequency.setValueAtTime(980, ctx.currentTime);
+    sparkle.frequency.exponentialRampToValueAtTime(1240, ctx.currentTime + 0.1);
+    sparkleGain.gain.value = 0.18;
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    gain.gain.setValueAtTime(0.038, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+
+    osc.connect(filter);
+    sparkle.connect(sparkleGain);
+    sparkleGain.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    sparkle.start();
+    osc.stop(ctx.currentTime + 0.16);
+    sparkle.stop(ctx.currentTime + 0.12);
+  }
+
+  playGunshot(): void {
+    this.playTagLaunch();
+  }
+
+  playTagImpact(): void {
+    const ctx = this.ensureContext();
+    const bufferSize = Math.floor(ctx.sampleRate * 0.045);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+      data[i] = (Math.random() * 2 - 1) * 0.45 * Math.exp(-i / (bufferSize * 0.18));
     }
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.035, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
     const filter = ctx.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.value = 800;
+    filter.type = 'bandpass';
+    filter.frequency.value = 950;
+    filter.Q.value = 1.4;
     source.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     source.start();
-    source.stop(ctx.currentTime + 0.06);
+    source.stop(ctx.currentTime + 0.08);
   }
 
   playExplosion(): void {
@@ -186,17 +224,7 @@ export class AudioManager {
   }
 
   playHit(): void {
-    const ctx = this.ensureContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.value = 1200;
-    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
+    this.playTagImpact();
   }
 
   destroy(): void {

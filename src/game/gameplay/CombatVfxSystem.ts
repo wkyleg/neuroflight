@@ -29,7 +29,7 @@ export class CombatVfxSystem {
   constructor(scene: THREE.Scene, config?: CombatVfxConfig) {
     this.scene = scene;
     this.config = config;
-    this.tracerGeometry = new THREE.CylinderGeometry(0.55, 0.55, 1, 6);
+    this.tracerGeometry = new THREE.CylinderGeometry(0.32, 0.32, 1, 8);
 
     if (config) {
       for (const texturePath of [
@@ -52,45 +52,45 @@ export class CombatVfxSystem {
     const muzzleTexture = this.textures[0];
     const smokeTexture = this.textures[3];
 
-    this.spawnSprite(muzzleTexture, origin.clone().addScaledVector(dir, 5), 0.08, 10, 34, color, true);
+    this.spawnSprite(muzzleTexture, origin.clone().addScaledVector(dir, 5), 0.12, 8, 28, color, true);
     this.spawnSprite(
       smokeTexture,
       origin.clone().addScaledVector(dir, -3),
-      0.24,
-      5,
-      24,
-      0xd7d7d7,
+      0.32,
+      4,
+      18,
+      owner === 'player' ? 0xcffdf2 : 0xffd7c2,
       false,
       dir.clone().multiplyScalar(-8),
     );
 
-    const length = owner === 'player' ? 88 : 62;
+    const length = owner === 'player' ? 74 : 54;
     const material = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: owner === 'player' ? 0.72 : 0.58,
+      opacity: owner === 'player' ? 0.62 : 0.48,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
     const mesh = new THREE.Mesh(this.tracerGeometry, material);
     mesh.position.copy(origin).addScaledVector(dir, length * 0.5);
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-    mesh.scale.set(owner === 'player' ? 1.2 : 1.6, length, owner === 'player' ? 1.2 : 1.6);
+    mesh.scale.set(owner === 'player' ? 1 : 1.3, length, owner === 'player' ? 1 : 1.3);
     mesh.renderOrder = 8;
     this.scene.add(mesh);
-    this.tracerFx.push({ mesh, age: 0, lifetime: 0.11 });
+    this.tracerFx.push({ mesh, age: 0, lifetime: 0.14 });
   }
 
   spawnHit(position: THREE.Vector3): void {
     if (!this.config) return;
-    this.spawnSprite(this.textures[1], position, 0.22, 18, 46, 0xfff1ba, true);
-    this.spawnSprite(this.textures[3], position, 0.52, 16, 58, 0xb8b8b8, false);
+    this.spawnSprite(this.textures[1], position, 0.28, 18, 54, 0xfff1ba, true);
+    this.spawnSprite(this.textures[3], position, 0.62, 12, 46, 0x9ef2ff, false);
   }
 
   spawnExplosion(position: THREE.Vector3): void {
     if (!this.config) return;
-    this.spawnSprite(this.textures[2], position, 0.78, 36, 150, 0xffd38a, true);
-    this.spawnSprite(this.textures[3], position, 1.4, 58, 210, 0x6f6f6f, false);
+    this.spawnSprite(this.textures[2], position, 0.72, 34, 126, 0xffe5a3, true);
+    this.spawnSprite(this.textures[3], position, 1.2, 36, 154, 0xbdeaff, false);
   }
 
   update(dt: number): void {

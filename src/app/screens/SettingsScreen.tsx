@@ -129,7 +129,7 @@ export function SettingsScreen() {
             <span style={{ color: 'var(--color-text-primary)' }}>R</span> — Restart
           </div>
           <div>
-            <span style={{ color: 'var(--color-text-primary)' }}>F / Click</span> — Fire
+            <span style={{ color: 'var(--color-text-primary)' }}>F / Click</span> — Tag
           </div>
         </div>
       </div>

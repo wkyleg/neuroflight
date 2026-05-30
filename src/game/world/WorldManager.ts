@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import type { MapDefinition } from '@/game/types.ts';
 import type { FlightObstacle } from '@/game/gameplay/FlightSafetySystem.ts';
+import type { MapDefinition } from '@/game/types.ts';
 import { buildScatterLayers, type ScatterResult } from './ProceduralWorld.ts';
 
 export class WorldManager {
