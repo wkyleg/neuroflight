@@ -67,3 +67,11 @@ canvas {
     16 17,
     crosshair;
 }
+
+.neuroflight-hud button,
+.neuroflight-hud [role="button"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%2314262d' stroke='%23ffdc7a' stroke-width='2'/%3E%3Cpath d='M14 5v5M14 18v5M5 14h5M18 14h5' stroke='%235eead4' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23fff2b8'/%3E%3C/svg%3E")
+    14 14,
+    pointer;
+}

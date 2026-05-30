@@ -1,4 +1,4 @@
-import { type PointerEvent, useCallback, useEffect, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
@@ -26,6 +26,23 @@ function headingLabel(heading: number): string {
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   const normalized = ((heading % 360) + 360) % 360;
   return directions[Math.round(normalized / 45) % directions.length];
+}
+
+function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
+  const latest = useRef(value);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    setDisplay(latest.current);
+    const timer = window.setInterval(() => setDisplay(latest.current), intervalMs);
+    return () => window.clearInterval(timer);
+  }, [intervalMs]);
+
+  return display;
 }
 
 function ControlsLegend({
@@ -541,13 +558,24 @@ export function FlightHud() {
     e.stopPropagation();
   }, []);
 
-  const speedKnots = Math.round(hud.speed * 1.944);
+  const displaySpeed = useThrottledDisplayValue(hud.speed, 280);
+  const displayAltitude = useThrottledDisplayValue(hud.altitude, 320);
+  const displayThrottle = useThrottledDisplayValue(hud.throttle, 260);
+  const displayHeading = useThrottledDisplayValue(hud.heading, 360);
+  const displayComposure = useThrottledDisplayValue(hud.composure, 1000);
+  const displayLoad = useThrottledDisplayValue(hud.neuroLoad, 1000);
+  const displayFlow = useThrottledDisplayValue(hud.flow, 1000);
+  const displayPrompt = useThrottledDisplayValue(hud.neuroPrompt, 1000);
+  const speedKnots = Math.round(displaySpeed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
   const modeMeta = getModeMeta(hud.mode);
-  const headingText = headingLabel(hud.heading);
+  const headingText = headingLabel(displayHeading);
 
   return (
-    <div className="absolute inset-0 pointer-events-none select-none" style={{ fontFamily: 'var(--font-body)' }}>
+    <div
+      className="neuroflight-hud absolute inset-0 pointer-events-none select-none"
+      style={{ fontFamily: 'var(--font-body)' }}
+    >
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
 
       {hud.nextObjectiveDir && <DirectionIndicator dir={hud.nextObjectiveDir} color={modeMeta.accent} label="ROUTE" />}
@@ -681,10 +709,10 @@ export function FlightHud() {
 
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap gap-2">
-              <InstrumentTile label="Speed" value={Math.round(hud.speed)} unit={`${speedKnots}kt`} />
-              <InstrumentTile label="Altitude" value={Math.round(hud.altitude)} unit="ft" />
+              <InstrumentTile label="Speed" value={Math.round(displaySpeed)} unit={`${speedKnots}kt`} />
+              <InstrumentTile label="Altitude" value={Math.round(displayAltitude)} unit="ft" />
               <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
-              <ThrottleInstrument value={hud.throttle} />
+              <ThrottleInstrument value={displayThrottle} />
             </div>
             <div
               className="rounded-xl border p-3"
@@ -697,12 +725,12 @@ export function FlightHud() {
                 Adaptive signals
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <AdaptiveGauge label="Composure" value={hud.composure} color="#5eead4" />
-                <AdaptiveGauge label="Load" value={hud.neuroLoad} color="#fb7185" />
-                <AdaptiveGauge label="Flow" value={hud.flow} color="#facc15" />
+                <AdaptiveGauge label="Composure" value={displayComposure} color="#5eead4" />
+                <AdaptiveGauge label="Load" value={displayLoad} color="#fb7185" />
+                <AdaptiveGauge label="Flow" value={displayFlow} color="#facc15" />
               </div>
               <div className="mt-2 text-xs leading-4" style={{ color: 'rgba(255,246,220,0.68)' }}>
-                {hud.neuroPrompt}
+                {displayPrompt}
               </div>
             </div>
             {isDogfight && (

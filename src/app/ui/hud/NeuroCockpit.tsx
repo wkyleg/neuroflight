@@ -24,6 +24,23 @@ function signalLabel(source: string, cameraActive: boolean, signalQuality: numbe
   return 'Signals optional';
 }
 
+function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
+  const latest = useRef(value);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    setDisplay(latest.current);
+    const timer = window.setInterval(() => setDisplay(latest.current), intervalMs);
+    return () => window.clearInterval(timer);
+  }, [intervalMs]);
+
+  return display;
+}
+
 function MetricChip({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div
@@ -57,6 +74,7 @@ function SignalBars({ value }: { value: number }) {
             width: 5,
             height: 7 + i * 3,
             background: i < bars ? signalTone(value) : 'rgba(255,255,255,0.14)',
+            transition: 'height 180ms ease, background 220ms ease',
           }}
         />
       ))}
@@ -122,6 +140,11 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const connection = useNeuroConnection();
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const displaySignalQuality = useThrottledDisplayValue(neuro.signalQuality, 1000);
+  const displayBpm = useThrottledDisplayValue(neuro.bpm, 1000);
+  const displayBpmQuality = useThrottledDisplayValue(neuro.bpmQuality, 1000);
+  const displayHrv = useThrottledDisplayValue(neuro.hrvRmssd, 1000);
+  const displayResp = useThrottledDisplayValue(neuro.respirationRate, 1000);
 
   const primary = useMemo(() => {
     if (neuro.source === 'eeg') return 'EEG';
@@ -130,11 +153,11 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
     return 'OPTIONAL';
   }, [connection.cameraActive, neuro.source]);
 
-  const label = signalLabel(neuro.source, connection.cameraActive, neuro.signalQuality);
-  const tone = signalTone(neuro.signalQuality);
-  const bpm = neuro.bpm !== null ? Math.round(neuro.bpm).toString() : '--';
-  const hrv = neuro.hrvRmssd !== null ? `${Math.round(neuro.hrvRmssd)}ms` : '--';
-  const resp = neuro.respirationRate !== null ? neuro.respirationRate.toFixed(1) : '--';
+  const label = signalLabel(neuro.source, connection.cameraActive, displaySignalQuality);
+  const tone = signalTone(displaySignalQuality);
+  const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';
+  const hrv = displayHrv !== null ? `${Math.round(displayHrv)}ms` : '--';
+  const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
     neuro.baselineDelta !== null ? `${neuro.baselineDelta > 0 ? '+' : ''}${Math.round(neuro.baselineDelta)}` : '--';
   const showAdvanced = expanded || neuro.source === 'eeg';
@@ -168,7 +191,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
                 <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-heading)' }}>
                   {primary}
                 </span>
-                <SignalBars value={neuro.signalQuality} />
+                <SignalBars value={displaySignalQuality} />
               </div>
               <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
                 {label}
@@ -209,10 +232,10 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
         </div>
 
         <div className="mt-3 grid grid-cols-4" style={{ gap: 8 }}>
-          <MetricChip label="BPM" value={bpm} tone={neuro.bpmQuality > 0.4 ? '#fb7185' : undefined} />
+          <MetricChip label="BPM" value={bpm} tone={displayBpmQuality > 0.4 ? '#fb7185' : undefined} />
           <MetricChip label="HRV" value={hrv} />
           <MetricChip label="Resp" value={resp} />
-          <MetricChip label="Sig" value={pct(neuro.signalQuality)} tone={tone} />
+          <MetricChip label="Sig" value={pct(displaySignalQuality)} tone={tone} />
         </div>
 
         {showAdvanced && (
