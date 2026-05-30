@@ -113,7 +113,11 @@ function CameraPreview({ active }: { active: boolean }) {
   );
 }
 
-export function NeuroCockpit() {
+interface NeuroCockpitProps {
+  embedded?: boolean;
+}
+
+export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const neuro = useNeuroSignals();
   const connection = useNeuroConnection();
   const [expanded, setExpanded] = useState(false);
@@ -137,9 +141,9 @@ export function NeuroCockpit() {
 
   return (
     <div
-      className="absolute left-6 bottom-6 pointer-events-auto"
+      className={embedded ? 'pointer-events-auto' : 'absolute left-6 bottom-6 pointer-events-auto'}
       style={{
-        width: showAdvanced ? 430 : 342,
+        width: embedded ? '100%' : showAdvanced ? 430 : 342,
         fontFamily: 'var(--font-body)',
       }}
     >

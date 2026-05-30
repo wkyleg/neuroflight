@@ -293,47 +293,6 @@ function Crosshair() {
   );
 }
 
-function AttitudeWidget({ heading, throttle }: { heading: number; throttle: number }) {
-  const bank = ((heading % 60) - 30) * 0.45;
-  const horizonOffset = Math.max(-16, Math.min(16, (throttle - 0.5) * 34));
-  const dir = headingLabel(heading);
-  return (
-    <div
-      className="rounded-lg border"
-      style={{
-        width: 126,
-        height: 84,
-        background: 'rgba(4,12,16,0.62)',
-        borderColor: 'rgba(255,244,202,0.18)',
-        backdropFilter: 'blur(6px)',
-        padding: 8,
-      }}
-    >
-      <div
-        className="relative h-full overflow-hidden rounded-md"
-        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <div
-          className="absolute left-[-20%] top-[-25%] h-[150%] w-[140%]"
-          style={{
-            transform: `rotate(${bank}deg) translateY(${horizonOffset}px)`,
-            background:
-              'linear-gradient(180deg, rgba(56,189,248,0.42) 0%, rgba(125,211,252,0.24) 46%, rgba(255,244,202,0.82) 47%, rgba(181,119,48,0.46) 100%)',
-          }}
-        />
-        <div className="absolute inset-x-5 top-1/2 h-px" style={{ background: 'rgba(255,255,255,0.72)' }} />
-        <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70" />
-        <div
-          className="absolute bottom-2 left-0 right-0 text-center text-[10px] font-bold"
-          style={{ color: '#fff8e2' }}
-        >
-          {dir} SKY CUE
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MissionCard({
   title,
   subtitle,
@@ -356,7 +315,7 @@ function MissionCard({
     <div
       className="rounded-lg border"
       style={{
-        width: 310,
+        width: '100%',
         background: 'rgba(5,14,18,0.62)',
         borderColor: `${accent}55`,
         backdropFilter: 'blur(8px)',
@@ -407,6 +366,78 @@ function AdaptiveGauge({ label, value, color }: { label: string; value: number; 
       </div>
       <div className="mt-1 text-xs font-bold tabular-nums" style={{ color }}>
         {pct}%
+      </div>
+    </div>
+  );
+}
+
+function InstrumentTile({
+  label,
+  value,
+  unit,
+  accent = 'var(--color-text-primary)',
+}: {
+  label: string;
+  value: string | number;
+  unit?: string;
+  accent?: string;
+}) {
+  return (
+    <div
+      className="rounded-xl border"
+      style={{
+        minWidth: 118,
+        padding: '12px 14px',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))',
+        borderColor: 'rgba(255,248,220,0.16)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
+      }}
+    >
+      <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-black tabular-nums" style={{ color: accent }}>
+        {value}
+        {unit && (
+          <span className="ml-1 text-sm font-bold" style={{ color: 'rgba(255,246,220,0.62)' }}>
+            {unit}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ThrottleInstrument({ value }: { value: number }) {
+  const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
+  return (
+    <div
+      className="rounded-xl border"
+      style={{
+        minWidth: 150,
+        padding: '12px 14px',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))',
+        borderColor: 'rgba(255,248,220,0.16)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+          Throttle
+        </span>
+        <span className="text-lg font-black tabular-nums" style={{ color: pct > 82 ? '#facc15' : '#5eead4' }}>
+          {pct}%
+        </span>
+      </div>
+      <div className="mt-2 h-3 overflow-hidden rounded-full" style={{ background: 'rgba(0,0,0,0.24)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-200"
+          style={{
+            width: `${pct}%`,
+            background:
+              pct > 82 ? 'linear-gradient(90deg, #facc15, #ffb86b)' : 'linear-gradient(90deg, #5eead4, #38bdf8)',
+          }}
+        />
       </div>
     </div>
   );
@@ -519,372 +550,299 @@ export function FlightHud() {
     <div className="absolute inset-0 pointer-events-none select-none" style={{ fontFamily: 'var(--font-body)' }}>
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
 
-      <NeuroConnectBanner />
-
-      {/* Top bar: speed, altitude, heading */}
-      <div
-        className="absolute top-0 left-0 right-0 flex justify-between items-start px-6 pt-4 pb-5"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(0,5,15,0.72) 0%, rgba(0,5,15,0.32) 58%, transparent 100%)',
-        }}
-      >
-        <div
-          className="flex rounded-lg"
-          style={{ background: 'rgba(0,5,15,0.48)', backdropFilter: 'blur(8px)', padding: '9px 14px', gap: 20 }}
-        >
-          <div style={{ minWidth: 92 }}>
-            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              SPD
-            </div>
-            <div
-              className="text-xl font-bold tabular-nums"
-              style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
-            >
-              {Math.round(hud.speed)}
-              <span
-                className="text-xs ml-1 font-normal"
-                style={{ color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}
-              >
-                {speedKnots}kt
-              </span>
-            </div>
-          </div>
-          <div style={{ minWidth: 92 }}>
-            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              ALT
-            </div>
-            <div
-              className="text-xl font-bold tabular-nums"
-              style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
-            >
-              {Math.round(hud.altitude)}
-              <span className="text-sm ml-1 font-normal" style={{ color: 'var(--color-text-secondary)' }}>
-                ft
-              </span>
-            </div>
-          </div>
-          <div style={{ minWidth: 70 }}>
-            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              DIR
-            </div>
-            <div className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {headingText}
-            </div>
-          </div>
-        </div>
-        <div className="text-right pointer-events-auto flex flex-col items-end" style={{ gap: 14 }}>
-          <div
-            className="rounded-lg"
-            style={{ background: 'rgba(0,5,15,0.52)', backdropFilter: 'blur(6px)', padding: '10px 18px' }}
-          >
-            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              {hud.scoreLabel}
-            </div>
-            <div
-              className="text-xl font-semibold"
-              style={{ color: modeMeta.accent, fontFamily: 'var(--font-heading)' }}
-            >
-              {hud.score}
-            </div>
-          </div>
-          <div className="flex items-center" style={{ gap: 10 }}>
-            <button
-              type="button"
-              onPointerDown={stopHudPointer}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowControls(true);
-              }}
-              className="tracking-widest rounded-lg cursor-pointer transition-all hover:scale-105 active:scale-95 font-bold"
-              style={{
-                fontFamily: 'var(--font-heading)',
-                color: 'var(--color-accent-gold)',
-                background: 'rgba(0,10,20,0.7)',
-                border: '1px solid rgba(255,200,100,0.4)',
-                padding: '8px 13px',
-                fontSize: 11,
-              }}
-            >
-              HELP
-            </button>
-            <button
-              type="button"
-              onPointerDown={stopHudPointer}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEndFlight();
-              }}
-              className="tracking-widest rounded-lg cursor-pointer transition-all hover:scale-105 hover:brightness-110 active:scale-95 font-bold"
-              style={{
-                fontFamily: 'var(--font-heading)',
-                color: '#ffffff',
-                background: 'rgba(180,40,30,0.9)',
-                border: 'none',
-                boxShadow: '0 2px 8px rgba(180,40,30,0.4)',
-                padding: '9px 18px',
-                fontSize: 12,
-              }}
-            >
-              END
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute left-6 top-28">
-        <MissionCard
-          title={hud.missionTitle}
-          subtitle={hud.missionSubtitle}
-          objective={hud.objectiveText}
-          subtext={hud.objectiveSubtext}
-          progress={hud.objectiveProgress}
-          goal={hud.objectiveGoal}
-          accent={modeMeta.accent}
-        />
-      </div>
-
-      <div className="absolute right-6 top-28 flex flex-col items-end gap-2">
-        <AttitudeWidget heading={hud.heading} throttle={hud.throttle} />
-        <div
-          className="rounded-lg border"
-          style={{
-            background: 'rgba(5,14,18,0.58)',
-            borderColor: 'rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(6px)',
-            padding: '10px 12px',
-            width: 210,
-          }}
-        >
-          <div className="mb-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.56)' }}>
-            Adaptive Signals
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <AdaptiveGauge label="Composure" value={hud.composure} color="#5eead4" />
-            <AdaptiveGauge label="Load" value={hud.neuroLoad} color="#fb7185" />
-            <AdaptiveGauge label="Flow" value={hud.flow} color="#facc15" />
-          </div>
-          <div className="mt-2 text-[10px] leading-4" style={{ color: 'rgba(240,236,224,0.58)' }}>
-            {hud.neuroPrompt}
-          </div>
-        </div>
-      </div>
-
       {hud.nextObjectiveDir && <DirectionIndicator dir={hud.nextObjectiveDir} color={modeMeta.accent} label="ROUTE" />}
 
-      {/* Dogfight HUD */}
       {isDogfight && (
         <>
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
           <KillFeed kills={hud.kills} deaths={hud.deaths} />
-
-          {/* Dogfight score / stats center */}
-          <div className="absolute top-5 left-1/2 -translate-x-1/2 text-center">
-            <div className="text-lg font-bold" style={{ color: '#ffb86b' }}>
-              {hud.kills}{' '}
-              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                WINS
-              </span>
-              <span className="mx-2" style={{ color: 'var(--color-text-secondary)' }}>
-                /
-              </span>
-              {hud.deaths}{' '}
-              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                LOSSES
-              </span>
-            </div>
-            <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-              {formatTime(hud.elapsedMs)}
-            </div>
-          </div>
-
-          {/* Health bars */}
-          <div
-            className="absolute flex flex-col rounded-lg"
-            style={{
-              left: 32,
-              bottom: 164,
-              gap: 10,
-              padding: '12px 16px',
-              background: 'rgba(0,5,15,0.6)',
-              backdropFilter: 'blur(6px)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" large />
-            <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff4444" large />
-          </div>
-
-          {/* Rival direction compass */}
-          {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff4444" label="RIVAL" />}
+          {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff6b6b" label="RIVAL" />}
         </>
       )}
 
-      {/* Throttle bar + label (left side) */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center rounded-lg"
-        style={{ left: 28, gap: 5, padding: '9px 11px', background: 'rgba(0,5,15,0.42)', backdropFilter: 'blur(4px)' }}
+        className="absolute left-0 right-0 top-0 flex items-start justify-between px-5 pt-4"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(0,9,18,0.38), transparent)',
+        }}
       >
-        <div className="text-[10px] tracking-widest font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-          THR
-        </div>
-        <div className="rounded-full relative" style={{ background: 'rgba(255,255,255,0.08)', width: 12, height: 126 }}>
-          <div
-            className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-100"
-            style={{
-              height: `${hud.throttle * 100}%`,
-              background:
-                hud.throttle > 0.8
-                  ? 'var(--color-accent-gold)'
-                  : hud.throttle < 0.2
-                    ? '#ff6644'
-                    : 'var(--color-accent-cyan)',
-            }}
-          />
-        </div>
-        <div className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-text-primary)' }}>
-          {Math.round(hud.throttle * 100)}%
-        </div>
-      </div>
-
-      {/* On-screen control buttons (bottom-right) */}
-      <div className="absolute flex flex-col pointer-events-auto" style={{ right: 24, bottom: 108, gap: 6 }}>
-        <button
-          type="button"
-          aria-label="Throttle up"
-          onPointerDown={(e) => {
-            stopHudPointer(e);
-            setThrottle(true, false);
-          }}
-          onPointerUp={(e) => {
-            stopHudPointer(e);
-            setThrottle(false, false);
-          }}
-          onPointerLeave={() => setThrottle(false, false)}
-          className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
-          style={{
-            width: 50,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            background: 'rgba(0,10,20,0.7)',
-            border: '1px solid rgba(0,204,204,0.5)',
-            color: 'var(--color-accent-cyan)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          ▲
-        </button>
-        <button
-          type="button"
-          aria-label="Throttle down"
-          onPointerDown={(e) => {
-            stopHudPointer(e);
-            setThrottle(false, true);
-          }}
-          onPointerUp={(e) => {
-            stopHudPointer(e);
-            setThrottle(false, false);
-          }}
-          onPointerLeave={() => setThrottle(false, false)}
-          className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
-          style={{
-            width: 50,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            background: 'rgba(0,10,20,0.7)',
-            border: '1px solid rgba(0,204,204,0.4)',
-            color: 'var(--color-accent-cyan)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          ▼
-        </button>
-        <button
-          type="button"
-          aria-label="Boost"
-          onPointerDown={(e) => {
-            stopHudPointer(e);
-            setBoost(true);
-          }}
-          onPointerUp={(e) => {
-            stopHudPointer(e);
-            setBoost(false);
-          }}
-          onPointerLeave={() => setBoost(false)}
-          className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
-          style={{
-            width: 50,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            background: 'rgba(0,10,20,0.7)',
-            border: '1px solid rgba(255,200,100,0.5)',
-            color: 'var(--color-accent-gold)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          BOOST
-        </button>
-        <button
-          type="button"
-          aria-label="Brake"
-          onPointerDown={(e) => {
-            stopHudPointer(e);
-            setBrake(true);
-          }}
-          onPointerUp={(e) => {
-            stopHudPointer(e);
-            setBrake(false);
-          }}
-          onPointerLeave={() => setBrake(false)}
-          className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
-          style={{
-            width: 50,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            background: 'rgba(0,10,20,0.7)',
-            border: '1px solid rgba(255,80,60,0.5)',
-            color: '#ff6644',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          BRAKE
-        </button>
+        <div />
         {isDogfight && (
-          <button
-            type="button"
-            aria-label="Tag rival"
-            onPointerDown={(e) => {
-              stopHudPointer(e);
-              setFire(true);
-            }}
-            onPointerUp={(e) => {
-              stopHudPointer(e);
-              setFire(false);
-            }}
-            onPointerLeave={() => setFire(false)}
-            className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
+          <div
+            className="text-center rounded-xl border px-5 py-2"
             style={{
-              width: 50,
-              height: 38,
-              minHeight: 38,
-              padding: 0,
-              background: 'linear-gradient(180deg, rgba(255,230,144,0.28), rgba(94,234,212,0.16))',
-              border: '2px solid rgba(255,184,107,0.66)',
-              color: '#ffdc7a',
-              backdropFilter: 'blur(4px)',
+              background: 'rgba(7,20,28,0.42)',
+              borderColor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(10px)',
             }}
           >
-            TAG
-          </button>
+            <div className="text-lg font-black tabular-nums" style={{ color: '#ffb86b' }}>
+              {hud.kills}{' '}
+              <span className="text-xs font-bold" style={{ color: 'rgba(255,246,220,0.58)' }}>
+                WINS
+              </span>
+              <span className="mx-2" style={{ color: 'rgba(255,246,220,0.42)' }}>
+                /
+              </span>
+              {hud.deaths}{' '}
+              <span className="text-xs font-bold" style={{ color: 'rgba(255,246,220,0.58)' }}>
+                LOSSES
+              </span>
+            </div>
+            <div className="text-xs tabular-nums" style={{ color: 'rgba(255,246,220,0.48)' }}>
+              {formatTime(hud.elapsedMs)}
+            </div>
+          </div>
         )}
+        <div className="pointer-events-auto flex items-start gap-3">
+          <div
+            className="rounded-xl border px-5 py-3 text-right"
+            style={{
+              background: 'rgba(7,20,28,0.54)',
+              borderColor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(12px)',
+              minWidth: 130,
+            }}
+          >
+            <div className="text-[10px] tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+              {hud.scoreLabel}
+            </div>
+            <div className="text-2xl font-black tabular-nums" style={{ color: modeMeta.accent }}>
+              {hud.score}
+            </div>
+          </div>
+          <button
+            type="button"
+            onPointerDown={stopHudPointer}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowControls(true);
+            }}
+            className="rounded-xl text-xs font-black tracking-widest"
+            style={{
+              color: 'var(--color-accent-gold)',
+              background: 'linear-gradient(180deg, rgba(41,56,64,0.86), rgba(13,25,31,0.86))',
+              border: '1px solid rgba(255,220,122,0.38)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 10px 24px rgba(0,0,0,0.2)',
+            }}
+          >
+            HELP
+          </button>
+          <button
+            type="button"
+            onPointerDown={stopHudPointer}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEndFlight();
+            }}
+            className="rounded-xl text-xs font-black tracking-widest"
+            style={{
+              color: '#fff7e8',
+              background: 'linear-gradient(180deg, rgba(236,92,76,0.95), rgba(173,48,38,0.95))',
+              border: '1px solid rgba(255,198,178,0.28)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24), 0 12px 26px rgba(187,45,35,0.24)',
+            }}
+          >
+            END
+          </button>
+        </div>
       </div>
 
-      {/* Bottom neuro cockpit panel */}
-      <NeuroCockpit />
+      <div
+        className="absolute left-4 right-4 bottom-4 pointer-events-auto"
+        onPointerDown={stopHudPointer}
+        style={{
+          borderRadius: 24,
+          padding: 14,
+          background: 'linear-gradient(135deg, rgba(13,56,68,0.68), rgba(12,28,34,0.58) 48%, rgba(92,72,32,0.42))',
+          border: '1px solid rgba(255,248,220,0.18)',
+          backdropFilter: 'blur(18px) saturate(1.35)',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -18px 40px rgba(0,0,0,0.12), 0 22px 70px rgba(0,0,0,0.28)',
+        }}
+      >
+        <div
+          className="grid items-stretch"
+          style={{
+            gridTemplateColumns: 'minmax(230px, 0.9fr) minmax(390px, 1.35fr) minmax(300px, 1fr) minmax(132px, 0.35fr)',
+            gap: 12,
+          }}
+        >
+          <MissionCard
+            title={hud.missionTitle}
+            subtitle={hud.missionSubtitle}
+            objective={hud.objectiveText}
+            subtext={hud.objectiveSubtext}
+            progress={hud.objectiveProgress}
+            goal={hud.objectiveGoal}
+            accent={modeMeta.accent}
+          />
+
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              <InstrumentTile label="Speed" value={Math.round(hud.speed)} unit={`${speedKnots}kt`} />
+              <InstrumentTile label="Altitude" value={Math.round(hud.altitude)} unit="ft" />
+              <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
+              <ThrottleInstrument value={hud.throttle} />
+            </div>
+            <div
+              className="rounded-xl border p-3"
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                borderColor: 'rgba(255,248,220,0.13)',
+              }}
+            >
+              <div className="mb-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.58)' }}>
+                Adaptive signals
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <AdaptiveGauge label="Composure" value={hud.composure} color="#5eead4" />
+                <AdaptiveGauge label="Load" value={hud.neuroLoad} color="#fb7185" />
+                <AdaptiveGauge label="Flow" value={hud.flow} color="#facc15" />
+              </div>
+              <div className="mt-2 text-xs leading-4" style={{ color: 'rgba(255,246,220,0.68)' }}>
+                {hud.neuroPrompt}
+              </div>
+            </div>
+            {isDogfight && (
+              <div
+                className="rounded-xl border p-3"
+                style={{ background: 'rgba(0,10,20,0.34)', borderColor: 'rgba(255,184,107,0.22)' }}
+              >
+                <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" large />
+                <div style={{ height: 8 }} />
+                <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff6b6b" large />
+              </div>
+            )}
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-2">
+            <NeuroConnectBanner variant="dock" />
+            <NeuroCockpit embedded />
+          </div>
+
+          <div className="grid gap-2">
+            <button
+              type="button"
+              aria-label="Throttle up"
+              onPointerDown={(e) => {
+                stopHudPointer(e);
+                setThrottle(true, false);
+              }}
+              onPointerUp={(e) => {
+                stopHudPointer(e);
+                setThrottle(false, false);
+              }}
+              onPointerLeave={() => setThrottle(false, false)}
+              className="rounded-xl text-xl font-black"
+              style={{
+                minHeight: 42,
+                padding: 0,
+                background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
+                border: '1px solid rgba(94,234,212,0.42)',
+                color: 'var(--color-accent-cyan)',
+              }}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              aria-label="Throttle down"
+              onPointerDown={(e) => {
+                stopHudPointer(e);
+                setThrottle(false, true);
+              }}
+              onPointerUp={(e) => {
+                stopHudPointer(e);
+                setThrottle(false, false);
+              }}
+              onPointerLeave={() => setThrottle(false, false)}
+              className="rounded-xl text-xl font-black"
+              style={{
+                minHeight: 42,
+                padding: 0,
+                background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
+                border: '1px solid rgba(94,234,212,0.36)',
+                color: 'var(--color-accent-cyan)',
+              }}
+            >
+              ▼
+            </button>
+            <button
+              type="button"
+              aria-label="Boost"
+              onPointerDown={(e) => {
+                stopHudPointer(e);
+                setBoost(true);
+              }}
+              onPointerUp={(e) => {
+                stopHudPointer(e);
+                setBoost(false);
+              }}
+              onPointerLeave={() => setBoost(false)}
+              className="rounded-xl text-xs font-black tracking-widest"
+              style={{
+                minHeight: 44,
+                padding: 0,
+                background: 'linear-gradient(180deg, rgba(83,68,28,0.96), rgba(38,35,23,0.96))',
+                border: '1px solid rgba(250,204,21,0.48)',
+                color: 'var(--color-accent-gold)',
+              }}
+            >
+              BOOST
+            </button>
+            <button
+              type="button"
+              aria-label="Brake"
+              onPointerDown={(e) => {
+                stopHudPointer(e);
+                setBrake(true);
+              }}
+              onPointerUp={(e) => {
+                stopHudPointer(e);
+                setBrake(false);
+              }}
+              onPointerLeave={() => setBrake(false)}
+              className="rounded-xl text-xs font-black tracking-widest"
+              style={{
+                minHeight: 44,
+                padding: 0,
+                background: 'linear-gradient(180deg, rgba(75,34,32,0.96), rgba(35,26,24,0.96))',
+                border: '1px solid rgba(255,107,86,0.5)',
+                color: '#ff745f',
+              }}
+            >
+              BRAKE
+            </button>
+            {isDogfight && (
+              <button
+                type="button"
+                aria-label="Tag rival"
+                onPointerDown={(e) => {
+                  stopHudPointer(e);
+                  setFire(true);
+                }}
+                onPointerUp={(e) => {
+                  stopHudPointer(e);
+                  setFire(false);
+                }}
+                onPointerLeave={() => setFire(false)}
+                className="rounded-xl text-xs font-black tracking-widest"
+                style={{
+                  minHeight: 46,
+                  padding: 0,
+                  background: 'linear-gradient(180deg, rgba(255,226,145,0.62), rgba(94,234,212,0.28))',
+                  border: '2px solid rgba(255,224,144,0.76)',
+                  color: '#fff2b8',
+                }}
+              >
+                TAG
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

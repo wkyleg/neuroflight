@@ -126,7 +126,6 @@ export class PlaneController {
       case 'y':
         group.rotation.x = Math.PI / 2;
         break;
-      case 'z':
       default:
         break;
     }

@@ -39,7 +39,8 @@ export class SeaTrafficSystem {
   update(dt: number, cameraPos: THREE.Vector3): void {
     for (const actor of this.actors) {
       actor.root.position.addScaledVector(actor.velocity, dt);
-      actor.root.position.y = this.waterY + Math.sin(performance.now() * 0.001 * actor.bobSpeed + actor.bobPhase) * actor.bobAmplitude;
+      actor.root.position.y =
+        this.waterY + Math.sin(performance.now() * 0.001 * actor.bobSpeed + actor.bobPhase) * actor.bobAmplitude;
 
       const target = actor.root.position.clone().add(actor.velocity);
       actor.root.lookAt(target.x, actor.root.position.y, target.z);

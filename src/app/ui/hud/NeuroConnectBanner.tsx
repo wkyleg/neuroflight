@@ -2,12 +2,17 @@ import { useState } from 'react';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
-export function NeuroConnectBanner() {
+interface NeuroConnectBannerProps {
+  variant?: 'floating' | 'dock';
+}
+
+export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerProps = {}) {
   const { eegConnected, cameraActive, mockEnabled, connecting } = useNeuroConnection();
   const [dismissed, setDismissed] = useState(false);
 
   const readyEnough = cameraActive || mockEnabled || eegConnected;
   if (dismissed || readyEnough) return null;
+  const docked = variant === 'dock';
 
   const connectHeadband = async () => {
     await useNeuroStore.getState().connectHeadband();
@@ -23,13 +28,14 @@ export function NeuroConnectBanner() {
 
   return (
     <div
-      className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center rounded-lg pointer-events-auto z-50"
+      className={`${docked ? 'flex flex-wrap' : 'absolute top-24 left-1/2 -translate-x-1/2 flex'} items-center rounded-lg pointer-events-auto z-50`}
       style={{
-        background: 'rgba(8, 20, 28, 0.66)',
-        border: '1px solid rgba(94, 234, 212, 0.26)',
-        backdropFilter: 'blur(8px)',
-        padding: '8px 10px',
+        background: docked ? 'rgba(10, 34, 42, 0.46)' : 'rgba(8, 20, 28, 0.66)',
+        border: docked ? '1px solid rgba(255, 236, 178, 0.16)' : '1px solid rgba(94, 234, 212, 0.26)',
+        backdropFilter: 'blur(12px)',
+        padding: docked ? '7px 9px' : '8px 10px',
         gap: 10,
+        width: docked ? '100%' : undefined,
       }}
     >
       <span

@@ -100,8 +100,9 @@ describe('MapRegistry', () => {
       const movingStatic =
         map.skyObjectLayers?.filter((layer) => ['airship', 'bird', 'traffic'].includes(layer.behavior ?? '')) ?? [];
       const movingEvents =
-        map.livingWorld?.events.filter((event) => ['airship-pass', 'plane-pass', 'bird-pass', 'ufo-dart'].includes(event.behavior)) ??
-        [];
+        map.livingWorld?.events.filter((event) =>
+          ['airship-pass', 'plane-pass', 'bird-pass', 'ufo-dart'].includes(event.behavior),
+        ) ?? [];
       expect([...movingStatic, ...movingEvents].every((entry) => entry.faceVelocity !== false)).toBe(true);
     }
   });
