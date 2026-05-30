@@ -12,6 +12,8 @@ export interface VisualGradeConfig {
   vignette: number;
   exposure: number;
   bloomStrength: number;
+  hueShift: number;
+  grain: number;
 }
 
 const DEFAULT_GRADE: VisualGradeConfig = {
@@ -21,6 +23,8 @@ const DEFAULT_GRADE: VisualGradeConfig = {
   vignette: 0.18,
   exposure: 1.02,
   bloomStrength: 0.12,
+  hueShift: 0,
+  grain: 0.012,
 };
 
 const VisualGradeShader = {
@@ -30,6 +34,8 @@ const VisualGradeShader = {
     contrast: { value: DEFAULT_GRADE.contrast },
     warmth: { value: DEFAULT_GRADE.warmth },
     vignette: { value: DEFAULT_GRADE.vignette },
+    hueShift: { value: DEFAULT_GRADE.hueShift },
+    grain: { value: DEFAULT_GRADE.grain },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -44,7 +50,34 @@ const VisualGradeShader = {
     uniform float contrast;
     uniform float warmth;
     uniform float vignette;
+    uniform float hueShift;
+    uniform float grain;
     varying vec2 vUv;
+
+    vec3 hueRotate(vec3 color, float angle) {
+      float s = sin(angle);
+      float c = cos(angle);
+      mat3 weights = mat3(
+        vec3(0.299, 0.587, 0.114),
+        vec3(0.299, 0.587, 0.114),
+        vec3(0.299, 0.587, 0.114)
+      );
+      mat3 hue = mat3(
+        vec3(0.701, -0.587, -0.114),
+        vec3(-0.299, 0.413, -0.114),
+        vec3(-0.300, -0.588, 0.886)
+      );
+      mat3 cross = mat3(
+        vec3(0.168, 0.330, -0.497),
+        vec3(-0.328, 0.035, 0.292),
+        vec3(1.250, -1.050, -0.203)
+      );
+      return color * (weights + hue * c + cross * s);
+    }
+
+    float noise(vec2 p) {
+      return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+    }
 
     void main() {
       vec4 texel = texture2D(tDiffuse, vUv);
@@ -52,7 +85,9 @@ const VisualGradeShader = {
       float luma = dot(color, vec3(0.299, 0.587, 0.114));
       color = mix(vec3(luma), color, saturation);
       color = (color - 0.5) * contrast + 0.5;
+      color = hueRotate(color, hueShift);
       color += vec3(warmth, warmth * 0.45, -warmth * 0.25);
+      color += (noise(vUv * 960.0) - 0.5) * grain;
 
       float dist = distance(vUv, vec2(0.5));
       float edge = 1.0 - smoothstep(0.28, 0.82, dist);
@@ -117,6 +152,8 @@ export class Renderer {
       this.gradePass.uniforms.contrast.value = grade.contrast;
       this.gradePass.uniforms.warmth.value = grade.warmth;
       this.gradePass.uniforms.vignette.value = grade.vignette;
+      this.gradePass.uniforms.hueShift.value = grade.hueShift;
+      this.gradePass.uniforms.grain.value = grade.grain;
     }
     if (this.bloomPass) {
       this.bloomPass.strength = grade.bloomStrength;

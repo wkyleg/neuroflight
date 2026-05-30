@@ -862,7 +862,9 @@ export class Game {
         warmth: 0.018,
         vignette: 0.16,
         exposure: 1.0,
-        bloomStrength: 0.13,
+        bloomStrength: 0.16,
+        hueShift: 0.018,
+        grain: 0.01,
       });
       return;
     }
@@ -873,7 +875,9 @@ export class Game {
       warmth: 0.06,
       vignette: 0.18,
       exposure: 0.99,
-      bloomStrength: 0.12,
+      bloomStrength: 0.15,
+      hueShift: -0.012,
+      grain: 0.012,
     });
   }
 
