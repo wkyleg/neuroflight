@@ -23,4 +23,12 @@ describe('MapRegistry', () => {
       expect(m.missionRoutes?.dogfight.length).toBeGreaterThan(0);
     }
   });
+
+  it('marks at least one large scatter layer per map as crash-relevant', () => {
+    for (const m of MAPS) {
+      const collidableLayers = m.scatterLayers.filter((layer) => layer.collision);
+      expect(collidableLayers.length).toBeGreaterThan(0);
+      expect(collidableLayers.every((layer) => layer.collision?.minScale && layer.collision.minScale > 0)).toBe(true);
+    }
+  });
 });

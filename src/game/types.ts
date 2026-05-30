@@ -82,6 +82,11 @@ export interface ScatterLayerConfig {
   minDistance: number;
   scaleRange: [number, number];
   yOffset?: number;
+  collision?: {
+    radiusMultiplier: number;
+    minScale: number;
+    label?: string;
+  };
 }
 
 export interface GroundPlaneConfig {

@@ -378,12 +378,11 @@ export class Game {
     const maxSpd = getAircraft(this.currentAircraftId)?.tuning?.maxSpeed ?? 200;
     this.planeController.update(dt, speed, maxSpd);
 
-    const safetyEvent = this.flightSafetySystem.update(
-      dt,
-      this.planeController.flightModel,
-      map,
-      this.worldLandmarkSystem?.getCollisionVolumes() ?? [],
-    );
+    const obstacleVolumes = [
+      ...(this.worldLandmarkSystem?.getCollisionVolumes() ?? []),
+      ...(this.worldManager?.getCollisionVolumes() ?? []),
+    ];
+    const safetyEvent = this.flightSafetySystem.update(dt, this.planeController.flightModel, map, obstacleVolumes);
     if (safetyEvent) {
       this.flightSafetySystem.applyRespawn(this.planeController.flightModel, safetyEvent);
       this.inputManager.clearInput();

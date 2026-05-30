@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { MapDefinition } from '@/game/types.ts';
+import type { FlightObstacle } from '@/game/gameplay/FlightSafetySystem.ts';
 import { buildScatterLayers, type ScatterResult } from './ProceduralWorld.ts';
 
 export class WorldManager {
@@ -104,6 +105,10 @@ export class WorldManager {
       (this.groundMesh.material as THREE.Material).dispose();
       this.groundMesh = null;
     }
+  }
+
+  getCollisionVolumes(): FlightObstacle[] {
+    return this.scatterResult?.collisionVolumes ?? [];
   }
 
   destroy(): void {
