@@ -48,7 +48,8 @@ export class SeaTrafficSystem {
 
       if (actor.wake) {
         const pulse = 0.84 + Math.sin(performance.now() * 0.0018 + actor.bobPhase) * 0.08;
-        actor.wake.material.opacity = actor.config.type === 'cruise' ? 0.18 * pulse : 0.13 * pulse;
+        (actor.wake.material as THREE.MeshBasicMaterial).opacity =
+          actor.config.type === 'cruise' ? 0.18 * pulse : 0.13 * pulse;
       }
 
       const dx = actor.root.position.x - cameraPos.x;
@@ -81,12 +82,13 @@ export class SeaTrafficSystem {
     for (const vesselConfig of this.config.vessels) {
       for (let i = 0; i < vesselConfig.count; i++) {
         const root = this.createVessel(vesselConfig);
+        const wakeObject = root.getObjectByName('wake');
         const actor: SeaTrafficActor = {
           root,
           config: vesselConfig,
           velocity: new THREE.Vector3(),
           radius: vesselConfig.radius,
-          wake: root.getObjectByName('wake') instanceof THREE.Mesh ? root.getObjectByName('wake') : null,
+          wake: wakeObject instanceof THREE.Mesh ? wakeObject : null,
           bobPhase: this.rng() * Math.PI * 2,
           bobSpeed: THREE.MathUtils.lerp(0.45, 0.9, this.rng()),
           bobAmplitude: vesselConfig.type === 'cruise' ? 0.7 : 1.5,

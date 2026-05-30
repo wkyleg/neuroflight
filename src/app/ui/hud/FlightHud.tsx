@@ -8,14 +8,14 @@ import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
 
-function shouldShowInitialHelp(): boolean {
+export function shouldShowInitialHelp(): boolean {
   if (typeof window === 'undefined') return false;
   if (window.localStorage.getItem(HELP_NEVER_SHOW_KEY) === 'true') return false;
   const count = Number.parseInt(window.localStorage.getItem(HELP_DISMISSED_COUNT_KEY) ?? '0', 10);
   return Number.isNaN(count) || count < 2;
 }
 
-function recordHelpDismissal(neverShow = false): void {
+export function recordHelpDismissal(neverShow = false): void {
   if (typeof window === 'undefined') return;
   if (neverShow) window.localStorage.setItem(HELP_NEVER_SHOW_KEY, 'true');
   const count = Number.parseInt(window.localStorage.getItem(HELP_DISMISSED_COUNT_KEY) ?? '0', 10);
