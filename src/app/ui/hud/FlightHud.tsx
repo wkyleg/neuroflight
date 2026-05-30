@@ -5,10 +5,48 @@ import { useGameStore } from '@/stores/gameStore.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
 
-function ControlsLegend({ mode, onDismiss }: { mode: GameMode; onDismiss: () => void }) {
+const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
+const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
+
+function shouldShowInitialHelp(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (window.localStorage.getItem(HELP_NEVER_SHOW_KEY) === 'true') return false;
+  const count = Number.parseInt(window.localStorage.getItem(HELP_DISMISSED_COUNT_KEY) ?? '0', 10);
+  return Number.isNaN(count) || count < 2;
+}
+
+function recordHelpDismissal(neverShow = false): void {
+  if (typeof window === 'undefined') return;
+  if (neverShow) window.localStorage.setItem(HELP_NEVER_SHOW_KEY, 'true');
+  const count = Number.parseInt(window.localStorage.getItem(HELP_DISMISSED_COUNT_KEY) ?? '0', 10);
+  window.localStorage.setItem(HELP_DISMISSED_COUNT_KEY, String((Number.isNaN(count) ? 0 : count) + 1));
+}
+
+function headingLabel(heading: number): string {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  const normalized = ((heading % 360) + 360) % 360;
+  return directions[Math.round(normalized / 45) % directions.length];
+}
+
+function ControlsLegend({
+  mode,
+  onDismiss,
+  onNeverShow,
+}: {
+  mode: GameMode;
+  onDismiss: () => void;
+  onNeverShow: () => void;
+}) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, 15000);
-    return () => clearTimeout(timer);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onDismiss();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', onKeyDown);
+    };
   }, [onDismiss]);
 
   return (
@@ -96,12 +134,26 @@ function ControlsLegend({ mode, onDismiss }: { mode: GameMode; onDismiss: () => 
             </>
           )}
         </div>
-        <p
-          className="text-center text-[10px] tracking-widest transition-opacity"
-          style={{ color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: 22 }}
-        >
-          CLICK OUTSIDE TO DISMISS
-        </p>
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <p
+            className="text-[10px] tracking-widest transition-opacity"
+            style={{ color: 'var(--color-text-secondary)', opacity: 0.55 }}
+          >
+            CLICK OUTSIDE OR PRESS ESC
+          </p>
+          <button
+            type="button"
+            onClick={onNeverShow}
+            className="pointer-events-auto rounded-md border px-3 py-2 text-[10px] font-bold tracking-widest"
+            style={{
+              borderColor: 'rgba(94,234,212,0.24)',
+              color: '#a7f3d0',
+              background: 'rgba(94,234,212,0.08)',
+            }}
+          >
+            DON'T SHOW AGAIN
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -137,7 +189,7 @@ function DirectionIndicator({ dir, color, label }: { dir: { x: number; y: number
           opacity="0.9"
         />
         {label && (
-          <text x="50" y="53" textAnchor="middle" fill={`${color}80`} fontSize="7" fontFamily="var(--font-mono)">
+          <text x="50" y="53" textAnchor="middle" fill={`${color}80`} fontSize="7" fontFamily="var(--font-body)">
             {label}
           </text>
         )}
@@ -241,19 +293,20 @@ function Crosshair() {
   );
 }
 
-function AttitudeWidget({ heading, throttle, speed }: { heading: number; throttle: number; speed: number }) {
+function AttitudeWidget({ heading, throttle }: { heading: number; throttle: number }) {
   const bank = ((heading % 60) - 30) * 0.45;
   const horizonOffset = Math.max(-16, Math.min(16, (throttle - 0.5) * 34));
+  const dir = headingLabel(heading);
   return (
     <div
       className="rounded-lg border"
       style={{
-        width: 150,
-        height: 118,
+        width: 126,
+        height: 84,
         background: 'rgba(4,12,16,0.62)',
         borderColor: 'rgba(255,244,202,0.18)',
         backdropFilter: 'blur(6px)',
-        padding: 10,
+        padding: 8,
       }}
     >
       <div
@@ -271,10 +324,10 @@ function AttitudeWidget({ heading, throttle, speed }: { heading: number; throttl
         <div className="absolute inset-x-5 top-1/2 h-px" style={{ background: 'rgba(255,255,255,0.72)' }} />
         <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70" />
         <div
-          className="absolute bottom-2 left-0 right-0 text-center text-[10px] font-bold tabular-nums"
+          className="absolute bottom-2 left-0 right-0 text-center text-[10px] font-bold"
           style={{ color: '#fff8e2' }}
         >
-          {Math.round(heading)} DEG / {Math.round(speed)}
+          {dir} SKY CUE
         </div>
       </div>
     </div>
@@ -310,7 +363,7 @@ function MissionCard({
         padding: '14px 16px',
       }}
     >
-      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-mono)' }}>
+      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-body)' }}>
         {title}
       </div>
       <div className="mt-1 text-sm font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
@@ -401,7 +454,7 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
 export function FlightHud() {
   const hud = useGameStore((s) => s.hud);
   const game = useGameStore((s) => s.game);
-  const [showControls, setShowControls] = useState(false);
+  const [showControls, setShowControls] = useState(() => shouldShowInitialHelp());
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -410,7 +463,15 @@ export function FlightHud() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const dismissControls = useCallback(() => setShowControls(false), []);
+  const dismissControls = useCallback(() => {
+    recordHelpDismissal(false);
+    setShowControls(false);
+  }, []);
+
+  const neverShowControls = useCallback(() => {
+    recordHelpDismissal(true);
+    setShowControls(false);
+  }, []);
 
   const handleEndFlight = useCallback(() => {
     game?.endSession();
@@ -452,35 +513,36 @@ export function FlightHud() {
   const speedKnots = Math.round(hud.speed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
   const modeMeta = getModeMeta(hud.mode);
+  const headingText = headingLabel(hud.heading);
 
   return (
-    <div className="absolute inset-0 pointer-events-none select-none" style={{ fontFamily: 'var(--font-mono)' }}>
-      {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} />}
+    <div className="absolute inset-0 pointer-events-none select-none" style={{ fontFamily: 'var(--font-body)' }}>
+      {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
 
       <NeuroConnectBanner />
 
       {/* Top bar: speed, altitude, heading */}
       <div
-        className="absolute top-0 left-0 right-0 flex justify-between items-start px-8 pt-4 pb-5"
+        className="absolute top-0 left-0 right-0 flex justify-between items-start px-6 pt-4 pb-5"
         style={{
           background: 'linear-gradient(to bottom, rgba(0,5,15,0.72) 0%, rgba(0,5,15,0.32) 58%, transparent 100%)',
         }}
       >
         <div
           className="flex rounded-lg"
-          style={{ background: 'rgba(0,5,15,0.52)', backdropFilter: 'blur(6px)', padding: '10px 16px', gap: 24 }}
+          style={{ background: 'rgba(0,5,15,0.48)', backdropFilter: 'blur(8px)', padding: '9px 14px', gap: 20 }}
         >
           <div style={{ minWidth: 92 }}>
             <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               SPD
             </div>
             <div
-              className="text-2xl font-bold tabular-nums"
+              className="text-xl font-bold tabular-nums"
               style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
             >
               {Math.round(hud.speed)}
               <span
-                className="text-sm ml-1 font-normal"
+                className="text-xs ml-1 font-normal"
                 style={{ color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}
               >
                 {speedKnots}kt
@@ -492,7 +554,7 @@ export function FlightHud() {
               ALT
             </div>
             <div
-              className="text-2xl font-bold tabular-nums"
+              className="text-xl font-bold tabular-nums"
               style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
             >
               {Math.round(hud.altitude)}
@@ -503,13 +565,10 @@ export function FlightHud() {
           </div>
           <div style={{ minWidth: 70 }}>
             <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              HDG
+              DIR
             </div>
-            <div
-              className="text-2xl font-bold tabular-nums"
-              style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
-            >
-              {Math.round(hud.heading)}°
+            <div className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              {headingText}
             </div>
           </div>
         </div>
@@ -572,7 +631,7 @@ export function FlightHud() {
         </div>
       </div>
 
-      <div className="absolute left-8 top-28">
+      <div className="absolute left-6 top-28">
         <MissionCard
           title={hud.missionTitle}
           subtitle={hud.missionSubtitle}
@@ -584,8 +643,8 @@ export function FlightHud() {
         />
       </div>
 
-      <div className="absolute right-8 top-28 flex flex-col items-end gap-2">
-        <AttitudeWidget heading={hud.heading} throttle={hud.throttle} speed={hud.speed} />
+      <div className="absolute right-6 top-28 flex flex-col items-end gap-2">
+        <AttitudeWidget heading={hud.heading} throttle={hud.throttle} />
         <div
           className="rounded-lg border"
           style={{
@@ -593,7 +652,7 @@ export function FlightHud() {
             borderColor: 'rgba(255,255,255,0.12)',
             backdropFilter: 'blur(6px)',
             padding: '10px 12px',
-            width: 226,
+            width: 210,
           }}
         >
           <div className="mb-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.56)' }}>
@@ -621,7 +680,7 @@ export function FlightHud() {
 
           {/* Dogfight score / stats center */}
           <div className="absolute top-5 left-1/2 -translate-x-1/2 text-center">
-            <div className="text-xl font-bold" style={{ color: '#ff4444' }}>
+            <div className="text-lg font-bold" style={{ color: '#ffb86b' }}>
               {hud.kills}{' '}
               <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                 WINS
@@ -644,7 +703,7 @@ export function FlightHud() {
             className="absolute flex flex-col rounded-lg"
             style={{
               left: 32,
-              bottom: 126,
+              bottom: 164,
               gap: 10,
               padding: '12px 16px',
               background: 'rgba(0,5,15,0.6)',
