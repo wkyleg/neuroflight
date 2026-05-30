@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import type { FlightModel } from '@/game/flight/FlightModel.ts';
-import type { MapConfig } from '@/game/types.ts';
+import type { MapDefinition } from '@/game/types.ts';
+
+export interface FlightObstacle {
+  center: THREE.Vector3;
+  radius: number;
+  label: string;
+}
 
 export interface FlightSafetyEvent {
   type: 'crash' | 'hard_landing';
@@ -18,7 +24,12 @@ export class FlightSafetySystem {
   private hasSafePosition = false;
   private invulnerabilityTimer = 0;
 
-  update(dt: number, flightModel: FlightModel, map: MapConfig): FlightSafetyEvent | null {
+  update(
+    dt: number,
+    flightModel: FlightModel,
+    map: MapDefinition,
+    obstacles: FlightObstacle[] = [],
+  ): FlightSafetyEvent | null {
     this.invulnerabilityTimer = Math.max(0, this.invulnerabilityTimer - dt);
 
     const position = flightModel.getPosition();
@@ -28,6 +39,17 @@ export class FlightSafetySystem {
     }
 
     if (this.invulnerabilityTimer > 0) return null;
+
+    const obstacleHit = this.getObstacleHit(position, obstacles);
+    if (obstacleHit) {
+      return {
+        type: 'crash',
+        label: `Bumped ${obstacleHit.label}`,
+        scorePenalty: -125,
+        respawnPosition: this.getRespawnPosition(map),
+      };
+    }
+
     if (position.y > GROUND_CRASH_ALTITUDE) return null;
 
     const speed = flightModel.getSpeed();
@@ -44,12 +66,13 @@ export class FlightSafetySystem {
   applyRespawn(flightModel: FlightModel, event: FlightSafetyEvent): void {
     flightModel.object.position.copy(event.respawnPosition);
     flightModel.object.quaternion.identity();
+    flightModel.resetSpeedForRecovery();
     this.lastSafePosition.copy(event.respawnPosition);
     this.hasSafePosition = true;
     this.invulnerabilityTimer = RESPAWN_INVULNERABILITY;
   }
 
-  reset(map: MapConfig): void {
+  reset(map: MapDefinition): void {
     this.lastSafePosition.set(map.playerSpawn[0], Math.max(map.playerSpawn[1], 120), map.playerSpawn[2]);
     this.hasSafePosition = true;
     this.invulnerabilityTimer = RESPAWN_INVULNERABILITY;
@@ -59,7 +82,15 @@ export class FlightSafetySystem {
     return this.invulnerabilityTimer;
   }
 
-  private getRespawnPosition(map: MapConfig): THREE.Vector3 {
+  private getObstacleHit(position: THREE.Vector3, obstacles: FlightObstacle[]): FlightObstacle | null {
+    for (const obstacle of obstacles) {
+      if (obstacle.radius <= 0) continue;
+      if (position.distanceTo(obstacle.center) <= obstacle.radius) return obstacle;
+    }
+    return null;
+  }
+
+  private getRespawnPosition(map: MapDefinition): THREE.Vector3 {
     if (this.hasSafePosition) {
       return this.lastSafePosition.clone().setY(Math.max(this.lastSafePosition.y, map.playerSpawn[1], 120));
     }

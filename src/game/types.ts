@@ -180,6 +180,7 @@ export interface AtmosphereVfxConfig {
 }
 
 export interface WorldLandmarkLayerConfig {
+  label?: string;
   assetPath: string;
   count: number;
   radius: number;
@@ -191,6 +192,7 @@ export interface WorldLandmarkLayerConfig {
   rotationSpeedRange?: [number, number];
   groundY?: number;
   faceCenter?: boolean;
+  collisionRadius?: number;
 }
 
 export interface WeatherBillboardLayerConfig {

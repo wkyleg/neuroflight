@@ -7,6 +7,7 @@ interface WorldLandmarkInstance {
   layer: WorldLandmarkLayerConfig;
   drift: THREE.Vector3;
   rotationSpeed: number;
+  collisionRadius: number | null;
 }
 
 function seededRng(seed: number) {
@@ -62,6 +63,16 @@ export class WorldLandmarkSystem {
     this.instances.length = 0;
   }
 
+  getCollisionVolumes(): Array<{ center: THREE.Vector3; radius: number; label: string }> {
+    return this.instances
+      .filter((instance) => instance.collisionRadius !== null)
+      .map((instance) => ({
+        center: instance.root.position,
+        radius: instance.collisionRadius ?? 0,
+        label: instance.layer.label ?? 'landmark',
+      }));
+  }
+
   private async loadLayer(layer: WorldLandmarkLayerConfig): Promise<void> {
     try {
       const gltf = await this.loader.loadAsync(layer.assetPath);
@@ -101,6 +112,7 @@ export class WorldLandmarkSystem {
             layer.rotationSpeedRange?.[1] ?? 0.008,
             this.rng(),
           ),
+          collisionRadius: layer.collisionRadius ?? null,
         };
         this.placeInstance(instance, new THREE.Vector3());
         this.scene.add(root);

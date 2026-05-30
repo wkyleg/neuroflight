@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { FlightModel } from '@/game/flight/FlightModel.ts';
-import type { MapConfig } from '@/game/types.ts';
+import type { MapDefinition } from '@/game/types.ts';
 import { FlightSafetySystem } from './FlightSafetySystem.ts';
 
 function makeFlight(y: number, speed = 70): FlightModel {
@@ -15,12 +15,19 @@ function makeFlight(y: number, speed = 70): FlightModel {
     getSpeed() {
       return speed;
     },
+    resetSpeedForRecovery() {},
   } as FlightModel;
 }
 
 const map = {
+  id: 'test',
+  name: 'Test',
+  description: 'Test',
+  environmentPresetId: 'clearSky',
   playerSpawn: [0, 90, 500],
-} as MapConfig;
+  scatterLayers: [],
+  ringBehavior: 'aheadPath',
+} as MapDefinition;
 
 describe('FlightSafetySystem', () => {
   it('records a crash event below the ground threshold', () => {
@@ -45,5 +52,18 @@ describe('FlightSafetySystem', () => {
     safety.applyRespawn(flight, event);
     expect(flight.object.position.y).toBeGreaterThanOrEqual(120);
     expect(safety.getInvulnerabilitySeconds()).toBeGreaterThan(0);
+  });
+
+  it('records a crash event when the plane intersects a landmark obstacle', () => {
+    const flight = makeFlight(140, 80);
+    flight.object.position.set(10, 140, 10);
+    const safety = new FlightSafetySystem();
+    safety.reset(map);
+    safety.update(3, flight, map);
+    const event = safety.update(0.1, flight, map, [
+      { center: new THREE.Vector3(15, 140, 12), radius: 28, label: 'pyramid' },
+    ]);
+    expect(event?.type).toBe('crash');
+    expect(event?.label).toContain('pyramid');
   });
 });

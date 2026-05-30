@@ -249,6 +249,7 @@ export const MAPS: MapDefinition[] = [
     },
     worldLandmarkLayers: [
       {
+        label: 'pyramid',
         assetPath: '/assets/world/desert-pyramid-01.glb',
         count: 1,
         radius: 7600,
@@ -256,8 +257,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [720, 980],
         groundY: 0,
+        collisionRadius: 260,
       },
       {
+        label: 'ruined temple',
         assetPath: '/assets/world/desert-ruined-temple-01.glb',
         count: 1,
         radius: 7800,
@@ -265,8 +268,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [560, 760],
         groundY: 0,
+        collisionRadius: 210,
       },
       {
+        label: 'temple',
         assetPath: '/assets/world/desert-temple-02.glb',
         count: 1,
         radius: 7200,
@@ -274,8 +279,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [420, 620],
         groundY: 0,
+        collisionRadius: 170,
       },
       {
+        label: 'stone arch',
         assetPath: '/assets/world/desert-arch-01.glb',
         count: 2,
         radius: 7600,
@@ -283,6 +290,7 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [320, 560],
         groundY: 0,
+        collisionRadius: 150,
       },
       {
         assetPath: '/assets/world/desert-canyon-01.glb',
@@ -303,6 +311,7 @@ export const MAPS: MapDefinition[] = [
         groundY: 0,
       },
       {
+        label: 'radar tower',
         assetPath: '/assets/world/desert-radar-01.glb',
         count: 1,
         radius: 7000,
@@ -310,8 +319,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [240, 340],
         groundY: 0,
+        collisionRadius: 120,
       },
       {
+        label: 'radio tower',
         assetPath: '/assets/world/desert-radio-tower-01.glb',
         count: 1,
         radius: 7600,
@@ -319,8 +330,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [300, 430],
         groundY: 0,
+        collisionRadius: 115,
       },
       {
+        label: 'floating island',
         assetPath: '/assets/world/floating-islands-large-01.glb',
         count: 2,
         radius: 9600,
@@ -329,6 +342,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [360, 680],
         driftSpeedRange: [0.8, 2.4],
         rotationSpeedRange: [-0.01, 0.01],
+        collisionRadius: 250,
       },
     ],
     livingWorld: {
@@ -784,6 +798,7 @@ export const MAPS: MapDefinition[] = [
     },
     worldLandmarkLayers: [
       {
+        label: 'lighthouse',
         assetPath: '/assets/world/ocean-lighthouse-01.glb',
         count: 2,
         radius: 7200,
@@ -791,6 +806,7 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [250, 360],
         groundY: 0,
+        collisionRadius: 130,
       },
       {
         assetPath: '/assets/world/ocean-port-01.glb',
@@ -811,6 +827,7 @@ export const MAPS: MapDefinition[] = [
         groundY: 0,
       },
       {
+        label: 'shipwreck',
         assetPath: '/assets/world/ocean-shipwreck-01.glb',
         count: 1,
         radius: 7400,
@@ -818,8 +835,10 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [360, 620],
         groundY: 0,
+        collisionRadius: 190,
       },
       {
+        label: 'cruise ship',
         assetPath: '/assets/world/ocean-cruise-ship-01.glb',
         count: 1,
         radius: 9000,
@@ -827,6 +846,7 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [0, 0],
         scaleRange: [650, 1000],
         groundY: 0,
+        collisionRadius: 260,
       },
       {
         assetPath: '/assets/world/ocean-docks-03.glb',
@@ -838,6 +858,7 @@ export const MAPS: MapDefinition[] = [
         groundY: 0,
       },
       {
+        label: 'floating island',
         assetPath: '/assets/world/floating-islands-large-01.glb',
         count: 2,
         radius: 9800,
@@ -846,6 +867,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [340, 660],
         driftSpeedRange: [0.8, 2.2],
         rotationSpeedRange: [-0.01, 0.01],
+        collisionRadius: 260,
       },
       {
         assetPath: '/assets/world/traffic-seaplane-01.glb',
