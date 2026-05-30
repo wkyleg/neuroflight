@@ -75,6 +75,27 @@ const DEFAULT_RPPG_STATE: Readonly<RppgProviderState> = {
 
 const NEURO_EMA_ALPHA = 0.08;
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function deriveRppgArousal(state: Readonly<RppgProviderState>): number {
+  const bpmArousal = state.arousal ?? 0.45;
+  const deltaArousal = state.baselineDelta !== null ? clamp01((state.baselineDelta + 6) / 26) : bpmArousal;
+  const respirationArousal = state.respirationRate !== null ? clamp01((state.respirationRate - 8) / 14) : bpmArousal;
+  const quality = clamp01(state.quality);
+  const derived = deltaArousal * 0.58 + bpmArousal * 0.24 + respirationArousal * 0.18;
+  return clamp01(0.48 * (1 - quality) + derived * quality);
+}
+
+function deriveRppgCalm(state: Readonly<RppgProviderState>): number {
+  const arousal = deriveRppgArousal(state);
+  const recoveryHint =
+    state.baselineDelta !== null && state.baselineDelta < 0 ? clamp01(Math.abs(state.baselineDelta) / 16) * 0.18 : 0;
+  const hrvHint = state.hrvRmssd !== null ? clamp01((state.hrvRmssd - 28) / 72) * 0.12 : 0;
+  return clamp01(1 - arousal + recoveryHint + hrvHint);
+}
+
 export type NeuroEventType = 'source_changed' | 'disconnected' | 'reconnected' | 'camera_quality_low' | 'alpha_bump';
 
 export interface NeuroEventData {
@@ -243,8 +264,8 @@ export class NeuroManager {
       this.state.alphaBumpState = eegState.alphaBumpState;
     } else if (rppgState.active) {
       source = 'rppg';
-      rawArousal = rppgState.arousal ?? 0;
-      rawCalm = this.mockProvider.getCurrentCalm();
+      rawArousal = deriveRppgArousal(rppgState);
+      rawCalm = deriveRppgCalm(rppgState);
       this.state.signalQuality = rppgState.quality;
       this.state.alphaBump = false;
       this.state.calmnessState = null;
