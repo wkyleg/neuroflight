@@ -67,7 +67,7 @@ export function MainMenu() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-full w-full max-w-7xl flex-col px-6 py-8 md:px-10 lg:px-14">
+      <div className="relative mx-auto flex min-h-full w-full max-w-[1360px] flex-col px-8 py-9 md:px-12 lg:px-16">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p
@@ -77,8 +77,8 @@ export function MainMenu() {
               Neuroadaptive storybook aviation
             </p>
             <h1
-              className="mt-2 text-5xl font-bold md:text-7xl"
-              style={{ color: '#fff4ca', fontFamily: 'var(--font-heading)' }}
+              className="mt-2 text-5xl font-bold md:text-6xl lg:text-7xl"
+              style={{ color: '#fff4ca', fontFamily: 'var(--font-heading)', lineHeight: 0.9 }}
             >
               NeuroFlight
             </h1>
@@ -113,14 +113,14 @@ export function MainMenu() {
           </div>
         </header>
 
-        <section className="grid flex-1 items-center gap-8 pb-20 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pt-16">
+        <section className="grid flex-1 items-start gap-8 pb-16 pt-9 lg:grid-cols-[1fr_0.92fr] lg:pt-12">
           <div>
-            <p className="max-w-2xl text-lg leading-8 md:text-xl" style={{ color: 'rgba(255,248,226,0.86)' }}>
+            <p className="max-w-2xl text-base leading-7 md:text-lg" style={{ color: 'rgba(255,248,226,0.86)' }}>
               Choose a quiet route, a landmark expedition, or a full dogfight. Sensors are optional; when they are on,
               the world responds gently to composure, recovery, and signal confidence.
             </p>
 
-            <div className="mt-9 grid gap-4 md:grid-cols-3">
+            <div className="mt-7 grid gap-3 md:grid-cols-3">
               {MODE_ORDER.map((modeId) => {
                 const item = MODE_META[modeId];
                 const active = selectedMode === modeId;
@@ -129,13 +129,13 @@ export function MainMenu() {
                     type="button"
                     key={item.id}
                     onClick={() => setSelectedMode(item.id)}
-                    className="min-h-[172px] cursor-pointer rounded-lg border text-left transition-transform hover:-translate-y-1 active:translate-y-0"
+                    className="min-h-[150px] cursor-pointer rounded-lg border text-left transition-transform hover:-translate-y-1 active:translate-y-0"
                     style={{
                       borderColor: active ? item.accent : 'rgba(255,255,255,0.16)',
                       background: active ? 'rgba(255,255,255,0.16)' : 'rgba(2,8,12,0.48)',
                       boxShadow: active ? `0 18px 50px ${item.accent}24` : 'none',
                       backdropFilter: 'blur(10px)',
-                      padding: 22,
+                      padding: 18,
                     }}
                   >
                     <span
@@ -158,11 +158,11 @@ export function MainMenu() {
               })}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-7 flex flex-wrap items-center gap-4">
               <button
                 type="button"
                 onClick={launchGame}
-                className="cursor-pointer rounded-lg px-8 py-5 text-lg font-bold transition-transform hover:scale-105 active:scale-95"
+                className="cursor-pointer rounded-lg px-7 py-4 text-base font-bold transition-transform hover:scale-105 active:scale-95"
                 style={{
                   color: '#071016',
                   background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)`,

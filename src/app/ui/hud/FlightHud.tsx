@@ -12,74 +12,98 @@ function ControlsLegend({ mode, onDismiss }: { mode: GameMode; onDismiss: () => 
   }, [onDismiss]);
 
   return (
-    <button
-      type="button"
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl pointer-events-auto z-50 text-left cursor-pointer"
-      onClick={onDismiss}
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
       style={{
-        background: 'rgba(0, 5, 15, 0.92)',
-        border: '1px solid rgba(255, 200, 100, 0.3)',
-        backdropFilter: 'blur(12px)',
-        padding: '40px 48px',
-        font: 'inherit',
-        color: 'inherit',
+        background: 'radial-gradient(circle at 50% 46%, rgba(3,12,18,0.12), rgba(3,12,18,0.28))',
       }}
     >
-      <h3
-        className="text-sm font-bold tracking-widest text-center"
-        style={{ color: 'var(--color-accent-gold)', fontFamily: 'var(--font-heading)', marginBottom: 24 }}
+      <button
+        type="button"
+        aria-label="Dismiss flight controls"
+        className="absolute inset-0 cursor-default"
+        onClick={onDismiss}
+        style={{ background: 'transparent', border: 0, borderRadius: 0, minHeight: 0, padding: 0 }}
+      />
+      <div
+        className="relative rounded-xl text-left"
+        style={{
+          background: 'rgba(0, 5, 15, 0.9)',
+          border: '1px solid rgba(255, 200, 100, 0.28)',
+          backdropFilter: 'blur(12px)',
+          padding: '30px 34px',
+          color: 'inherit',
+          width: 'min(560px, calc(100vw - 40px))',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.34)',
+        }}
       >
-        HOW TO FLY
-      </h3>
-      <div className="grid grid-cols-2 text-[12px]" style={{ color: 'var(--color-text-secondary)', gap: '14px 48px' }}>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>W / ↑</span> &mdash; Pitch up
+        <div className="flex items-start justify-between gap-6">
+          <h3
+            className="text-sm font-bold tracking-widest"
+            style={{ color: 'var(--color-accent-gold)', fontFamily: 'var(--font-heading)', marginBottom: 22 }}
+          >
+            HOW TO FLY
+          </h3>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="pointer-events-auto rounded-md border px-2 py-1 text-[10px] font-bold tracking-widest"
+            style={{
+              borderColor: 'rgba(255,255,255,0.12)',
+              color: 'rgba(240,236,224,0.74)',
+              background: 'rgba(255,255,255,0.05)',
+            }}
+          >
+            CLOSE
+          </button>
         </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>S / ↓</span> &mdash; Pitch down
+        <div
+          className="grid grid-cols-2 text-[12px]"
+          style={{ color: 'var(--color-text-secondary)', gap: '12px 34px' }}
+        >
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>W / ↑</span> - Pitch up
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>S / ↓</span> - Pitch down
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>A / ←</span> - Roll left
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>D / →</span> - Roll right
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>Q / E</span> - Yaw
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>Shift / Ctrl</span> - Throttle
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>B</span> - Brake
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-primary)' }}>R</span> - Restart
+          </div>
+          {mode === 'dogfight' && (
+            <>
+              <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                <span style={{ color: '#ff8888' }}>Space / Enter</span> - Fire
+              </div>
+              <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                <span style={{ color: 'var(--color-text-primary)' }}>Click</span> - Fire
+              </div>
+            </>
+          )}
         </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>A / ←</span> &mdash; Roll left
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>D / →</span> &mdash; Roll right
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>Q / E</span> &mdash; Yaw
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>Shift</span> &mdash; Throttle up
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>Ctrl</span> &mdash; Throttle down
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>B</span> &mdash; Brake
-        </div>
-        {mode === 'dogfight' && (
-          <>
-            <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
-              <span style={{ color: '#ff4444' }}>Space / Enter</span> &mdash; Fire
-            </div>
-            <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
-              <span style={{ color: 'var(--color-text-primary)' }}>Click</span> &mdash; Fire
-            </div>
-          </>
-        )}
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>R</span> &mdash; Restart
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-primary)' }}>Esc</span> &mdash; Pause
-        </div>
+        <p
+          className="text-center text-[10px] tracking-widest transition-opacity"
+          style={{ color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: 22 }}
+        >
+          CLICK OUTSIDE TO DISMISS
+        </p>
       </div>
-      <p
-        className="text-center text-[10px] tracking-widest cursor-pointer transition-opacity hover:opacity-100"
-        style={{ color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: 24 }}
-      >
-        CLICK ANYWHERE TO DISMISS
-      </p>
-    </button>
+    </div>
   );
 }
 
@@ -136,14 +160,19 @@ function HealthBar({
   large?: boolean;
 }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  const barW = large ? 220 : 160;
-  const barH = large ? 16 : 12;
-  const fontSize = large ? 14 : 12;
+  const barW = large ? 170 : 140;
+  const barH = large ? 12 : 10;
+  const fontSize = large ? 12 : 11;
   return (
     <div className="flex items-center" style={{ gap: 12 }}>
       <span
         className="tracking-widest text-right font-bold"
-        style={{ color: 'var(--color-text-secondary)', width: 64, fontFamily: 'var(--font-heading)', fontSize }}
+        style={{
+          color: 'var(--color-text-secondary)',
+          width: large ? 54 : 64,
+          fontFamily: 'var(--font-heading)',
+          fontSize,
+        }}
       >
         {label}
       </span>
@@ -274,11 +303,11 @@ function MissionCard({
     <div
       className="rounded-lg border"
       style={{
-        width: 330,
-        background: 'rgba(5,14,18,0.68)',
+        width: 310,
+        background: 'rgba(5,14,18,0.62)',
         borderColor: `${accent}55`,
         backdropFilter: 'blur(8px)',
-        padding: '16px 18px',
+        padding: '14px 16px',
       }}
     >
       <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-mono)' }}>
@@ -287,7 +316,10 @@ function MissionCard({
       <div className="mt-1 text-sm font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
         {subtitle}
       </div>
-      <div className="mt-4 text-lg font-bold leading-6" style={{ color: '#ffffff', fontFamily: 'var(--font-heading)' }}>
+      <div
+        className="mt-3 text-base font-bold leading-6"
+        style={{ color: '#ffffff', fontFamily: 'var(--font-heading)' }}
+      >
         {objective}
       </div>
       <div className="mt-2 min-h-8 text-xs leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
@@ -295,7 +327,7 @@ function MissionCard({
       </div>
       {goal > 0 && (
         <div className="mt-4">
-          <div className="flex justify-between text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+          <div className="flex justify-between text-[9px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
             <span>Progress</span>
             <span>
               {progress}/{goal}
@@ -313,7 +345,7 @@ function MissionCard({
 function AdaptiveGauge({ label, value, color }: { label: string; value: number; color: string }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
-    <div style={{ minWidth: 92 }}>
+    <div style={{ minWidth: 0 }}>
       <div className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
         {label}
       </div>
@@ -429,21 +461,21 @@ export function FlightHud() {
 
       {/* Top bar: speed, altitude, heading */}
       <div
-        className="absolute top-0 left-0 right-0 flex justify-between items-start px-20 pt-6 pb-5"
+        className="absolute top-0 left-0 right-0 flex justify-between items-start px-8 pt-4 pb-5"
         style={{
-          background: 'linear-gradient(to bottom, rgba(0,5,15,0.85) 0%, rgba(0,5,15,0.55) 60%, transparent 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,5,15,0.72) 0%, rgba(0,5,15,0.32) 58%, transparent 100%)',
         }}
       >
         <div
           className="flex rounded-lg"
-          style={{ background: 'rgba(0,5,15,0.6)', backdropFilter: 'blur(6px)', padding: '14px 24px', gap: 36 }}
+          style={{ background: 'rgba(0,5,15,0.52)', backdropFilter: 'blur(6px)', padding: '10px 16px', gap: 24 }}
         >
-          <div style={{ minWidth: 110 }}>
-            <div className="text-xs tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          <div style={{ minWidth: 92 }}>
+            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               SPD
             </div>
             <div
-              className="text-3xl font-bold tabular-nums"
+              className="text-2xl font-bold tabular-nums"
               style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
             >
               {Math.round(hud.speed)}
@@ -455,12 +487,12 @@ export function FlightHud() {
               </span>
             </div>
           </div>
-          <div style={{ minWidth: 110 }}>
-            <div className="text-xs tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          <div style={{ minWidth: 92 }}>
+            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               ALT
             </div>
             <div
-              className="text-3xl font-bold tabular-nums"
+              className="text-2xl font-bold tabular-nums"
               style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
             >
               {Math.round(hud.altitude)}
@@ -469,12 +501,12 @@ export function FlightHud() {
               </span>
             </div>
           </div>
-          <div style={{ minWidth: 80 }}>
-            <div className="text-xs tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          <div style={{ minWidth: 70 }}>
+            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               HDG
             </div>
             <div
-              className="text-3xl font-bold tabular-nums"
+              className="text-2xl font-bold tabular-nums"
               style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
             >
               {Math.round(hud.heading)}°
@@ -484,9 +516,9 @@ export function FlightHud() {
         <div className="text-right pointer-events-auto flex flex-col items-end" style={{ gap: 14 }}>
           <div
             className="rounded-lg"
-            style={{ background: 'rgba(0,5,15,0.6)', backdropFilter: 'blur(6px)', padding: '14px 24px' }}
+            style={{ background: 'rgba(0,5,15,0.52)', backdropFilter: 'blur(6px)', padding: '10px 18px' }}
           >
-            <div className="text-xs tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            <div className="text-[10px] tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               {hud.scoreLabel}
             </div>
             <div
@@ -510,11 +542,11 @@ export function FlightHud() {
                 color: 'var(--color-accent-gold)',
                 background: 'rgba(0,10,20,0.7)',
                 border: '1px solid rgba(255,200,100,0.4)',
-                padding: '10px 16px',
-                fontSize: 12,
+                padding: '8px 13px',
+                fontSize: 11,
               }}
             >
-              HOW TO FLY
+              HELP
             </button>
             <button
               type="button"
@@ -530,17 +562,17 @@ export function FlightHud() {
                 background: 'rgba(180,40,30,0.9)',
                 border: 'none',
                 boxShadow: '0 2px 8px rgba(180,40,30,0.4)',
-                padding: '10px 24px',
-                fontSize: 14,
+                padding: '9px 18px',
+                fontSize: 12,
               }}
             >
-              END FLIGHT
+              END
             </button>
           </div>
         </div>
       </div>
 
-      <div className="absolute left-10 top-36">
+      <div className="absolute left-8 top-28">
         <MissionCard
           title={hud.missionTitle}
           subtitle={hud.missionSubtitle}
@@ -552,7 +584,7 @@ export function FlightHud() {
         />
       </div>
 
-      <div className="absolute right-10 top-36 flex flex-col items-end gap-3">
+      <div className="absolute right-8 top-28 flex flex-col items-end gap-2">
         <AttitudeWidget heading={hud.heading} throttle={hud.throttle} speed={hud.speed} />
         <div
           className="rounded-lg border"
@@ -560,14 +592,14 @@ export function FlightHud() {
             background: 'rgba(5,14,18,0.58)',
             borderColor: 'rgba(255,255,255,0.12)',
             backdropFilter: 'blur(6px)',
-            padding: '12px 14px',
-            width: 260,
+            padding: '10px 12px',
+            width: 226,
           }}
         >
           <div className="mb-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.56)' }}>
             Adaptive Signals
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <AdaptiveGauge label="Composure" value={hud.composure} color="#5eead4" />
             <AdaptiveGauge label="Load" value={hud.neuroLoad} color="#fb7185" />
             <AdaptiveGauge label="Flow" value={hud.flow} color="#facc15" />
@@ -611,10 +643,10 @@ export function FlightHud() {
           <div
             className="absolute flex flex-col rounded-lg"
             style={{
-              left: 40,
-              bottom: 200,
+              left: 32,
+              bottom: 126,
               gap: 10,
-              padding: '16px 22px',
+              padding: '12px 16px',
               background: 'rgba(0,5,15,0.6)',
               backdropFilter: 'blur(6px)',
               border: '1px solid rgba(255,255,255,0.06)',
@@ -632,12 +664,12 @@ export function FlightHud() {
       {/* Throttle bar + label (left side) */}
       <div
         className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center rounded-lg"
-        style={{ left: 40, gap: 6, padding: '12px 14px', background: 'rgba(0,5,15,0.5)', backdropFilter: 'blur(4px)' }}
+        style={{ left: 28, gap: 5, padding: '9px 11px', background: 'rgba(0,5,15,0.42)', backdropFilter: 'blur(4px)' }}
       >
         <div className="text-[10px] tracking-widest font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
           THR
         </div>
-        <div className="rounded-full relative" style={{ background: 'rgba(255,255,255,0.08)', width: 14, height: 160 }}>
+        <div className="rounded-full relative" style={{ background: 'rgba(255,255,255,0.08)', width: 12, height: 126 }}>
           <div
             className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-100"
             style={{
@@ -657,9 +689,10 @@ export function FlightHud() {
       </div>
 
       {/* On-screen control buttons (bottom-right) */}
-      <div className="absolute flex flex-col pointer-events-auto" style={{ right: 36, bottom: 156, gap: 8 }}>
+      <div className="absolute flex flex-col pointer-events-auto" style={{ right: 24, bottom: 108, gap: 6 }}>
         <button
           type="button"
+          aria-label="Throttle up"
           onPointerDown={(e) => {
             stopHudPointer(e);
             setThrottle(true, false);
@@ -671,18 +704,21 @@ export function FlightHud() {
           onPointerLeave={() => setThrottle(false, false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 58,
-            height: 44,
+            width: 50,
+            height: 38,
+            minHeight: 38,
+            padding: 0,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(0,204,204,0.5)',
             color: 'var(--color-accent-cyan)',
             backdropFilter: 'blur(4px)',
           }}
         >
-          THR ▲
+          ▲
         </button>
         <button
           type="button"
+          aria-label="Throttle down"
           onPointerDown={(e) => {
             stopHudPointer(e);
             setThrottle(false, true);
@@ -694,18 +730,21 @@ export function FlightHud() {
           onPointerLeave={() => setThrottle(false, false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 58,
-            height: 44,
+            width: 50,
+            height: 38,
+            minHeight: 38,
+            padding: 0,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(0,204,204,0.4)',
             color: 'var(--color-accent-cyan)',
             backdropFilter: 'blur(4px)',
           }}
         >
-          THR ▼
+          ▼
         </button>
         <button
           type="button"
+          aria-label="Boost"
           onPointerDown={(e) => {
             stopHudPointer(e);
             setBoost(true);
@@ -717,8 +756,10 @@ export function FlightHud() {
           onPointerLeave={() => setBoost(false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 58,
-            height: 44,
+            width: 50,
+            height: 38,
+            minHeight: 38,
+            padding: 0,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(255,200,100,0.5)',
             color: 'var(--color-accent-gold)',
@@ -729,6 +770,7 @@ export function FlightHud() {
         </button>
         <button
           type="button"
+          aria-label="Brake"
           onPointerDown={(e) => {
             stopHudPointer(e);
             setBrake(true);
@@ -740,8 +782,10 @@ export function FlightHud() {
           onPointerLeave={() => setBrake(false)}
           className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
           style={{
-            width: 58,
-            height: 44,
+            width: 50,
+            height: 38,
+            minHeight: 38,
+            padding: 0,
             background: 'rgba(0,10,20,0.7)',
             border: '1px solid rgba(255,80,60,0.5)',
             color: '#ff6644',
@@ -753,6 +797,7 @@ export function FlightHud() {
         {isDogfight && (
           <button
             type="button"
+            aria-label="Fire"
             onPointerDown={(e) => {
               stopHudPointer(e);
               setFire(true);
@@ -764,8 +809,10 @@ export function FlightHud() {
             onPointerLeave={() => setFire(false)}
             className="rounded-lg text-xs font-bold tracking-wider flex items-center justify-center cursor-pointer select-none active:scale-95 transition-transform"
             style={{
-              width: 58,
-              height: 44,
+              width: 50,
+              height: 38,
+              minHeight: 38,
+              padding: 0,
               background: 'rgba(255,30,30,0.3)',
               border: '2px solid rgba(255,60,60,0.7)',
               color: '#ff4444',
@@ -775,15 +822,6 @@ export function FlightHud() {
             FIRE
           </button>
         )}
-      </div>
-
-      {/* Dev controls hint */}
-      <div
-        className="absolute text-[10px] leading-relaxed"
-        style={{ left: 40, bottom: 170, color: 'rgba(255,255,255,0.25)' }}
-      >
-        <div>[ switch environment</div>
-        <div>R restart{isDogfight ? ' · Space / F to tag' : ''}</div>
       </div>
 
       {/* Bottom neuro cockpit panel */}

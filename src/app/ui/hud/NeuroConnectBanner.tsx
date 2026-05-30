@@ -6,8 +6,8 @@ export function NeuroConnectBanner() {
   const { eegConnected, cameraActive, mockEnabled, connecting } = useNeuroConnection();
   const [dismissed, setDismissed] = useState(false);
 
-  const allConnected = (eegConnected && cameraActive) || mockEnabled;
-  if (dismissed || allConnected) return null;
+  const readyEnough = cameraActive || mockEnabled || eegConnected;
+  if (dismissed || readyEnough) return null;
 
   const connectHeadband = async () => {
     await useNeuroStore.getState().connectHeadband();
@@ -20,8 +20,6 @@ export function NeuroConnectBanner() {
   const enableMock = () => {
     useNeuroStore.getState().enableMock();
   };
-
-  const hasAny = eegConnected || cameraActive;
 
   return (
     <div
@@ -38,7 +36,7 @@ export function NeuroConnectBanner() {
         className="text-[11px] tracking-wide"
         style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-heading)' }}
       >
-        {hasAny ? 'Add signal' : 'Signals optional'}
+        Signals optional
       </span>
 
       <button
@@ -73,22 +71,20 @@ export function NeuroConnectBanner() {
         {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
       </button>
 
-      {!hasAny && (
-        <button
-          type="button"
-          onClick={enableMock}
-          className="text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
-          style={{
-            fontFamily: 'var(--font-heading)',
-            borderColor: 'var(--color-text-secondary)',
-            color: 'var(--color-text-secondary)',
-            background: 'transparent',
-            padding: '7px 12px',
-          }}
-        >
-          Sim
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={enableMock}
+        className="text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
+        style={{
+          fontFamily: 'var(--font-heading)',
+          borderColor: 'var(--color-text-secondary)',
+          color: 'var(--color-text-secondary)',
+          background: 'transparent',
+          padding: '7px 12px',
+        }}
+      >
+        Sim
+      </button>
 
       <button
         type="button"
