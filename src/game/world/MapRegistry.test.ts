@@ -36,9 +36,32 @@ describe('MapRegistry', () => {
     const ocean = getMap('ocean_islands');
     expect(ocean.scatterLayers.some((layer) => layer.type === 'pine_tree')).toBe(false);
     expect(ocean.scatterLayers.some((layer) => layer.type === 'palm_tree' && layer.scaleRange[0] >= 18)).toBe(true);
-    expect(ocean.worldLandmarkLayers?.some((layer) => layer.label === 'lighthouse' && layer.islandBase?.radius)).toBe(
-      true,
-    );
+    expect(
+      ocean.worldLandmarkLayers?.some(
+        (layer) => layer.label === 'lighthouse' && layer.placementKind === 'island' && layer.islandBase?.radius,
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps ships in the water instead of on island bases', () => {
+    const ocean = getMap('ocean_islands');
+    const cruise = ocean.worldLandmarkLayers?.find((layer) => layer.label === 'cruise ship');
+    const shipwreck = ocean.worldLandmarkLayers?.find((layer) => layer.label === 'shipwreck');
+    const dock = ocean.worldLandmarkLayers?.find((layer) => layer.label === 'dock island');
+
+    expect(cruise?.placementKind).toBe('waterline');
+    expect(cruise?.islandBase).toBeUndefined();
+    expect(shipwreck?.placementKind).toBe('waterline');
+    expect(shipwreck?.islandBase).toBeUndefined();
+    expect(shipwreck?.placements?.every((placement) => placement.placementKind === 'waterline')).toBe(true);
+    expect(dock?.placementKind).toBe('island');
+    expect(dock?.islandBase).toBeDefined();
+  });
+
+  it('adds seeded moving sea traffic for Stormglass open water', () => {
+    const ocean = getMap('ocean_islands');
+    expect(ocean.seaTraffic?.vessels.map((vessel) => vessel.type)).toEqual(['sailboat', 'cargo', 'cruise']);
+    expect(ocean.seaTraffic?.vessels.every((vessel) => vessel.wake && vessel.speedRange[1] > 0)).toBe(true);
   });
 
   it('authors hero landmarks near mission route set pieces', () => {

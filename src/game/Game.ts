@@ -28,6 +28,7 @@ import { CloudSystem } from './world/CloudSystem.ts';
 import { LivingWorldDirector } from './world/LivingWorldDirector.ts';
 import { getMap } from './world/MapRegistry.ts';
 import { RingManager } from './world/RingManager.ts';
+import { SeaTrafficSystem } from './world/SeaTrafficSystem.ts';
 import { SkyObjectSystem } from './world/SkyObjectSystem.ts';
 import { SkySystem } from './world/SkySystem.ts';
 import { WeatherIdentitySystem } from './world/WeatherIdentitySystem.ts';
@@ -136,6 +137,7 @@ export class Game {
   private skyObjectSystem: SkyObjectSystem | null = null;
   private atmosphereVfxSystem: AtmosphereVfxSystem | null = null;
   private worldLandmarkSystem: WorldLandmarkSystem | null = null;
+  private seaTrafficSystem: SeaTrafficSystem | null = null;
   private weatherIdentitySystem: WeatherIdentitySystem | null = null;
   private livingWorldDirector: LivingWorldDirector | null = null;
   private combatVfxSystem: CombatVfxSystem | null = null;
@@ -288,6 +290,7 @@ export class Game {
     this.atmosphereVfxSystem = new AtmosphereVfxSystem(this.scene, map.atmosphere);
     this.worldLandmarkSystem = new WorldLandmarkSystem(this.scene);
     await this.worldLandmarkSystem.load(map.worldLandmarkLayers ?? []);
+    this.seaTrafficSystem = new SeaTrafficSystem(this.scene, map.seaTraffic);
     this.weatherIdentitySystem = new WeatherIdentitySystem(this.scene, map.weatherIdentity);
     this.livingWorldDirector = new LivingWorldDirector(this.scene, map.livingWorld, mode, map.id);
     await this.livingWorldDirector.load();
@@ -515,6 +518,7 @@ export class Game {
     this.skyObjectSystem?.update(dt, this.cameraManager.camera.position);
     this.atmosphereVfxSystem?.update(dt, this.cameraManager.camera.position);
     this.worldLandmarkSystem?.update(dt, this.cameraManager.camera.position);
+    this.seaTrafficSystem?.update(dt, this.cameraManager.camera.position);
     this.weatherIdentitySystem?.update(dt, this.cameraManager.camera.position);
     this.livingWorldDirector?.update(dt, this.cameraManager.camera.position);
     this.combatVfxSystem?.update(dt);
@@ -1064,6 +1068,7 @@ export class Game {
     this.skyObjectSystem?.destroy();
     this.atmosphereVfxSystem?.destroy();
     this.worldLandmarkSystem?.destroy();
+    this.seaTrafficSystem?.destroy();
     this.weatherIdentitySystem?.destroy();
     this.livingWorldDirector?.destroy();
     this.combatVfxSystem?.destroy();

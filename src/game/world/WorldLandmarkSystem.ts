@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import type { WorldLandmarkLayerConfig } from '@/game/types.ts';
+import type { WorldLandmarkLayerConfig, WorldLandmarkPlacementKind } from '@/game/types.ts';
 
 interface WorldLandmarkInstance {
   root: THREE.Group;
@@ -95,8 +95,9 @@ export class WorldLandmarkSystem {
         const root = new THREE.Group();
         root.add(clone);
 
+        const placementKind = placement?.placementKind ?? layer.placementKind ?? this.defaultPlacementKind(layer);
         const islandBase = placement?.islandBase ?? layer.islandBase;
-        if (islandBase) {
+        if (islandBase && this.shouldRenderIslandBase(placementKind)) {
           const baseHeight = islandBase.height ?? 18;
           const baseRadius = islandBase.radius;
           const baseGeometry = new THREE.CylinderGeometry(1, 1.28, 1, 18);
@@ -178,5 +179,14 @@ export class WorldLandmarkSystem {
     const angle = this.rng() * Math.PI * 2;
     const speed = THREE.MathUtils.lerp(speedRange[0], speedRange[1], this.rng());
     return new THREE.Vector3(Math.cos(angle) * speed, 0, Math.sin(angle) * speed);
+  }
+
+  private defaultPlacementKind(layer: WorldLandmarkLayerConfig): WorldLandmarkPlacementKind {
+    if (layer.groundY === undefined && layer.altitudeRange[0] > 0) return 'floating';
+    return layer.islandBase ? 'island' : 'waterline';
+  }
+
+  private shouldRenderIslandBase(kind: WorldLandmarkPlacementKind): boolean {
+    return kind === 'island' || kind === 'shoreline';
   }
 }

@@ -214,6 +214,8 @@ export interface AtmosphereVfxConfig {
   lightningColor: number;
 }
 
+export type WorldLandmarkPlacementKind = 'island' | 'shoreline' | 'waterline' | 'floating';
+
 export interface WorldLandmarkLayerConfig {
   label?: string;
   assetPath: string;
@@ -228,6 +230,7 @@ export interface WorldLandmarkLayerConfig {
   groundY?: number;
   faceCenter?: boolean;
   collisionRadius?: number;
+  placementKind?: WorldLandmarkPlacementKind;
   islandBase?: {
     radius: number;
     height?: number;
@@ -239,6 +242,7 @@ export interface WorldLandmarkLayerConfig {
     targetSize?: number;
     rotationY?: number;
     collisionRadius?: number;
+    placementKind?: WorldLandmarkPlacementKind;
     islandBase?: {
       radius: number;
       height?: number;
@@ -246,6 +250,24 @@ export interface WorldLandmarkLayerConfig {
       flatten?: number;
     };
   }>;
+}
+
+export interface SeaTrafficVesselConfig {
+  id: string;
+  label?: string;
+  type: 'sailboat' | 'cargo' | 'cruise';
+  count: number;
+  radius: number;
+  minDistance?: number;
+  scaleRange: [number, number];
+  speedRange: [number, number];
+  wake?: boolean;
+}
+
+export interface SeaTrafficConfig {
+  seed?: number;
+  waterY?: number;
+  vessels: SeaTrafficVesselConfig[];
 }
 
 export interface WeatherBillboardLayerConfig {
@@ -315,6 +337,7 @@ export interface MapDefinition {
   atmosphere?: AtmosphereVfxConfig;
   worldLandmarkLayers?: WorldLandmarkLayerConfig[];
   livingWorld?: LivingWorldConfig;
+  seaTraffic?: SeaTrafficConfig;
   weatherIdentity?: WeatherIdentityConfig;
   combatVfx?: CombatVfxConfig;
   audioPolish?: AudioPolishConfig;
