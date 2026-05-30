@@ -1,13 +1,17 @@
 import * as THREE from 'three';
 
-const CLOUD_COUNT = 30;
-const CLOUD_SPREAD = 6000;
-const CLOUD_MIN_Y = 500;
-const CLOUD_MAX_Y = 1200;
-const CLOUD_MIN_SCALE = 60;
-const CLOUD_MAX_SCALE = 300;
-const CULL_DISTANCE = 4500;
-const RESPAWN_DISTANCE = 3800;
+const CLOUD_COUNT = 52;
+const CLOUD_SPREAD = 7600;
+const CLOUD_MIN_SCALE = 150;
+const CLOUD_MAX_SCALE = 780;
+const CULL_DISTANCE = 5600;
+const RESPAWN_DISTANCE = 5000;
+
+interface CloudBillboard {
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  drift: THREE.Vector3;
+  band: 'low' | 'mid' | 'high';
+}
 
 function createCloudTexture(): THREE.CanvasTexture {
   const size = 256;
@@ -22,21 +26,21 @@ function createCloudTexture(): THREE.CanvasTexture {
   const cx = size / 2;
   const cy = size / 2;
 
-  const blobs = [
-    { x: cx, y: cy, r: size * 0.38, a: 0.55 },
-    { x: cx - size * 0.2, y: cy + size * 0.05, r: size * 0.3, a: 0.45 },
-    { x: cx + size * 0.22, y: cy - size * 0.03, r: size * 0.32, a: 0.45 },
-    { x: cx - size * 0.1, y: cy - size * 0.14, r: size * 0.24, a: 0.35 },
-    { x: cx + size * 0.14, y: cy + size * 0.12, r: size * 0.27, a: 0.4 },
-    { x: cx - size * 0.25, y: cy - size * 0.06, r: size * 0.2, a: 0.3 },
-    { x: cx + size * 0.08, y: cy - size * 0.18, r: size * 0.18, a: 0.25 },
-  ];
+  const blobs = Array.from({ length: 18 }, (_, i) => {
+    const t = i / 17;
+    return {
+      x: cx + Math.cos(t * Math.PI * 4.8) * size * (0.08 + t * 0.22),
+      y: cy + Math.sin(t * Math.PI * 3.4) * size * 0.16,
+      r: size * (0.18 + Math.sin(t * Math.PI) * 0.22),
+      a: 0.18 + Math.sin(t * Math.PI) * 0.34,
+    };
+  });
 
   for (const blob of blobs) {
     const gradient = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
     gradient.addColorStop(0, `rgba(255, 255, 255, ${blob.a})`);
-    gradient.addColorStop(0.4, `rgba(255, 255, 255, ${blob.a * 0.6})`);
-    gradient.addColorStop(0.7, `rgba(255, 255, 255, ${blob.a * 0.2})`);
+    gradient.addColorStop(0.35, `rgba(255, 255, 255, ${blob.a * 0.62})`);
+    gradient.addColorStop(0.72, `rgba(255, 255, 255, ${blob.a * 0.18})`);
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, size, size);
@@ -48,7 +52,7 @@ function createCloudTexture(): THREE.CanvasTexture {
 }
 
 export class CloudSystem {
-  private clouds: THREE.Mesh[] = [];
+  private clouds: CloudBillboard[] = [];
   private material: THREE.MeshBasicMaterial;
   private geometry: THREE.PlaneGeometry;
   private cloudTexture: THREE.CanvasTexture;
@@ -68,42 +72,65 @@ export class CloudSystem {
     });
 
     for (let i = 0; i < CLOUD_COUNT; i++) {
+      const band = i % 5 === 0 ? 'high' : i % 3 === 0 ? 'low' : 'mid';
       const cloud = new THREE.Mesh(this.geometry, this.material.clone());
-      const scale = THREE.MathUtils.randFloat(CLOUD_MIN_SCALE, CLOUD_MAX_SCALE);
-      cloud.scale.set(scale * (1.5 + Math.random()), scale * (0.5 + Math.random() * 0.3), 1);
-      cloud.position.set(
-        THREE.MathUtils.randFloatSpread(CLOUD_SPREAD),
-        THREE.MathUtils.randFloat(CLOUD_MIN_Y, CLOUD_MAX_Y),
-        THREE.MathUtils.randFloatSpread(CLOUD_SPREAD),
-      );
-      (cloud.material as THREE.MeshBasicMaterial).opacity = THREE.MathUtils.randFloat(0.15, 0.35);
+      this.placeCloud(cloud, new THREE.Vector3(), band, CLOUD_SPREAD);
+      (cloud.material as THREE.MeshBasicMaterial).opacity = THREE.MathUtils.randFloat(0.12, 0.34);
       cloud.renderOrder = -1;
       this.scene.add(cloud);
-      this.clouds.push(cloud);
+      this.clouds.push({
+        mesh: cloud,
+        drift: this.makeDrift(band),
+        band,
+      });
     }
   }
 
-  update(cameraPos: THREE.Vector3): void {
+  update(dt: number, cameraPos: THREE.Vector3): void {
     for (const cloud of this.clouds) {
-      cloud.lookAt(cameraPos);
+      cloud.mesh.position.addScaledVector(cloud.drift, dt);
+      cloud.mesh.lookAt(cameraPos);
 
-      const dx = cloud.position.x - cameraPos.x;
-      const dz = cloud.position.z - cameraPos.z;
+      const dx = cloud.mesh.position.x - cameraPos.x;
+      const dz = cloud.mesh.position.z - cameraPos.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
 
       if (dist > CULL_DISTANCE) {
-        const angle = Math.random() * Math.PI * 2;
-        cloud.position.x = cameraPos.x + Math.cos(angle) * RESPAWN_DISTANCE * 0.5;
-        cloud.position.z = cameraPos.z + Math.sin(angle) * RESPAWN_DISTANCE * 0.5;
-        cloud.position.y = THREE.MathUtils.randFloat(CLOUD_MIN_Y, CLOUD_MAX_Y);
+        this.placeCloud(cloud.mesh, cameraPos, cloud.band, RESPAWN_DISTANCE);
+        cloud.drift = this.makeDrift(cloud.band);
       }
     }
   }
 
+  private placeCloud(
+    cloud: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>,
+    center: THREE.Vector3,
+    band: CloudBillboard['band'],
+    radius: number,
+  ): void {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = THREE.MathUtils.randFloat(radius * 0.25, radius);
+    const scale = THREE.MathUtils.randFloat(CLOUD_MIN_SCALE, CLOUD_MAX_SCALE) * (band === 'high' ? 1.25 : 1);
+    const altitude =
+      band === 'low'
+        ? THREE.MathUtils.randFloat(360, 760)
+        : band === 'high'
+          ? THREE.MathUtils.randFloat(1550, 2750)
+          : THREE.MathUtils.randFloat(820, 1650);
+    cloud.scale.set(scale * THREE.MathUtils.randFloat(1.45, 2.9), scale * THREE.MathUtils.randFloat(0.24, 0.5), 1);
+    cloud.position.set(center.x + Math.cos(angle) * distance, altitude, center.z + Math.sin(angle) * distance);
+  }
+
+  private makeDrift(band: CloudBillboard['band']): THREE.Vector3 {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = band === 'high' ? THREE.MathUtils.randFloat(4, 10) : THREE.MathUtils.randFloat(1.5, 5.5);
+    return new THREE.Vector3(Math.cos(angle) * speed, 0, Math.sin(angle) * speed);
+  }
+
   destroy(): void {
     for (const cloud of this.clouds) {
-      this.scene.remove(cloud);
-      (cloud.material as THREE.Material).dispose();
+      this.scene.remove(cloud.mesh);
+      cloud.mesh.material.dispose();
     }
     this.geometry.dispose();
     this.material.dispose();

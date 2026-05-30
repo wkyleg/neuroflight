@@ -511,7 +511,7 @@ export class Game {
     this.cameraManager.update(dt, plane, speed);
 
     this.skySystem?.followCamera(this.cameraManager.camera.position);
-    this.cloudSystem?.update(this.cameraManager.camera.position);
+    this.cloudSystem?.update(dt, this.cameraManager.camera.position);
     this.skyObjectSystem?.update(dt, this.cameraManager.camera.position);
     this.atmosphereVfxSystem?.update(dt, this.cameraManager.camera.position);
     this.worldLandmarkSystem?.update(dt, this.cameraManager.camera.position);

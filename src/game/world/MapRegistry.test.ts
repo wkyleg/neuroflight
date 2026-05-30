@@ -51,4 +51,12 @@ describe('MapRegistry', () => {
       true,
     );
   });
+
+  it('uses distant ocean mist curtains instead of near falling rain streaks', () => {
+    const ocean = getMap('ocean_islands');
+    expect(ocean.atmosphere?.rainCount).toBe(0);
+    expect(ocean.weatherIdentity?.billboardLayers.some((layer) => layer.texturePath.includes('rain-streak'))).toBe(
+      false,
+    );
+  });
 });
