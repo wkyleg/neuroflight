@@ -160,7 +160,7 @@ export const MAPS: MapDefinition[] = [
       { type: 'wreck', count: 5, radius: 6000, minDistance: 700, scaleRange: [6, 12] },
     ],
     groundPlane: {
-      color: 0xc8a96e,
+      color: 0xd3a65f,
       size: 22000,
     },
     skyObjectLayers: [
@@ -615,7 +615,7 @@ export const MAPS: MapDefinition[] = [
         },
       ],
     },
-    environmentPresetId: 'clearSky',
+    environmentPresetId: 'tropical',
     playerSpawn: [0, 110, 400],
     scatterLayers: [
       { type: 'rock', count: 45, radius: 7000, minDistance: 100, scaleRange: [15, 50] },
@@ -628,11 +628,11 @@ export const MAPS: MapDefinition[] = [
       { type: 'lighthouse', count: 4, radius: 5000, minDistance: 1200, scaleRange: [12, 16] },
     ],
     groundPlane: {
-      color: 0x1478aa,
+      color: 0x0f8ec4,
       size: 22000,
       opacity: 1.0,
-      emissive: 0x0a5580,
-      emissiveIntensity: 0.3,
+      emissive: 0x076b98,
+      emissiveIntensity: 0.22,
     },
     skyObjectLayers: [
       {

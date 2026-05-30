@@ -110,7 +110,6 @@ export class Game {
     this.flightSafetySystem = new FlightSafetySystem();
 
     this.inputManager.onDevKey((key) => {
-      if (key === 'BracketLeft') this.switchEnvironment();
       if (key === 'Escape') this.togglePause();
       if (key === 'KeyR') this.restart();
     });
@@ -713,23 +712,23 @@ export class Game {
   private applyVisualGrade(mapId: string): void {
     if (mapId === 'ocean_islands') {
       this.renderer.setVisualGrade({
-        saturation: 1.2,
-        contrast: 1.05,
-        warmth: 0.005,
-        vignette: 0.14,
-        exposure: 1.05,
-        bloomStrength: 0.1,
+        saturation: 1.34,
+        contrast: 1.1,
+        warmth: 0.018,
+        vignette: 0.16,
+        exposure: 1.0,
+        bloomStrength: 0.13,
       });
       return;
     }
 
     this.renderer.setVisualGrade({
-      saturation: 1.18,
-      contrast: 1.08,
-      warmth: 0.04,
-      vignette: 0.16,
-      exposure: 1.04,
-      bloomStrength: 0.11,
+      saturation: 1.3,
+      contrast: 1.11,
+      warmth: 0.06,
+      vignette: 0.18,
+      exposure: 0.99,
+      bloomStrength: 0.12,
     });
   }
 

@@ -11,6 +11,7 @@ export interface SkyConfig {
   fogColor: THREE.Color;
   fogNear: number;
   fogFar: number;
+  fogDensity?: number;
   useAtmosphericSky?: boolean;
   turbidity?: number;
   rayleigh?: number;
@@ -91,7 +92,10 @@ export class SkySystem {
     uniforms.sunPosition.value.copy(config.sunDirection).multiplyScalar(1000);
 
     this.scene.add(this.sky);
-    this.scene.fog = new THREE.Fog(config.fogColor, config.fogNear, config.fogFar);
+    this.scene.fog =
+      config.fogDensity !== undefined
+        ? new THREE.FogExp2(config.fogColor, config.fogDensity)
+        : new THREE.Fog(config.fogColor, config.fogNear, config.fogFar);
   }
 
   private createGradientSky(config: SkyConfig): void {
@@ -129,7 +133,10 @@ export class SkySystem {
     this.scene.add(this.skyMesh);
     this.scene.background = config.fogColor;
 
-    this.scene.fog = new THREE.Fog(config.fogColor, config.fogNear, config.fogFar);
+    this.scene.fog =
+      config.fogDensity !== undefined
+        ? new THREE.FogExp2(config.fogColor, config.fogDensity)
+        : new THREE.Fog(config.fogColor, config.fogNear, config.fogFar);
   }
 
   followCamera(cameraPos: THREE.Vector3): void {
