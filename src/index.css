@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg-primary: #06060a;
-  --color-bg-panel: #0a0a10;
-  --color-accent-gold: #c9a84c;
-  --color-accent-cyan: #00cccc;
-  --color-accent-blue: #4488ff;
-  --color-accent-red: #ff4466;
-  --color-text-primary: #f0ece0;
-  --color-text-secondary: #8888aa;
+  --color-bg-primary: #061114;
+  --color-bg-panel: #0c222b;
+  --color-accent-gold: #f0c85a;
+  --color-accent-cyan: #34e6d2;
+  --color-accent-blue: #66b7ff;
+  --color-accent-red: #ff6f64;
+  --color-text-primary: #fff6dc;
+  --color-text-secondary: #b7bdd8;
 
-  --font-heading: "Crimson Pro", serif;
-  --font-body: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-heading: "Fredoka", "Nunito", sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  --font-mono: "B612", "Nunito", sans-serif;
+  --font-instrument: "B612", "Nunito", sans-serif;
 }
 
 * {
@@ -30,6 +31,10 @@ body,
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 button {
@@ -55,6 +60,18 @@ button:not(:disabled):active {
 button:focus-visible {
   outline: 2px solid rgba(94, 234, 212, 0.72);
   outline-offset: 3px;
+}
+
+.neuroflight-hud,
+.neuroflight-hud .tabular-nums {
+  font-family: var(--font-instrument);
+}
+
+.neuroflight-hud button,
+.neuroflight-hud h1,
+.neuroflight-hud h2,
+.neuroflight-hud h3 {
+  font-family: var(--font-heading);
 }
 
 canvas {
