@@ -35,6 +35,7 @@ export class WeaponSystem {
   private muzzleLight: THREE.PointLight;
   private muzzleFadeTimer = 0;
   private aiTargets: THREE.Vector3[] = [];
+  private aimAssistMultiplier = 1;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -64,6 +65,10 @@ export class WeaponSystem {
 
   setAiTargets(positions: THREE.Vector3[]): void {
     this.aiTargets = positions;
+  }
+
+  setAimAssist(multiplier: number): void {
+    this.aimAssistMultiplier = THREE.MathUtils.clamp(multiplier, 0.8, 1.45);
   }
 
   fire(origin: THREE.Vector3, direction: THREE.Vector3, owner: 'player' | 'ai'): void {
@@ -123,11 +128,11 @@ export class WeaponSystem {
             closestTarget = t;
           }
         }
-        if (closestTarget && closestDist < MAGNETISM_RANGE) {
+        if (closestTarget && closestDist < MAGNETISM_RANGE * this.aimAssistMultiplier) {
           _magnetDir.subVectors(closestTarget, proj.mesh.position).normalize();
           const currentSpeed = proj.velocity.length();
           const currentDir = proj.velocity.clone().normalize();
-          currentDir.lerp(_magnetDir, MAGNETISM_STRENGTH * dt);
+          currentDir.lerp(_magnetDir, MAGNETISM_STRENGTH * this.aimAssistMultiplier * dt);
           currentDir.normalize();
           proj.velocity.copy(currentDir).multiplyScalar(currentSpeed);
         }
@@ -145,7 +150,7 @@ export class WeaponSystem {
         if (target.owner === proj.owner) continue;
         const dist = proj.mesh.position.distanceTo(target.position);
         // Player shooting AI gets a larger hit radius
-        const hitRadius = proj.owner === 'player' ? PLAYER_HIT_RADIUS : AI_HIT_RADIUS;
+        const hitRadius = proj.owner === 'player' ? PLAYER_HIT_RADIUS * this.aimAssistMultiplier : AI_HIT_RADIUS;
         if (dist < hitRadius) {
           hits.push({ targetIndex: ti, owner: proj.owner, position: proj.mesh.position.clone() });
           proj.active = false;

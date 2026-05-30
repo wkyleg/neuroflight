@@ -1,4 +1,12 @@
-import type { Backend, DemoRunner, Metrics, RppgProcessor } from '@elata-biosciences/rppg-web';
+import type {
+  Backend,
+  DemoRunner,
+  Metrics,
+  RppgAppAdapter,
+  RppgAppSnapshot,
+  RppgProcessor,
+  RppgSession,
+} from '@elata-biosciences/rppg-web';
 import logger from './logger';
 
 export interface RppgDebugMetrics {
@@ -57,6 +65,9 @@ const LOG_INTERVAL = 5;
 export class ElataRppgProvider {
   private processor: RppgProcessor | null = null;
   private runner: DemoRunner | null = null;
+  private session: RppgSession | null = null;
+  private appAdapter: RppgAppAdapter | null = null;
+  private appSnapshot: RppgAppSnapshot | null = null;
   private stream: MediaStream | null = null;
   private video: HTMLVideoElement | null = null;
   private active = false;
@@ -120,38 +131,59 @@ export class ElataRppgProvider {
       await video.play();
       this.video = video;
 
-      let backend: Backend | null;
+      let backend: Backend | null = null;
+      let sessionReady = false;
       try {
-        backend = await rppg.loadWasmBackend();
-      } catch {
-        backend = null;
+        this.session = await rppg.createRppgSession({
+          video,
+          sampleRate: 30,
+          backend: 'auto',
+          faceMesh: 'auto',
+          ensureVideoPlayback: true,
+          enableTracker: { minBpm: MIN_BPM, maxBpm: MAX_BPM, numParticles: 120 },
+          wasmImporter: () => import('@elata-biosciences/rppg-web/pkg/rppg_wasm.js'),
+        });
+        this.processor = this.session.processor;
+        this.appAdapter = rppg.createRppgAppAdapter();
+        sessionReady = true;
+      } catch (sessionError) {
+        logger.warn('rPPG', 'SDK session helper failed — falling back to low-level runner', sessionError);
       }
 
-      const source = new rppg.MediaPipeFrameSource(video);
+      if (!sessionReady) {
+        try {
+          backend = await rppg.loadWasmBackend();
+        } catch {
+          backend = null;
+        }
 
-      if (backend) {
-        this.processor = new rppg.RppgProcessor(backend, 30);
-      } else {
-        const noopPipeline = {
-          push_sample: () => {},
-          push_sample_rgb: () => {},
-          push_sample_rgb_meta: () => {},
-          get_metrics: () => ({ bpm: null, confidence: 0, signal_quality: 0 }),
-          enable_tracker: () => {},
-        };
-        this.processor = new rppg.RppgProcessor({ newPipeline: () => noopPipeline } as Backend, 30);
-        logger.info('rPPG', 'WASM backend unavailable — using JS-only signal processing');
+        const source = new rppg.MediaPipeFrameSource(video);
+
+        if (backend) {
+          this.processor = new rppg.RppgProcessor(backend, 30);
+        } else {
+          const noopPipeline = {
+            push_sample: () => {},
+            push_sample_rgb: () => {},
+            push_sample_rgb_meta: () => {},
+            get_metrics: () => ({ bpm: null, confidence: 0, signal_quality: 0 }),
+            enable_tracker: () => {},
+          };
+          this.processor = new rppg.RppgProcessor({ newPipeline: () => noopPipeline } as Backend, 30);
+          logger.info('rPPG', 'WASM backend unavailable — using JS-only signal processing');
+        }
+
+        this.runner = new rppg.DemoRunner(source, this.processor, { useSkinMask: true });
+        await this.runner.start();
       }
-
-      this.runner = new rppg.DemoRunner(source, this.processor, { useSkinMask: true });
-      await this.runner.start();
       this.active = true;
       this.state.active = true;
       this.lastError = null;
       this.notifySubscribers();
       logger.info('rPPG', 'Camera enabled', {
         resolution: `${video.videoWidth}x${video.videoHeight}`,
-        wasmBackend: !!backend,
+        wasmBackend: !!backend || this.session?.backendMode === 'wasm',
+        sdkSession: sessionReady,
       });
       return true;
     } catch (err: unknown) {
@@ -169,6 +201,14 @@ export class ElataRppgProvider {
   }
 
   disable(): void {
+    if (this.session) {
+      this.session.dispose().catch(() => {
+        /* swallow */
+      });
+      this.session = null;
+      this.appAdapter = null;
+      this.appSnapshot = null;
+    }
     if (this.runner) {
       try {
         this.runner.stop?.();
@@ -264,7 +304,10 @@ export class ElataRppgProvider {
     }
 
     try {
-      const metrics = this.processor.getMetrics();
+      if (this.session && this.appAdapter) {
+        this.appSnapshot = this.appAdapter.getSnapshot(this.session);
+      }
+      const metrics = this.appSnapshot?.metrics ?? this.processor.getMetrics();
       const rawBpm = metrics.bpm ?? null;
       this.state.rawBpm = rawBpm;
       this.state.quality = Math.max(metrics.signal_quality ?? 0, metrics.confidence ?? 0);

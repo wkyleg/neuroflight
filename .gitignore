@@ -26,8 +26,9 @@ coverage
 asset-inbox/raw/
 asset-inbox/extracted/
 asset-inbox/candidates/
-asset-inbox/screenshots/baseline/*.png
-asset-inbox/screenshots/baseline/*.webp
+asset-inbox/screenshots/**/*.png
+asset-inbox/screenshots/**/*.webp
+asset-inbox/screenshots/**/*.json
 
 # Lock files (pnpm only)
 package-lock.json

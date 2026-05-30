@@ -15,10 +15,13 @@ import { getAircraft, getNextAircraftId } from './flight/AircraftRegistry.ts';
 import { PlaneController } from './flight/PlaneController.ts';
 import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
+import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
+import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { WeaponSystem } from './gameplay/WeaponSystem.ts';
-import type { GameMode } from './types.ts';
+import { getModeMeta } from './modes.ts';
+import type { GameMode, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
 import { getMap } from './world/MapRegistry.ts';
@@ -45,9 +48,11 @@ export class Game {
   private combatVfxSystem: CombatVfxSystem | null = null;
   private audioPolishSystem: AudioPolishSystem | null = null;
   private ringManager: RingManager | null = null;
+  private missionObjectiveSystem: MissionObjectiveSystem | null = null;
   private worldManager: WorldManager | null = null;
   private scoreManager: ScoreManager;
   private sessionRecorder: SessionRecorder;
+  private neuroAdaptationSystem: NeuroAdaptationSystem;
   private planeController: PlaneController | null = null;
   private mode: GameMode = 'zen';
   private running = false;
@@ -78,6 +83,11 @@ export class Game {
   private bpmSum = 0;
   private neuroSamples = 0;
   private bpmSamples = 0;
+  private composureSum = 0;
+  private loadSum = 0;
+  private flowSum = 0;
+  private adaptationSamples = 0;
+  private lastRecoveryEventAt = -999;
 
   private onSessionEnd: (() => void) | null = null;
   private canvas: HTMLCanvasElement;
@@ -92,6 +102,7 @@ export class Game {
     this.audioManager = new AudioManager();
     this.scoreManager = new ScoreManager();
     this.sessionRecorder = new SessionRecorder();
+    this.neuroAdaptationSystem = new NeuroAdaptationSystem();
 
     this.inputManager.onDevKey((key) => {
       if (key === 'BracketRight') this.switchAircraft();
@@ -122,6 +133,7 @@ export class Game {
 
     eventBus.on('dogfight:ai_hit', () => {
       this.audioManager.playHit();
+      this.scoreManager.addBonus(65);
       this.sessionRecorder.recordEvent('shot_hit');
     });
 
@@ -131,6 +143,7 @@ export class Game {
 
     eventBus.on('dogfight:ai_kill', () => {
       this.audioManager.playExplosion();
+      this.scoreManager.addBonus(550);
       this.sessionRecorder.recordEvent('kill');
     });
 
@@ -184,6 +197,10 @@ export class Game {
       this.ringManager = new RingManager(this.scene);
     }
 
+    if (mode === 'free') {
+      this.missionObjectiveSystem = new MissionObjectiveSystem(this.scene, map.missionRoutes?.expedition ?? []);
+    }
+
     if (mode === 'dogfight') {
       this.weaponSystem = new WeaponSystem(this.scene);
       this.combatVfxSystem = new CombatVfxSystem(this.scene, map.combatVfx);
@@ -201,24 +218,26 @@ export class Game {
       const markerCanvas = document.createElement('canvas');
       markerCanvas.width = 64;
       markerCanvas.height = 64;
-      const ctx = markerCanvas.getContext('2d')!;
-      ctx.fillStyle = '#ff2222';
-      ctx.beginPath();
-      ctx.moveTo(32, 4);
-      ctx.lineTo(60, 32);
-      ctx.lineTo(32, 60);
-      ctx.lineTo(4, 32);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      const markerTexture = new THREE.CanvasTexture(markerCanvas);
-      const markerMat = new THREE.SpriteMaterial({ map: markerTexture, depthTest: false, sizeAttenuation: false });
-      this.aiMarker = new THREE.Sprite(markerMat) as unknown as THREE.Mesh;
-      (this.aiMarker as unknown as THREE.Sprite).scale.set(0.14, 0.14, 1);
-      this.aiMarker.renderOrder = 999;
-      this.scene.add(this.aiMarker);
+      const ctx = markerCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ff2222';
+        ctx.beginPath();
+        ctx.moveTo(32, 4);
+        ctx.lineTo(60, 32);
+        ctx.lineTo(32, 60);
+        ctx.lineTo(4, 32);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        const markerTexture = new THREE.CanvasTexture(markerCanvas);
+        const markerMat = new THREE.SpriteMaterial({ map: markerTexture, depthTest: false, sizeAttenuation: false });
+        this.aiMarker = new THREE.Sprite(markerMat) as unknown as THREE.Mesh;
+        (this.aiMarker as unknown as THREE.Sprite).scale.set(0.14, 0.14, 1);
+        this.aiMarker.renderOrder = 999;
+        this.scene.add(this.aiMarker);
+      }
     }
 
     const aircraft = getAircraft(this.currentAircraftId);
@@ -232,13 +251,41 @@ export class Game {
     this.cameraManager.snapTo(this.planeController.getObject());
 
     if (this.ringManager) {
-      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
-      this.ringManager.spawnInitial(this.planeController.flightModel.getPosition(), forward);
+      const route = map.missionRoutes?.zen ?? [];
+      if (route.length > 0) {
+        this.ringManager.spawnRoute(route.map((point) => new THREE.Vector3(...point.position)));
+      } else {
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
+        this.ringManager.spawnInitial(this.planeController.flightModel.getPosition(), forward);
+      }
     }
 
     this.renderer.initPostProcessing(this.scene, this.cameraManager.camera);
 
-    useGameStore.getState().updateHud({ mode, aircraftId: this.currentAircraftId });
+    const modeMeta = getModeMeta(mode);
+    useGameStore.getState().updateHud({
+      mode,
+      aircraftId: this.currentAircraftId,
+      missionTitle: modeMeta.title,
+      missionSubtitle: map.storyName ?? map.name,
+      scoreLabel: modeMeta.scoreLabel,
+      objectiveLabel: modeMeta.objectiveLabel,
+      objectiveText: this.getInitialObjectiveText(mode, map.missionRoutes?.expedition),
+      objectiveSubtext: map.storyTagline ?? map.description,
+      objectiveProgress: 0,
+      objectiveGoal:
+        mode === 'zen'
+          ? (map.missionRoutes?.zen.length ?? 0)
+          : mode === 'free'
+            ? (map.missionRoutes?.expedition.length ?? 0)
+            : 0,
+    });
+  }
+
+  private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
+    if (mode === 'free') return expeditionRoute?.[0]?.label ?? 'Find the first expedition beacon';
+    if (mode === 'dogfight') return 'Acquire the patrol target';
+    return 'Follow the glowing route';
   }
 
   start(): void {
@@ -270,6 +317,19 @@ export class Game {
     const speed = this.planeController.flightModel.getSpeed();
     const maxSpd = getAircraft(this.currentAircraftId)?.tuning?.maxSpeed ?? 200;
     this.planeController.update(dt, speed, maxSpd);
+    const neuroState = useNeuroStore.getState();
+    const objectiveGoal =
+      this.mode === 'free' ? (this.missionObjectiveSystem?.getTotalCount() ?? 0) : this.ringManager ? 6 : 0;
+    const objectiveProgress =
+      this.mode === 'free'
+        ? (this.missionObjectiveSystem?.getCompletedCount() ?? 0) / Math.max(1, objectiveGoal)
+        : Math.min(1, this.scoreManager.getRingsPassed() / Math.max(1, objectiveGoal || 6));
+    this.neuroAdaptationSystem.update(dt, neuroState, this.mode, speed / maxSpd, objectiveProgress);
+    const adaptation = this.neuroAdaptationSystem.getSnapshot();
+    this.ringManager?.setAdaptiveGlow(1 + adaptation.composure * adaptation.confidence * 0.55);
+    this.weatherIdentitySystem?.setAdaptiveClarity(adaptation.weatherClarity);
+    this.audioPolishSystem?.setIntensity(adaptation.audioIntensity);
+    this.weaponSystem?.setAimAssist(adaptation.aimAssist);
 
     const plane = this.planeController.getObject();
     this.cameraManager.update(dt, plane, speed);
@@ -294,8 +354,28 @@ export class Game {
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
       const hits = this.ringManager.update(this.planeController.flightModel.getPosition(), forward);
       for (let i = 0; i < hits; i++) {
-        this.scoreManager.addRing(this.planeController.flightModel.getSpeed());
+        this.scoreManager.addRing(this.planeController.flightModel.getSpeed(), adaptation.scoreMultiplier);
       }
+    }
+
+    const objectiveState = this.missionObjectiveSystem?.update(dt, this.planeController.flightModel.getPosition());
+    if (objectiveState?.completion) {
+      const completion = objectiveState.completion;
+      this.scoreManager.addObjective(completion.score, adaptation.scoreMultiplier);
+      this.audioManager.playChime();
+      this.audioPolishSystem?.playUi();
+      this.sessionRecorder.recordEvent(completion.waypoint.kind === 'postcard' ? 'postcard' : 'objective_complete', {
+        label: completion.waypoint.label,
+        score: completion.score,
+      });
+      if (completion.waypoint.kind === 'landmark' || completion.waypoint.kind === 'low_pass') {
+        this.sessionRecorder.recordEvent('landmark_discovered', { label: completion.waypoint.label });
+      }
+    }
+
+    if (adaptation.recovery > 0.76 && this.scoreManager.getElapsedMs() / 1000 - this.lastRecoveryEventAt > 12) {
+      this.lastRecoveryEventAt = this.scoreManager.getElapsedMs() / 1000;
+      this.sessionRecorder.recordEvent('neuro_recovery', { label: adaptation.prompt });
     }
 
     // Dogfight update
@@ -378,6 +458,7 @@ export class Game {
         );
         this.aiController.respawn(respawnPos);
         this.aiController.setHealth(100);
+        this.sessionRecorder.recordEvent('respawn', { label: 'Enemy re-entered patrol' });
       } else if (!this.dogfightManager.isAiDead()) {
         this.aiController.setHealth(this.dogfightManager.getAiHealthFraction() * 100);
       }
@@ -400,7 +481,6 @@ export class Game {
     if (this.hudUpdateTimer >= this.HUD_UPDATE_INTERVAL) {
       this.hudUpdateTimer = 0;
 
-      const neuroState = useNeuroStore.getState();
       this.audioManager.setBpm(neuroState.bpm);
 
       // Sample neuro metrics
@@ -413,8 +493,14 @@ export class Game {
           this.bpmSamples++;
         }
       }
+      this.composureSum += adaptation.composure;
+      this.loadSum += adaptation.load;
+      this.flowSum += adaptation.flow;
+      this.adaptationSamples++;
 
       const dfSnapState = this.dogfightManager?.getState();
+      const completedObjectives = this.missionObjectiveSystem?.getCompletedCount() ?? 0;
+      const totalObjectives = this.missionObjectiveSystem?.getTotalCount() ?? 0;
       this.sessionRecorder.sample(this.HUD_UPDATE_INTERVAL, {
         speed: Math.round(speed),
         altitude: Math.round(this.planeController.flightModel.getAltitude()),
@@ -435,6 +521,18 @@ export class Game {
         score: this.scoreManager.getScore(),
         combo: this.scoreManager.getCombo(),
         ringsPassed: this.scoreManager.getRingsPassed(),
+        objectivesCompleted: completedObjectives,
+        objectiveProgress:
+          this.mode === 'free'
+            ? completedObjectives / Math.max(1, totalObjectives)
+            : this.scoreManager.getRingsPassed() /
+              Math.max(1, getMap(this.currentMapId).missionRoutes?.zen.length ?? 6),
+        composure: adaptation.composure,
+        neuroLoad: adaptation.load,
+        recovery: adaptation.recovery,
+        flow: adaptation.flow,
+        adaptationConfidence: adaptation.confidence,
+        signalCoverage: adaptation.coverage,
         playerHealth: dfSnapState?.playerHealth ?? 100,
         aiHealth: dfSnapState?.aiHealth ?? 100,
         kills: dfSnapState?.kills ?? 0,
@@ -463,6 +561,26 @@ export class Game {
         }
       }
 
+      let nextObjectiveDir: { x: number; y: number } | null = null;
+      const activeObjective = this.missionObjectiveSystem?.getActiveWaypoint();
+      if (activeObjective) {
+        const dir = new THREE.Vector3(...activeObjective.position).sub(this.planeController.flightModel.getPosition());
+        const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(this.cameraManager.camera.quaternion);
+        const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.cameraManager.camera.quaternion);
+        const camFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.cameraManager.camera.quaternion);
+        const dot = dir.dot(camFwd);
+        if (dot > 0) {
+          nextObjectiveDir = { x: dir.dot(camRight), y: dir.dot(camUp) };
+          const mag = Math.sqrt(nextObjectiveDir.x * nextObjectiveDir.x + nextObjectiveDir.y * nextObjectiveDir.y);
+          if (mag > 0.01) {
+            nextObjectiveDir.x /= mag;
+            nextObjectiveDir.y /= mag;
+          }
+        } else {
+          nextObjectiveDir = { x: dir.dot(camRight) > 0 ? 1 : -1, y: 0 };
+        }
+      }
+
       let enemyDir: { x: number; y: number } | null = null;
       if (this.aiController && !this.dogfightManager?.isAiDead()) {
         const dir = this.aiController.getPosition().clone().sub(this.planeController.flightModel.getPosition());
@@ -485,6 +603,24 @@ export class Game {
       const dfState = this.dogfightManager?.getState();
 
       const aiDebug = this.aiController?.getDebugInfo();
+      const currentMap = getMap(this.currentMapId);
+      const modeMeta = getModeMeta(this.mode);
+      const hudActiveObjective = this.missionObjectiveSystem?.getActiveWaypoint();
+      const expeditionGoal = this.missionObjectiveSystem?.getTotalCount() ?? 0;
+      const expeditionProgress = this.missionObjectiveSystem?.getCompletedCount() ?? 0;
+      const zenGoal = currentMap.missionRoutes?.zen.length ?? 0;
+      const objectiveText =
+        this.mode === 'free'
+          ? (hudActiveObjective?.label ?? 'Route complete')
+          : this.mode === 'zen'
+            ? 'Follow the glowing route'
+            : (currentMap.missionRoutes?.dogfight[0]?.label ?? 'Hold the patrol lane');
+      const objectiveSubtext =
+        this.mode === 'free'
+          ? (hudActiveObjective?.description ?? 'All expedition beacons are logged.')
+          : this.mode === 'zen'
+            ? adaptation.prompt
+            : 'Stay composed, keep visual contact, and use the landmarks.';
 
       useGameStore.getState().updateHud({
         speed: Math.round(speed),
@@ -495,6 +631,7 @@ export class Game {
         ringsHit: this.scoreManager.getRingsPassed(),
         elapsedMs: this.scoreManager.getElapsedMs(),
         nextRingDir,
+        nextObjectiveDir,
         enemyDir,
         playerHealth: dfState?.playerHealth ?? 100,
         aiHealth: dfState?.aiHealth ?? 100,
@@ -505,6 +642,26 @@ export class Game {
         aiDotForward: aiDebug?.dotForward ?? 0,
         shotsFired: dfState?.shotsFired ?? 0,
         shotsHit: dfState?.shotsHit ?? 0,
+        missionTitle: modeMeta.title,
+        missionSubtitle: currentMap.storyName ?? currentMap.name,
+        objectiveLabel: modeMeta.objectiveLabel,
+        objectiveText,
+        objectiveSubtext,
+        objectiveProgress:
+          this.mode === 'free'
+            ? expeditionProgress
+            : this.mode === 'zen'
+              ? this.scoreManager.getRingsPassed()
+              : (dfState?.kills ?? 0),
+        objectiveGoal: this.mode === 'free' ? expeditionGoal : this.mode === 'zen' ? zenGoal : 3,
+        scoreLabel: modeMeta.scoreLabel,
+        composure: adaptation.composure,
+        neuroLoad: adaptation.load,
+        recovery: adaptation.recovery,
+        flow: adaptation.flow,
+        adaptationConfidence: adaptation.confidence,
+        signalCoverage: adaptation.coverage,
+        neuroPrompt: adaptation.prompt,
       });
     }
   }
@@ -564,10 +721,16 @@ export class Game {
       this.cameraManager.snapTo(this.planeController.getObject());
 
       if (this.ringManager) {
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
-        this.ringManager.spawnInitial(this.planeController.flightModel.getPosition(), forward);
+        const route = map.missionRoutes?.zen ?? [];
+        if (route.length > 0) {
+          this.ringManager.spawnRoute(route.map((point) => new THREE.Vector3(...point.position)));
+        } else {
+          const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
+          this.ringManager.spawnInitial(this.planeController.flightModel.getPosition(), forward);
+        }
       }
     }
+    this.missionObjectiveSystem?.reset();
 
     this.maxAltitude = 0;
     this.minAltitude = Infinity;
@@ -577,6 +740,12 @@ export class Game {
     this.bpmSum = 0;
     this.neuroSamples = 0;
     this.bpmSamples = 0;
+    this.composureSum = 0;
+    this.loadSum = 0;
+    this.flowSum = 0;
+    this.adaptationSamples = 0;
+    this.lastRecoveryEventAt = -999;
+    this.neuroAdaptationSystem.reset();
     this.sessionRecorder.reset();
   }
 
@@ -592,6 +761,8 @@ export class Game {
     const dfState = this.dogfightManager?.getState();
     const recorded = this.sessionRecorder.stop();
     const s = recorded.samples;
+    const currentMap = getMap(this.currentMapId);
+    const modeMeta = getModeMeta(this.mode);
 
     let peakBpm: number | null = null;
     let minBpm: number | null = null;
@@ -658,6 +829,18 @@ export class Game {
       deaths: dfState?.deaths ?? 0,
       shotsFired: dfState?.shotsFired ?? 0,
       shotsHit: dfState?.shotsHit ?? 0,
+      objectivesCompleted:
+        this.mode === 'dogfight'
+          ? (dfState?.kills ?? 0)
+          : (this.missionObjectiveSystem?.getCompletedCount() ?? this.scoreManager.getRingsPassed()),
+      objectiveGoal:
+        this.mode === 'free'
+          ? (this.missionObjectiveSystem?.getTotalCount() ?? 0)
+          : this.mode === 'zen'
+            ? (currentMap.missionRoutes?.zen.length ?? 0)
+            : 3,
+      scoreLabel: modeMeta.scoreLabel,
+      missionTitle: `${modeMeta.title} over ${currentMap.storyName ?? currentMap.name}`,
 
       samples: s,
       events: recorded.events,
@@ -674,6 +857,10 @@ export class Game {
       dominantBrainState,
       calmTrend,
       arousalTrend,
+      avgComposure: this.adaptationSamples > 0 ? this.composureSum / this.adaptationSamples : null,
+      avgLoad: this.adaptationSamples > 0 ? this.loadSum / this.adaptationSamples : null,
+      avgFlow: this.adaptationSamples > 0 ? this.flowSum / this.adaptationSamples : null,
+      signalCoveragePct: this.neuroAdaptationSystem.getSnapshot().coverage * 100,
     };
 
     useGameStore.getState().setLastSession(summary);
@@ -702,6 +889,7 @@ export class Game {
     this.combatVfxSystem?.destroy();
     this.audioPolishSystem?.destroy();
     this.ringManager?.destroy();
+    this.missionObjectiveSystem?.destroy();
     this.worldManager?.destroy();
     this.weaponSystem?.destroy();
     this.aiController?.removeFromScene(this.scene);

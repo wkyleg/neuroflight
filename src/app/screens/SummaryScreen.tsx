@@ -16,6 +16,8 @@ import {
   YAxis,
 } from 'recharts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
+import { getModeMeta, getModeTitle } from '@/game/modes.ts';
+import { getMap } from '@/game/world/MapRegistry.ts';
 import type { SessionSummary } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 
@@ -137,7 +139,7 @@ function buildBpmTimeline(samples: FlightSample[]) {
     .filter((s) => s.bpm !== null)
     .map((s) => ({
       time: Math.round(s.t),
-      bpm: Math.round(s.bpm!),
+      bpm: Math.round(s.bpm ?? 0),
       hrv: s.hrv !== null ? Math.round(s.hrv) : undefined,
     }));
 }
@@ -197,6 +199,71 @@ function buildStressVsAltitudeScatter(samples: FlightSample[]) {
   return altStability;
 }
 
+function mean(values: Array<number | undefined>): number | null {
+  const finite = values.filter((value): value is number => Number.isFinite(value));
+  if (finite.length === 0) return null;
+  return finite.reduce((sum, value) => sum + value, 0) / finite.length;
+}
+
+function buildPhaseBreakdown(samples: FlightSample[]) {
+  if (samples.length < 3) return [];
+  const duration = samples[samples.length - 1].t || 1;
+  return ['Opening', 'Mid Flight', 'Final Approach'].map((label, index) => {
+    const start = (duration / 3) * index;
+    const end = index === 2 ? duration + 0.01 : (duration / 3) * (index + 1);
+    const slice = samples.filter((s) => s.t >= start && s.t < end);
+    return {
+      label,
+      calm: mean(slice.map((s) => s.calm)),
+      arousal: mean(slice.map((s) => s.arousal)),
+      composure: mean(slice.map((s) => s.composure)),
+      flow: mean(slice.map((s) => s.flow)),
+      avgSpeed: mean(slice.map((s) => s.speed)),
+      rings: slice.at(-1)?.ringsPassed ?? 0,
+      objectives: slice.at(-1)?.objectivesCompleted ?? 0,
+    };
+  });
+}
+
+function buildEventWindows(samples: FlightSample[], events: FlightEvent[]) {
+  return events.slice(-10).map((event) => {
+    const nearby = samples.filter((sample) => Math.abs(sample.t - event.t) <= 2);
+    return {
+      time: Math.round(event.t),
+      label: event.label ?? event.type.replace(/_/g, ' '),
+      type: event.type,
+      calm: mean(nearby.map((s) => s.calm)),
+      load: mean(nearby.map((s) => s.neuroLoad)),
+      flow: mean(nearby.map((s) => s.flow)),
+      score: event.score,
+    };
+  });
+}
+
+function buildNotableMoments(samples: FlightSample[], events: FlightEvent[]) {
+  const moments: Array<{ time: number; title: string; detail: string }> = [];
+  for (const event of events) {
+    if (event.type === 'postcard' || event.type === 'objective_complete' || event.type === 'kill') {
+      moments.push({
+        time: Math.round(event.t),
+        title: event.label ?? event.type.replace(/_/g, ' '),
+        detail: event.score ? `Scored ${event.score} points around this moment.` : 'Marked as a key flight event.',
+      });
+    }
+  }
+  for (let i = 1; i < samples.length; i++) {
+    const recoveryJump = samples[i].recovery - samples[i - 1].recovery;
+    if (recoveryJump > 0.18) {
+      moments.push({
+        time: Math.round(samples[i].t),
+        title: 'Recovery lift',
+        detail: `Recovery proxy rose by ${(recoveryJump * 100).toFixed(0)}% near this point.`,
+      });
+    }
+  }
+  return moments.sort((a, b) => a.time - b.time).slice(0, 8);
+}
+
 function buildAltitudeWithEvents(samples: FlightSample[], events: FlightEvent[]) {
   const timeline = samples.map((s) => ({
     time: Math.round(s.t),
@@ -229,45 +296,29 @@ function generateInsights(session: SessionSummary): string[] {
   if (s.length === 0) return ['No time-series data was recorded for this session.'];
 
   if (session.calmTrend === 'improved') {
-    insights.push(
-      'Your calm levels improved over the course of the flight, suggesting effective self-regulation under sustained cognitive load.',
-    );
+    insights.push('Calm proxy improved across the flight, so later moments lined up with steadier signal readings.');
   } else if (session.calmTrend === 'declined') {
     insights.push(
-      'Your calm levels declined during the session, which may indicate accumulating cognitive fatigue — a pattern commonly observed in pilot workload studies.',
+      'Calm proxy trended down near the end. The next pass may benefit from wider turns or a slower route.',
     );
   } else if (session.calmTrend === 'stable') {
-    insights.push(
-      'Your calm levels remained stable throughout the flight, indicating consistent emotional regulation.',
-    );
+    insights.push('Calm proxy stayed stable, which is a useful baseline for comparing future flights.');
   }
 
   if (session.arousalTrend === 'increased') {
     insights.push(
-      'Arousal increased over the session — in affective computing research on operators, this can signal heightened vigilance or mounting stress.',
+      'Arousal proxy increased over the session, especially useful to compare against combat or route events.',
     );
   } else if (session.arousalTrend === 'decreased') {
-    insights.push(
-      'Arousal decreased over time, which may indicate habituation to the task — similar to patterns seen in long-haul driver studies.',
-    );
+    insights.push('Arousal proxy decreased over time, suggesting the route became easier to settle into.');
   }
 
   if (session.avgHrv !== null) {
-    if (session.avgHrv > 50) {
-      insights.push(
-        `Your average HRV of ${Math.round(session.avgHrv)}ms suggests strong parasympathetic tone and good stress resilience — a positive indicator in aviation medicine.`,
-      );
-    } else if (session.avgHrv < 25) {
-      insights.push(
-        `Your average HRV of ${Math.round(session.avgHrv)}ms is on the lower side, which in operator fatigue research is associated with higher cognitive load.`,
-      );
-    }
+    insights.push(`Average HRV proxy was ${Math.round(session.avgHrv)}ms where rPPG confidence allowed a reading.`);
   }
 
   if (session.dominantBrainState) {
-    insights.push(
-      `Your dominant brain state was ${session.dominantBrainState}, which was the strongest EEG band throughout the session.`,
-    );
+    insights.push(`${session.dominantBrainState} was the strongest available EEG band during this session.`);
   }
 
   if (session.mode === 'dogfight' && session.kills > 0) {
@@ -282,9 +333,7 @@ function generateInsights(session: SessionSummary): string[] {
           .reduce((a, b) => a + b, 0) / combatEvents.length;
 
       if (session.avgCalm !== null && calmDuringCombat < session.avgCalm * 0.8) {
-        insights.push(
-          'Your calm levels dropped significantly during combat encounters — a natural stress response that can be improved with practice.',
-        );
+        insights.push('Combat events lined up with lower calm proxy readings than the flight average.');
       }
     }
   }
@@ -293,9 +342,13 @@ function generateInsights(session: SessionSummary): string[] {
     const range = session.peakBpm - session.minBpm;
     if (range > 30) {
       insights.push(
-        `Your heart rate ranged ${Math.round(range)} BPM during the flight (${Math.round(session.minBpm)}-${Math.round(session.peakBpm)}), indicating significant autonomic variability in response to in-game events.`,
+        `Heart-rate proxy ranged ${Math.round(range)} BPM during the flight (${Math.round(session.minBpm)}-${Math.round(session.peakBpm)}).`,
       );
     }
+  }
+
+  if (session.signalCoveragePct < 20) {
+    insights.push('Signal coverage was low, so the debrief leans more on flight events than biofeedback.');
   }
 
   return insights;
@@ -321,6 +374,9 @@ export function SummaryScreen() {
       respiration: buildRespirationTimeline(s),
       cogLoad: buildCognitiveLoadTimeline(s),
       stressVsStability: buildStressVsAltitudeScatter(s),
+      phases: buildPhaseBreakdown(s),
+      eventWindows: buildEventWindows(s, e),
+      notableMoments: buildNotableMoments(s, e),
       insights: generateInsights(lastSession),
     };
   }, [lastSession]);
@@ -332,8 +388,7 @@ export function SummaryScreen() {
     return `${min}m ${sec}s`;
   };
 
-  const modeLabel =
-    lastSession?.mode === 'zen' ? 'Zen Flight' : lastSession?.mode === 'dogfight' ? 'Dogfight' : 'Free Flight';
+  const modeLabel = lastSession ? getModeTitle(lastSession.mode) : 'Flight';
 
   if (!lastSession) {
     return (
@@ -364,11 +419,17 @@ export function SummaryScreen() {
   const accuracy = lastSession.shotsFired > 0 ? Math.round((lastSession.shotsHit / lastSession.shotsFired) * 100) : 0;
   const isDogfight = lastSession.mode === 'dogfight';
   const isZen = lastSession.mode === 'zen';
+  const isExpedition = lastSession.mode === 'free';
   const hasNeuro = lastSession.neuroSource !== 'none';
+  const map = getMap(lastSession.mapId);
+  const modeMeta = getModeMeta(lastSession.mode as 'zen' | 'free' | 'dogfight');
 
   const ringEvents = lastSession.events.filter((e) => e.type === 'ring_hit');
   const killEvents = lastSession.events.filter((e) => e.type === 'kill');
   const deathEvents = lastSession.events.filter((e) => e.type === 'death');
+  const objectiveEvents = lastSession.events.filter(
+    (e) => e.type === 'objective_complete' || e.type === 'postcard' || e.type === 'landmark_discovered',
+  );
 
   return (
     <div
@@ -377,21 +438,24 @@ export function SummaryScreen() {
     >
       {/* Header */}
       <p className="tracking-[0.3em] uppercase" style={{ color: COLORS.textDim, fontSize: 13, marginBottom: 16 }}>
-        {modeLabel} &middot; {lastSession.mapId.replace(/_/g, ' ')} &middot;{' '}
+        {modeLabel} &middot; {map.storyName ?? map.name} &middot;{' '}
         {lastSession.aircraftId.replace(/_/g, ' ').toUpperCase()}
       </p>
       <h1
         className="font-bold tracking-wider"
         style={{ fontFamily: 'var(--font-heading)', color: COLORS.gold, fontSize: 38, marginBottom: 24 }}
       >
-        FLIGHT COMPLETE
+        {modeMeta.summaryTitle.toUpperCase()}
       </h1>
+      <p className="max-w-2xl text-center leading-7" style={{ color: COLORS.text, fontSize: 14, marginBottom: 32 }}>
+        {modeMeta.summaryLead}
+      </p>
       <div className="text-center" style={{ marginBottom: 80 }}>
         <div className="font-bold" style={{ color: COLORS.cyan, fontSize: 52 }}>
           {lastSession.score}
         </div>
         <div className="tracking-widest" style={{ color: COLORS.textDim, fontSize: 11, marginTop: 8 }}>
-          SCORE
+          {lastSession.scoreLabel.toUpperCase()}
         </div>
       </div>
 
@@ -412,6 +476,23 @@ export function SummaryScreen() {
           sub="km"
         />
         <StatBox label="Max Altitude" value={`${Math.round(lastSession.maxAltitude)}`} color={COLORS.cyan} sub="ft" />
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 w-full max-w-4xl" style={{ gap: 20, marginBottom: 32 }}>
+        <StatBox
+          label={isExpedition ? 'Discoveries' : isDogfight ? 'Wins Target' : 'Route Gates'}
+          value={`${lastSession.objectivesCompleted}/${Math.max(1, lastSession.objectiveGoal)}`}
+          color={COLORS.gold}
+        />
+        <StatBox label="Best Combo" value={`${lastSession.bestCombo}x`} color={COLORS.gold} />
+        <StatBox
+          label="Signal Coverage"
+          value={`${Math.round(lastSession.signalCoveragePct)}%`}
+          color={lastSession.signalCoveragePct > 30 ? COLORS.green : COLORS.orange}
+        />
+        {lastSession.avgFlow !== null && (
+          <StatBox label="Avg Flow" value={`${Math.round(lastSession.avgFlow * 100)}%`} color={COLORS.green} />
+        )}
       </div>
 
       {isZen && lastSession.ringsPassed > 0 && (
@@ -443,6 +524,34 @@ export function SummaryScreen() {
             sub={`${lastSession.shotsHit}/${lastSession.shotsFired}`}
           />
         </div>
+      )}
+
+      {objectiveEvents.length > 0 && (
+        <>
+          <SectionHeading title="MISSION LOG" color={COLORS.gold} />
+          <div className="grid w-full max-w-4xl gap-3" style={{ marginBottom: 56 }}>
+            {objectiveEvents.slice(0, 8).map((event, index) => (
+              <div
+                key={`${event.type}-${event.t}-${index}`}
+                className="rounded-lg border"
+                style={{
+                  borderColor: 'rgba(255,204,68,0.16)',
+                  background: 'rgba(255,204,68,0.05)',
+                  padding: '16px 18px',
+                }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-bold" style={{ color: COLORS.gold, fontFamily: 'var(--font-heading)' }}>
+                    {event.label ?? event.type.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-xs tabular-nums" style={{ color: COLORS.textDim }}>
+                    {Math.round(event.t)}s{event.score ? ` / ${event.score} pts` : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* ── SECTION: Flight Charts ── */}
@@ -598,7 +707,7 @@ export function SummaryScreen() {
       {/* ── SECTION: Neural Performance Stats ── */}
       {hasNeuro && (
         <>
-          <SectionHeading title="NEUROLOGICAL PERFORMANCE" color={COLORS.gold} />
+          <SectionHeading title="SIGNAL PERFORMANCE" color={COLORS.gold} />
           <div className="grid grid-cols-2 sm:grid-cols-4 w-full max-w-4xl" style={{ gap: 20, marginBottom: 32 }}>
             {lastSession.avgCalm !== null && (
               <StatBox label="Avg Calm" value={`${(lastSession.avgCalm * 100).toFixed(0)}%`} color={COLORS.green} />
@@ -612,7 +721,7 @@ export function SummaryScreen() {
             )}
             {lastSession.calmTrend && (
               <StatBox
-                label="Calm Trend"
+                label="Composure Trend"
                 value={
                   lastSession.calmTrend === 'improved'
                     ? 'Improved'
@@ -682,15 +791,15 @@ export function SummaryScreen() {
         </>
       )}
 
-      {/* ── SECTION: Affective Computing / Stress Analysis Charts ── */}
+      {/* ── SECTION: Signal analysis charts ── */}
       {hasNeuro && data && (
         <>
-          <SectionHeading title="STRESS RESPONSE ANALYSIS" color={COLORS.magenta} />
+          <SectionHeading title="SIGNAL RESPONSE" color={COLORS.magenta} />
           <p
             className="tracking-wide w-full max-w-4xl"
             style={{ color: COLORS.textDim, fontSize: 12, marginBottom: 40 }}
           >
-            Metrics drawn from affective computing research on pilots, truck drivers, and high-stakes operators.
+            These charts compare available signal proxies with the flight timeline. They are not medical measures.
           </p>
 
           <div className="w-full max-w-4xl flex flex-col" style={{ gap: 40, marginBottom: 80 }}>
@@ -911,7 +1020,7 @@ export function SummaryScreen() {
 
             {/* Cognitive Load (Beta/Alpha ratio) */}
             {data.cogLoad.length > 2 && (
-              <ChartContainer title="COGNITIVE WORKLOAD (BETA/ALPHA RATIO)">
+              <ChartContainer title="LOAD PROXY (BETA/ALPHA RATIO)">
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={data.cogLoad}>
                     <CartesianGrid strokeDasharray="3 3" stroke={COLORS.gridLine} />
@@ -967,8 +1076,7 @@ export function SummaryScreen() {
                   </AreaChart>
                 </ResponsiveContainer>
                 <p style={{ color: COLORS.textDim, fontSize: 11, marginTop: 12 }}>
-                  Beta/Alpha ratio is a standard cognitive workload metric in aviation psychology. Values above 1.0
-                  suggest high mental demand.
+                  Beta/Alpha ratio is shown as a lightweight load proxy when EEG bands are available.
                 </p>
               </ChartContainer>
             )}
@@ -1003,8 +1111,7 @@ export function SummaryScreen() {
                   </LineChart>
                 </ResponsiveContainer>
                 <p style={{ color: COLORS.textDim, fontSize: 11, marginTop: 12 }}>
-                  Individual alpha frequency tracks cognitive fatigue. A downward drift may indicate declining
-                  alertness.
+                  Alpha peak frequency is included as an available EEG signal feature, not a diagnosis.
                 </p>
               </ChartContainer>
             )}
@@ -1071,8 +1178,7 @@ export function SummaryScreen() {
                   </ScatterChart>
                 </ResponsiveContainer>
                 <p style={{ color: COLORS.textDim, fontSize: 11, marginTop: 12 }}>
-                  Correlates your calm level with altitude stability. In operator studies, calmer states typically
-                  produce smoother control inputs.
+                  Compares calm proxy readings with altitude stability during this flight.
                 </p>
               </ChartContainer>
             )}
@@ -1080,10 +1186,93 @@ export function SummaryScreen() {
         </>
       )}
 
-      {/* ── SECTION: Insights ── */}
-      {data && data.insights.length > 0 && hasNeuro && (
+      {data && (data.phases.length > 0 || data.eventWindows.length > 0 || data.notableMoments.length > 0) && (
         <>
-          <SectionHeading title="ASSESSMENT" color={COLORS.gold} />
+          <SectionHeading title="FLIGHT WINDOWS" color={COLORS.cyan} />
+          {data.phases.length > 0 && (
+            <div className="grid w-full max-w-4xl gap-4 sm:grid-cols-3" style={{ marginBottom: 28 }}>
+              {data.phases.map((phase) => (
+                <div
+                  key={phase.label}
+                  className="rounded-lg border"
+                  style={{
+                    borderColor: 'rgba(0,204,204,0.14)',
+                    background: 'rgba(0,204,204,0.04)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div className="font-bold" style={{ color: COLORS.cyan, fontFamily: 'var(--font-heading)' }}>
+                    {phase.label}
+                  </div>
+                  <div className="mt-3 grid gap-2 text-xs" style={{ color: COLORS.text }}>
+                    <span>Speed {phase.avgSpeed !== null ? `${Math.round(phase.avgSpeed)}` : '-'}</span>
+                    <span>Composure {phase.composure !== null ? `${Math.round(phase.composure * 100)}%` : '-'}</span>
+                    <span>Flow {phase.flow !== null ? `${Math.round(phase.flow * 100)}%` : '-'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data.eventWindows.length > 0 && (
+            <div
+              className="w-full max-w-4xl rounded-lg border"
+              style={{ borderColor: 'rgba(255,255,255,0.1)', padding: 24, marginBottom: 28 }}
+            >
+              <h3
+                className="tracking-[0.2em] uppercase"
+                style={{ fontFamily: 'var(--font-heading)', color: COLORS.gold, fontSize: 13, marginBottom: 18 }}
+              >
+                Recent Event Windows
+              </h3>
+              <div className="grid gap-3">
+                {data.eventWindows.map((event, index) => (
+                  <div
+                    key={`${event.type}-${event.time}-${index}`}
+                    className="grid grid-cols-[70px_1fr_110px] gap-3 text-xs"
+                  >
+                    <span style={{ color: COLORS.textDim }}>{event.time}s</span>
+                    <span style={{ color: COLORS.text }}>{event.label}</span>
+                    <span style={{ color: COLORS.cyan }}>
+                      {event.flow !== null ? `Flow ${Math.round(event.flow * 100)}%` : 'No signal'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.notableMoments.length > 0 && (
+            <div
+              className="w-full max-w-4xl rounded-lg border"
+              style={{ borderColor: 'rgba(255,204,68,0.15)', padding: 24, marginBottom: 64 }}
+            >
+              <h3
+                className="tracking-[0.2em] uppercase"
+                style={{ fontFamily: 'var(--font-heading)', color: COLORS.gold, fontSize: 13, marginBottom: 18 }}
+              >
+                Notable Moments
+              </h3>
+              <div className="grid gap-3">
+                {data.notableMoments.map((moment, index) => (
+                  <div
+                    key={`${moment.title}-${moment.time}-${index}`}
+                    className="text-sm leading-6"
+                    style={{ color: COLORS.text }}
+                  >
+                    <span style={{ color: COLORS.gold }}>{moment.time}s</span> / {moment.title}: {moment.detail}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── SECTION: Insights ── */}
+      {data && data.insights.length > 0 && (
+        <>
+          <SectionHeading title="FLIGHT NOTES" color={COLORS.gold} />
           <div
             className="w-full max-w-4xl rounded-xl flex flex-col"
             style={{

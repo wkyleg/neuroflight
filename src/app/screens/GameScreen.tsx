@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { FlightHud } from '@/app/ui/hud/FlightHud.tsx';
 import { getAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { Game } from '@/game/Game.ts';
+import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
 import { getMap } from '@/game/world/MapRegistry.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
@@ -19,7 +20,7 @@ export function GameScreen() {
   const map = getMap(mapId);
   const aircraft = getAircraft('spitfire');
 
-  const modeLabel = 'Dogfight';
+  const modeMeta = getModeMeta(mode);
 
   const initGame = useCallback(async () => {
     if (!canvasRef.current || gameRef.current) return;
@@ -68,13 +69,16 @@ export function GameScreen() {
             className="text-sm"
             style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)', marginBottom: 12 }}
           >
-            {map.name}
+            {map.storyName ?? map.name}
           </p>
           <p
             className="text-xs"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', opacity: 0.6 }}
           >
-            {aircraft.name} &middot; {modeLabel}
+            {aircraft.name} &middot; {modeMeta.title}
+          </p>
+          <p className="mt-3 max-w-md text-center text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
+            {modeMeta.loadingLine}
           </p>
           <div
             className="w-32 h-0.5 rounded-full overflow-hidden"

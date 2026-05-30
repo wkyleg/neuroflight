@@ -20,6 +20,10 @@ export interface SessionSummary {
   deaths: number;
   shotsFired: number;
   shotsHit: number;
+  objectivesCompleted: number;
+  objectiveGoal: number;
+  scoreLabel: string;
+  missionTitle: string;
 
   samples: FlightSample[];
   events: FlightEvent[];
@@ -36,6 +40,10 @@ export interface SessionSummary {
   dominantBrainState: string | null;
   calmTrend: 'improved' | 'declined' | 'stable' | null;
   arousalTrend: 'increased' | 'decreased' | 'stable' | null;
+  avgComposure: number | null;
+  avgLoad: number | null;
+  avgFlow: number | null;
+  signalCoveragePct: number;
 }
 
 export interface FlightHudState {
@@ -60,6 +68,22 @@ export interface FlightHudState {
   aiDotForward: number;
   shotsFired: number;
   shotsHit: number;
+  missionTitle: string;
+  missionSubtitle: string;
+  objectiveLabel: string;
+  objectiveText: string;
+  objectiveSubtext: string;
+  objectiveProgress: number;
+  objectiveGoal: number;
+  scoreLabel: string;
+  nextObjectiveDir: { x: number; y: number } | null;
+  composure: number;
+  neuroLoad: number;
+  recovery: number;
+  flow: number;
+  adaptationConfidence: number;
+  signalCoverage: number;
+  neuroPrompt: string;
 }
 
 interface GameStoreState {
@@ -94,6 +118,22 @@ const DEFAULT_HUD: FlightHudState = {
   aiDotForward: 0,
   shotsFired: 0,
   shotsHit: 0,
+  missionTitle: 'Zen Flight',
+  missionSubtitle: 'Route warming up',
+  objectiveLabel: 'Rings',
+  objectiveText: 'Find the next glowing gate',
+  objectiveSubtext: 'Sensors optional',
+  objectiveProgress: 0,
+  objectiveGoal: 0,
+  scoreLabel: 'Flow Score',
+  nextObjectiveDir: null,
+  composure: 0.5,
+  neuroLoad: 0.35,
+  recovery: 0.5,
+  flow: 0.5,
+  adaptationConfidence: 0,
+  signalCoverage: 0,
+  neuroPrompt: 'Signals optional',
 };
 
 function loadPersistedSession(): SessionSummary | null {

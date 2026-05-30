@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { getModeMeta, MODE_META } from '@/game/modes.ts';
+import type { GameMode } from '@/game/types.ts';
 import { MAPS } from '@/game/world/MapRegistry.ts';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
+const MODE_ORDER: GameMode[] = ['zen', 'free', 'dogfight'];
+
 export function MainMenu() {
   const navigate = useNavigate();
   const [selectedMap, setSelectedMap] = useState(MAPS[0].id);
-  const { eegConnected, cameraActive, connecting } = useNeuroConnection();
+  const [selectedMode, setSelectedMode] = useState<GameMode>('zen');
+  const { eegConnected, cameraActive, connecting, mockEnabled } = useNeuroConnection();
+
+  const map = useMemo(() => MAPS.find((m) => m.id === selectedMap) ?? MAPS[0], [selectedMap]);
+  const mode = getModeMeta(selectedMode);
+  const sensorReady = eegConnected || cameraActive || mockEnabled;
 
   const launchGame = () => {
-    navigate(`/fly?mode=dogfight&map=${selectedMap}`);
+    navigate(`/fly?mode=${selectedMode}&map=${selectedMap}`);
   };
 
   const connectHeadband = async () => {
@@ -21,217 +30,262 @@ export function MainMenu() {
     await useNeuroStore.getState().enableCamera();
   };
 
+  const enableMock = () => {
+    useNeuroStore.getState().enableMock();
+  };
+
   return (
-    <div
-      className="w-full h-full flex flex-col items-center overflow-y-auto relative"
+    <main
+      className="w-full h-full overflow-y-auto relative"
       style={{
-        paddingTop: 120,
-        paddingBottom: 120,
-        backgroundColor: 'var(--color-bg-primary)',
+        background: '#071016',
+        color: 'var(--color-text-primary)',
+        fontFamily: 'var(--font-body)',
       }}
     >
-      {/* Fixed background layers */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 140% 50% at 50% 60%, rgba(0,40,60,0.6) 0%, transparent 50%), radial-gradient(ellipse 100% 60% at 80% 90%, rgba(60,20,40,0.4) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 10% 80%, rgba(0,50,70,0.3) 0%, transparent 50%)',
-        }}
-      />
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(0,204,204,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,204,204,0.03) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+            'linear-gradient(180deg, rgba(7,16,22,0.16) 0%, rgba(7,16,22,0.76) 62%, rgba(7,16,22,0.96) 100%), url("/assets/sky/skyboxes/cloudy-panorama-06.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
         }}
       />
-      <h1
-        className="text-6xl font-bold tracking-wider"
-        style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-accent-gold)', marginBottom: 16 }}
-      >
-        NEUROFLIGHT
-      </h1>
-      <p
-        className="text-lg"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 80 }}
-      >
-        Neuroadaptive Flight Experience
-      </p>
+      <div
+        className="fixed inset-x-0 bottom-0 pointer-events-none"
+        style={{
+          height: '48%',
+          background: 'linear-gradient(180deg, transparent 0%, rgba(63,42,24,0.32) 36%, rgba(8,28,28,0.84) 100%)',
+        }}
+      />
 
-      {/* Neuro device connection panel */}
-      <div style={{ marginBottom: 72, width: 460 }}>
-        <span
-          className="block text-xs tracking-widest uppercase"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: 16 }}
-        >
-          Connect Devices
-        </span>
-        <div
-          className="flex flex-col rounded-xl"
-          style={{
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.02)',
-            padding: '28px 32px',
-            gap: 20,
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-              EEG Headband
-            </span>
-            {eegConnected ? (
-              <span
-                className="text-xs rounded-lg font-medium"
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  color: 'var(--color-accent-gold)',
-                  border: '1px solid rgba(255,200,100,0.4)',
-                  background: 'rgba(255,200,100,0.08)',
-                  padding: '10px 20px',
-                }}
-              >
-                Connected
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={connectHeadband}
-                disabled={connecting.eeg}
-                className="text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  borderColor: 'rgba(255,255,255,0.25)',
-                  color: 'var(--color-text-secondary)',
-                  background: 'transparent',
-                  padding: '12px 24px',
-                }}
-              >
-                {connecting.eeg ? 'Connecting...' : 'Connect'}
-              </button>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-              Camera (rPPG)
-            </span>
-            {cameraActive ? (
-              <span
-                className="text-xs rounded-lg font-medium"
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  color: 'var(--color-accent-gold)',
-                  border: '1px solid rgba(255,200,100,0.4)',
-                  background: 'rgba(255,200,100,0.08)',
-                  padding: '10px 20px',
-                }}
-              >
-                Active
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={enableCamera}
-                disabled={connecting.camera}
-                className="text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  borderColor: 'rgba(255,255,255,0.25)',
-                  color: 'var(--color-text-secondary)',
-                  background: 'transparent',
-                  padding: '12px 24px',
-                }}
-              >
-                {connecting.camera ? 'Enabling...' : 'Enable'}
-              </button>
-            )}
-          </div>
-          {!eegConnected && !cameraActive && (
-            <p className="text-[10px] opacity-50" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>
-              Optional — fly without devices or connect for biofeedback
+      <div className="relative mx-auto flex min-h-full w-full max-w-7xl flex-col px-6 py-8 md:px-10 lg:px-14">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p
+              className="text-xs uppercase tracking-widest"
+              style={{ color: 'rgba(240,236,224,0.72)', fontFamily: 'var(--font-mono)' }}
+            >
+              Neuroadaptive storybook aviation
             </p>
-          )}
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 72, width: 460 }}>
-        <span
-          className="block text-xs tracking-widest uppercase"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: 16 }}
-        >
-          Select Map
-        </span>
-        <div className="flex flex-col" style={{ gap: 12 }}>
-          {MAPS.map((map) => (
+            <h1
+              className="mt-2 text-5xl font-bold md:text-7xl"
+              style={{ color: '#fff4ca', fontFamily: 'var(--font-heading)' }}
+            >
+              NeuroFlight
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              key={map.id}
-              onClick={() => setSelectedMap(map.id)}
-              className="text-left border rounded-lg transition-all duration-150 cursor-pointer"
+              onClick={() => navigate('/assets')}
+              className="cursor-pointer border text-sm font-semibold transition-transform hover:scale-105 active:scale-95"
               style={{
-                fontFamily: 'var(--font-body)',
-                borderColor: selectedMap === map.id ? 'var(--color-accent-gold)' : 'rgba(255,255,255,0.15)',
-                color: selectedMap === map.id ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)',
-                background: selectedMap === map.id ? 'rgba(255,200,100,0.08)' : 'transparent',
-                padding: '20px 24px',
+                borderColor: 'rgba(125,211,252,0.5)',
+                color: '#bae6fd',
+                background: 'rgba(8,47,73,0.44)',
+                fontFamily: 'var(--font-heading)',
               }}
             >
-              <span className="block text-sm font-medium" style={{ fontFamily: 'var(--font-heading)' }}>
-                {map.name}
-              </span>
-              <span className="block text-xs opacity-70" style={{ marginTop: 4 }}>
-                {map.description}
-              </span>
+              Asset Lab
             </button>
-          ))}
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={() => navigate('/settings')}
+              className="cursor-pointer border text-sm font-semibold transition-transform hover:scale-105 active:scale-95"
+              style={{
+                borderColor: 'rgba(255,244,202,0.36)',
+                color: '#fff4ca',
+                background: 'rgba(30,26,18,0.42)',
+                fontFamily: 'var(--font-heading)',
+              }}
+            >
+              Settings
+            </button>
+          </div>
+        </header>
 
-      <div className="flex flex-col" style={{ gap: 20, width: 460 }}>
-        <button
-          type="button"
-          onClick={launchGame}
-          className="rounded-lg text-xl tracking-widest transition-all duration-200 hover:scale-105 cursor-pointer font-bold"
-          style={{
-            fontFamily: 'var(--font-heading)',
-            color: '#ffffff',
-            background: 'linear-gradient(135deg, rgba(255,60,60,0.85) 0%, rgba(200,30,30,0.9) 100%)',
-            border: '1px solid rgba(255,100,100,0.4)',
-            boxShadow: '0 4px 20px rgba(255,50,50,0.3)',
-            padding: '22px 32px',
-          }}
-        >
-          LAUNCH DOGFIGHT
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/settings')}
-          className="border rounded-lg text-sm tracking-wide transition-all duration-200 hover:scale-105 cursor-pointer"
-          style={{
-            fontFamily: 'var(--font-body)',
-            borderColor: 'var(--color-text-secondary)',
-            color: 'var(--color-text-secondary)',
-            background: 'transparent',
-            padding: '16px 32px',
-          }}
-        >
-          SETTINGS
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/assets')}
-          className="border rounded-lg text-sm tracking-wide transition-all duration-200 hover:scale-105 cursor-pointer"
-          style={{
-            fontFamily: 'var(--font-body)',
-            borderColor: 'rgba(0,204,204,0.45)',
-            color: 'var(--color-accent-cyan)',
-            background: 'rgba(0,204,204,0.06)',
-            padding: '16px 32px',
-          }}
-        >
-          ASSET LAB
-        </button>
+        <section className="grid flex-1 items-center gap-8 pb-20 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pt-16">
+          <div>
+            <p className="max-w-2xl text-lg leading-8 md:text-xl" style={{ color: 'rgba(255,248,226,0.86)' }}>
+              Choose a quiet route, a landmark expedition, or a full dogfight. Sensors are optional; when they are on,
+              the world responds gently to composure, recovery, and signal confidence.
+            </p>
+
+            <div className="mt-9 grid gap-4 md:grid-cols-3">
+              {MODE_ORDER.map((modeId) => {
+                const item = MODE_META[modeId];
+                const active = selectedMode === modeId;
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => setSelectedMode(item.id)}
+                    className="min-h-[172px] cursor-pointer rounded-lg border text-left transition-transform hover:-translate-y-1 active:translate-y-0"
+                    style={{
+                      borderColor: active ? item.accent : 'rgba(255,255,255,0.16)',
+                      background: active ? 'rgba(255,255,255,0.16)' : 'rgba(2,8,12,0.48)',
+                      boxShadow: active ? `0 18px 50px ${item.accent}24` : 'none',
+                      backdropFilter: 'blur(10px)',
+                      padding: 22,
+                    }}
+                  >
+                    <span
+                      className="block text-xs uppercase tracking-widest"
+                      style={{ color: active ? item.accent : 'rgba(240,236,224,0.58)', fontFamily: 'var(--font-mono)' }}
+                    >
+                      {item.scoreLabel}
+                    </span>
+                    <span
+                      className="mt-3 block text-2xl font-bold"
+                      style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}
+                    >
+                      {item.title}
+                    </span>
+                    <span className="mt-3 block text-sm leading-6" style={{ color: 'rgba(240,236,224,0.72)' }}>
+                      {item.menuDescription}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={launchGame}
+                className="cursor-pointer rounded-lg px-8 py-5 text-lg font-bold transition-transform hover:scale-105 active:scale-95"
+                style={{
+                  color: '#071016',
+                  background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)`,
+                  border: '1px solid rgba(255,255,255,0.54)',
+                  boxShadow: `0 18px 45px ${mode.accent}38`,
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
+                Launch {mode.title}
+              </button>
+              <p className="max-w-sm text-sm leading-6" style={{ color: 'rgba(240,236,224,0.64)' }}>
+                {sensorReady
+                  ? 'Sensors are connected for adaptive ambience and debrief notes.'
+                  : 'You can fly without sensors; simulated signals are available for testing.'}
+              </p>
+            </div>
+          </div>
+
+          <aside className="grid gap-5">
+            <div
+              className="rounded-lg border"
+              style={{
+                borderColor: 'rgba(255,244,202,0.18)',
+                background: 'rgba(5,14,18,0.62)',
+                backdropFilter: 'blur(12px)',
+                padding: 24,
+              }}
+            >
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: '#facc15', fontFamily: 'var(--font-mono)' }}
+              >
+                Route
+              </p>
+              <h2 className="mt-2 text-3xl font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
+                {map.storyName ?? map.name}
+              </h2>
+              <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(240,236,224,0.72)' }}>
+                {map.storyDescription ?? map.description}
+              </p>
+              <div className="mt-5 grid gap-3">
+                {MAPS.map((candidate) => {
+                  const active = candidate.id === selectedMap;
+                  return (
+                    <button
+                      type="button"
+                      key={candidate.id}
+                      onClick={() => setSelectedMap(candidate.id)}
+                      className="cursor-pointer rounded-lg border text-left transition-transform hover:translate-x-1"
+                      style={{
+                        borderColor: active ? '#facc15' : 'rgba(255,255,255,0.14)',
+                        background: active ? 'rgba(250,204,21,0.12)' : 'rgba(255,255,255,0.04)',
+                        padding: '16px 18px',
+                      }}
+                    >
+                      <span className="block font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
+                        {candidate.storyName ?? candidate.name}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5" style={{ color: 'rgba(240,236,224,0.62)' }}>
+                        {candidate.storyTagline ?? candidate.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className="rounded-lg border"
+              style={{
+                borderColor: 'rgba(125,211,252,0.22)',
+                background: 'rgba(3,24,32,0.58)',
+                backdropFilter: 'blur(12px)',
+                padding: 24,
+              }}
+            >
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: '#7dd3fc', fontFamily: 'var(--font-mono)' }}
+              >
+                Biofeedback
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={connectHeadband}
+                  disabled={connecting.eeg || eegConnected}
+                  className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    borderColor: eegConnected ? '#5eead4' : 'rgba(255,255,255,0.18)',
+                    color: eegConnected ? '#5eead4' : '#dbeafe',
+                    background: eegConnected ? 'rgba(45,212,191,0.12)' : 'rgba(255,255,255,0.04)',
+                    fontFamily: 'var(--font-heading)',
+                  }}
+                >
+                  {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
+                </button>
+                <button
+                  type="button"
+                  onClick={enableCamera}
+                  disabled={connecting.camera || cameraActive}
+                  className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    borderColor: cameraActive ? '#facc15' : 'rgba(255,255,255,0.18)',
+                    color: cameraActive ? '#facc15' : '#dbeafe',
+                    background: cameraActive ? 'rgba(250,204,21,0.12)' : 'rgba(255,255,255,0.04)',
+                    fontFamily: 'var(--font-heading)',
+                  }}
+                >
+                  {connecting.camera ? 'Starting' : cameraActive ? 'Camera Ready' : 'Camera'}
+                </button>
+                <button
+                  type="button"
+                  onClick={enableMock}
+                  disabled={mockEnabled}
+                  className="cursor-pointer border text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    borderColor: mockEnabled ? '#c4b5fd' : 'rgba(255,255,255,0.18)',
+                    color: mockEnabled ? '#c4b5fd' : '#dbeafe',
+                    background: mockEnabled ? 'rgba(196,181,253,0.12)' : 'rgba(255,255,255,0.04)',
+                    fontFamily: 'var(--font-heading)',
+                  }}
+                >
+                  {mockEnabled ? 'Sim Ready' : 'Simulate'}
+                </button>
+              </div>
+            </div>
+          </aside>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

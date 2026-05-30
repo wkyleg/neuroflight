@@ -1,20 +1,32 @@
 export class ScoreManager {
   private score = 0;
   private ringsPassed = 0;
+  private objectiveCompletions = 0;
   private combo = 0;
   private bestCombo = 0;
   private elapsedMs = 0;
   private totalSpeed = 0;
   private speedSamples = 0;
 
-  addRing(speed: number): void {
+  addRing(speed: number, multiplier = 1): void {
     this.ringsPassed++;
     this.combo++;
     if (this.combo > this.bestCombo) this.bestCombo = this.combo;
     const comboMultiplier = 1 + Math.floor(this.combo / 3) * 0.5;
-    this.score += Math.round(100 * comboMultiplier);
+    this.score += Math.round(100 * comboMultiplier * multiplier);
     this.totalSpeed += speed;
     this.speedSamples++;
+  }
+
+  addObjective(points: number, multiplier = 1): void {
+    this.objectiveCompletions++;
+    this.combo++;
+    if (this.combo > this.bestCombo) this.bestCombo = this.combo;
+    this.score += Math.round(points * multiplier);
+  }
+
+  addBonus(points: number): void {
+    this.score += Math.round(points);
   }
 
   breakCombo(): void {
@@ -30,6 +42,9 @@ export class ScoreManager {
   }
   getRingsPassed(): number {
     return this.ringsPassed;
+  }
+  getObjectiveCompletions(): number {
+    return this.objectiveCompletions;
   }
   getCombo(): number {
     return this.combo;
@@ -47,6 +62,7 @@ export class ScoreManager {
   reset(): void {
     this.score = 0;
     this.ringsPassed = 0;
+    this.objectiveCompletions = 0;
     this.combo = 0;
     this.bestCombo = 0;
     this.elapsedMs = 0;

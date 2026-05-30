@@ -1,4 +1,4 @@
-import { MockBCIProvider } from './bciMock';
+import { type BCI_PRESETS, MockBCIProvider } from './bciMock';
 import { type EEGProviderState, ElataEEGProvider } from './eegProvider';
 import logger from './logger';
 import { ElataRppgProvider, type RppgProviderState } from './rppgProvider';
@@ -172,6 +172,13 @@ export class NeuroManager {
   enableMock(): void {
     this.mockEnabled = true;
     this.mockProvider.init();
+    this.notifySubscribers();
+  }
+
+  setMockPreset(preset: keyof typeof BCI_PRESETS): void {
+    this.mockEnabled = true;
+    this.mockProvider.init();
+    this.mockProvider.applyPreset(preset);
     this.notifySubscribers();
   }
 

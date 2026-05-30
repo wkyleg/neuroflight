@@ -10,6 +10,7 @@ export class AudioPolishSystem {
   private readonly ambientLoops: AmbientLoop[] = [];
   private readonly activeOneShots = new Set<HTMLAudioElement>();
   private started = false;
+  private intensity = 0.65;
 
   constructor(config?: AudioPolishConfig) {
     this.config = config;
@@ -38,8 +39,12 @@ export class AudioPolishSystem {
     const ratio = Math.min(1, Math.max(0, speed / maxSpeed));
     for (const loop of this.ambientLoops) {
       const baseVolume = loop.clip.volume ?? 0.08;
-      loop.audio.volume = baseVolume * (0.45 + ratio * 0.55);
+      loop.audio.volume = baseVolume * (0.35 + ratio * 0.45 + this.intensity * 0.2);
     }
+  }
+
+  setIntensity(intensity: number): void {
+    this.intensity = Math.max(0, Math.min(1, intensity));
   }
 
   playWeapon(): void {

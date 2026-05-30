@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { getModeMeta } from '@/game/modes.ts';
+import type { GameMode } from '@/game/types.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
 
-function ControlsLegend({ onDismiss }: { onDismiss: () => void }) {
+function ControlsLegend({ mode, onDismiss }: { mode: GameMode; onDismiss: () => void }) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, 15000);
     return () => clearTimeout(timer);
@@ -54,12 +56,16 @@ function ControlsLegend({ onDismiss }: { onDismiss: () => void }) {
         <div>
           <span style={{ color: 'var(--color-text-primary)' }}>B</span> &mdash; Brake
         </div>
-        <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
-          <span style={{ color: '#ff4444' }}>Space / Enter</span> &mdash; Fire
-        </div>
-        <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
-          <span style={{ color: 'var(--color-text-primary)' }}>Click</span> &mdash; Fire
-        </div>
+        {mode === 'dogfight' && (
+          <>
+            <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
+              <span style={{ color: '#ff4444' }}>Space / Enter</span> &mdash; Fire
+            </div>
+            <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
+              <span style={{ color: 'var(--color-text-primary)' }}>Click</span> &mdash; Fire
+            </div>
+          </>
+        )}
         <div>
           <span style={{ color: 'var(--color-text-primary)' }}>R</span> &mdash; Restart
         </div>
@@ -206,6 +212,121 @@ function Crosshair() {
   );
 }
 
+function AttitudeWidget({ heading, throttle, speed }: { heading: number; throttle: number; speed: number }) {
+  const bank = ((heading % 60) - 30) * 0.45;
+  const horizonOffset = Math.max(-16, Math.min(16, (throttle - 0.5) * 34));
+  return (
+    <div
+      className="rounded-lg border"
+      style={{
+        width: 150,
+        height: 118,
+        background: 'rgba(4,12,16,0.62)',
+        borderColor: 'rgba(255,244,202,0.18)',
+        backdropFilter: 'blur(6px)',
+        padding: 10,
+      }}
+    >
+      <div
+        className="relative h-full overflow-hidden rounded-md"
+        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div
+          className="absolute left-[-20%] top-[-25%] h-[150%] w-[140%]"
+          style={{
+            transform: `rotate(${bank}deg) translateY(${horizonOffset}px)`,
+            background:
+              'linear-gradient(180deg, rgba(56,189,248,0.42) 0%, rgba(125,211,252,0.24) 46%, rgba(255,244,202,0.82) 47%, rgba(181,119,48,0.46) 100%)',
+          }}
+        />
+        <div className="absolute inset-x-5 top-1/2 h-px" style={{ background: 'rgba(255,255,255,0.72)' }} />
+        <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70" />
+        <div
+          className="absolute bottom-2 left-0 right-0 text-center text-[10px] font-bold tabular-nums"
+          style={{ color: '#fff8e2' }}
+        >
+          {Math.round(heading)} DEG / {Math.round(speed)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MissionCard({
+  title,
+  subtitle,
+  objective,
+  subtext,
+  progress,
+  goal,
+  accent,
+}: {
+  title: string;
+  subtitle: string;
+  objective: string;
+  subtext: string;
+  progress: number;
+  goal: number;
+  accent: string;
+}) {
+  const pct = goal > 0 ? Math.max(0, Math.min(100, (progress / goal) * 100)) : 0;
+  return (
+    <div
+      className="rounded-lg border"
+      style={{
+        width: 330,
+        background: 'rgba(5,14,18,0.68)',
+        borderColor: `${accent}55`,
+        backdropFilter: 'blur(8px)',
+        padding: '16px 18px',
+      }}
+    >
+      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-mono)' }}>
+        {title}
+      </div>
+      <div className="mt-1 text-sm font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
+        {subtitle}
+      </div>
+      <div className="mt-4 text-lg font-bold leading-6" style={{ color: '#ffffff', fontFamily: 'var(--font-heading)' }}>
+        {objective}
+      </div>
+      <div className="mt-2 min-h-8 text-xs leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+        {subtext}
+      </div>
+      {goal > 0 && (
+        <div className="mt-4">
+          <div className="flex justify-between text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+            <span>Progress</span>
+            <span>
+              {progress}/{goal}
+            </span>
+          </div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: accent }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdaptiveGauge({ label, value, color }: { label: string; value: number; color: string }) {
+  const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
+  return (
+    <div style={{ minWidth: 92 }}>
+      <div className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
+        {label}
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <div className="mt-1 text-xs font-bold tabular-nums" style={{ color }}>
+        {pct}%
+      </div>
+    </div>
+  );
+}
+
 function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
   const [lastKills, setLastKills] = useState(0);
   const [lastDeaths, setLastDeaths] = useState(0);
@@ -293,10 +414,11 @@ export function FlightHud() {
 
   const speedKnots = Math.round(hud.speed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
+  const modeMeta = getModeMeta(hud.mode);
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none" style={{ fontFamily: 'var(--font-mono)' }}>
-      {showControls && <ControlsLegend onDismiss={dismissControls} />}
+      {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} />}
 
       <NeuroConnectBanner />
 
@@ -360,13 +482,13 @@ export function FlightHud() {
             style={{ background: 'rgba(0,5,15,0.6)', backdropFilter: 'blur(6px)', padding: '14px 24px' }}
           >
             <div className="text-xs tracking-widest font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-              DOGFIGHT
+              {hud.scoreLabel}
             </div>
             <div
               className="text-xl font-semibold"
-              style={{ color: 'var(--color-accent-gold)', fontFamily: 'var(--font-heading)' }}
+              style={{ color: modeMeta.accent, fontFamily: 'var(--font-heading)' }}
             >
-              {hud.aircraftId.toUpperCase().replace(/_/g, ' ')}
+              {hud.score}
             </div>
           </div>
           <div className="flex items-center" style={{ gap: 10 }}>
@@ -404,6 +526,46 @@ export function FlightHud() {
           </div>
         </div>
       </div>
+
+      <div className="absolute left-10 top-36">
+        <MissionCard
+          title={hud.missionTitle}
+          subtitle={hud.missionSubtitle}
+          objective={hud.objectiveText}
+          subtext={hud.objectiveSubtext}
+          progress={hud.objectiveProgress}
+          goal={hud.objectiveGoal}
+          accent={modeMeta.accent}
+        />
+      </div>
+
+      <div className="absolute right-10 top-36 flex flex-col items-end gap-3">
+        <AttitudeWidget heading={hud.heading} throttle={hud.throttle} speed={hud.speed} />
+        <div
+          className="rounded-lg border"
+          style={{
+            background: 'rgba(5,14,18,0.58)',
+            borderColor: 'rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(6px)',
+            padding: '12px 14px',
+            width: 260,
+          }}
+        >
+          <div className="mb-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.56)' }}>
+            Adaptive Signals
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <AdaptiveGauge label="Composure" value={hud.composure} color="#5eead4" />
+            <AdaptiveGauge label="Load" value={hud.neuroLoad} color="#fb7185" />
+            <AdaptiveGauge label="Flow" value={hud.flow} color="#facc15" />
+          </div>
+          <div className="mt-2 text-[10px] leading-4" style={{ color: 'rgba(240,236,224,0.58)' }}>
+            {hud.neuroPrompt}
+          </div>
+        </div>
+      </div>
+
+      {hud.nextObjectiveDir && <DirectionIndicator dir={hud.nextObjectiveDir} color={modeMeta.accent} label="ROUTE" />}
 
       {/* Dogfight HUD */}
       {isDogfight && (

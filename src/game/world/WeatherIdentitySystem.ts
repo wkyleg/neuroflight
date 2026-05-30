@@ -5,6 +5,7 @@ interface WeatherParticle {
   sprite: THREE.Sprite;
   layer: WeatherBillboardLayerConfig;
   velocity: THREE.Vector3;
+  baseOpacity: number;
 }
 
 function seededRng(seed: number) {
@@ -27,6 +28,7 @@ export class WeatherIdentitySystem {
   private lightningLight: THREE.PointLight | null = null;
   private lightningTimer = 3;
   private lightningPulse = 0;
+  private adaptiveClarity = 1;
 
   constructor(scene: THREE.Scene, config?: WeatherIdentityConfig) {
     this.scene = scene;
@@ -45,6 +47,7 @@ export class WeatherIdentitySystem {
   update(dt: number, cameraPos: THREE.Vector3): void {
     for (const particle of this.particles) {
       particle.sprite.position.addScaledVector(particle.velocity, dt);
+      particle.sprite.material.opacity = particle.baseOpacity * this.adaptiveClarity;
       const dx = particle.sprite.position.x - cameraPos.x;
       const dz = particle.sprite.position.z - cameraPos.z;
       const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
@@ -57,6 +60,10 @@ export class WeatherIdentitySystem {
     }
 
     this.updateLightning(dt, cameraPos);
+  }
+
+  setAdaptiveClarity(multiplier: number): void {
+    this.adaptiveClarity = THREE.MathUtils.clamp(multiplier, 0.62, 1.12);
   }
 
   destroy(): void {
@@ -74,10 +81,11 @@ export class WeatherIdentitySystem {
     this.textures.push(texture);
 
     for (let i = 0; i < layer.count; i++) {
+      const baseOpacity = THREE.MathUtils.lerp(layer.opacityRange[0], layer.opacityRange[1], this.rng());
       const material = new THREE.SpriteMaterial({
         map: texture,
         color: layer.color,
-        opacity: THREE.MathUtils.lerp(layer.opacityRange[0], layer.opacityRange[1], this.rng()),
+        opacity: baseOpacity,
         transparent: true,
         depthWrite: false,
         fog: false,
@@ -97,6 +105,7 @@ export class WeatherIdentitySystem {
         sprite,
         layer,
         velocity: this.makeVelocity(layer),
+        baseOpacity,
       };
       this.placeParticle(particle, new THREE.Vector3());
       this.scene.add(sprite);

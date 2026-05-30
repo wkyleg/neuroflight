@@ -25,72 +25,75 @@ export function NeuroConnectBanner() {
 
   return (
     <div
-      className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center rounded-xl pointer-events-auto z-50"
+      className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center rounded-lg pointer-events-auto z-50"
       style={{
-        background: 'rgba(0, 10, 20, 0.85)',
+        background: 'rgba(0, 10, 20, 0.72)',
         border: '1px solid rgba(0, 204, 204, 0.3)',
         backdropFilter: 'blur(8px)',
-        padding: '20px 40px',
-        gap: 20,
+        padding: '10px 14px',
+        gap: 10,
       }}
     >
       <span
-        className="text-sm tracking-wide"
+        className="text-xs tracking-wide"
         style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-heading)' }}
       >
-        {hasAny ? 'Add another device:' : 'Connect a neuro device:'}
+        {hasAny ? 'Add signal:' : 'Signals optional:'}
       </span>
 
       <button
         type="button"
         onClick={connectHeadband}
         disabled={connecting.eeg || eegConnected}
-        className="px-6 py-3 text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
+        className="text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
           fontFamily: 'var(--font-heading)',
           borderColor: 'var(--color-accent-cyan)',
           color: 'var(--color-accent-cyan)',
           background: eegConnected ? 'rgba(0,204,204,0.1)' : 'transparent',
+          padding: '8px 14px',
         }}
       >
-        {connecting.eeg ? 'Connecting...' : eegConnected ? 'EEG ✓' : 'EEG Headband'}
+        {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
       </button>
 
       <button
         type="button"
         onClick={enableCamera}
         disabled={connecting.camera || cameraActive}
-        className="px-6 py-3 text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
+        className="text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
           fontFamily: 'var(--font-heading)',
           borderColor: '#ffaa44',
           color: '#ffaa44',
           background: cameraActive ? 'rgba(255,170,68,0.1)' : 'transparent',
+          padding: '8px 14px',
         }}
       >
-        {connecting.camera ? 'Enabling...' : cameraActive ? 'Camera ✓' : 'Camera (rPPG)'}
+        {connecting.camera ? 'Starting' : cameraActive ? 'Camera Ready' : 'Camera'}
       </button>
 
       {!hasAny && (
         <button
           type="button"
           onClick={enableMock}
-          className="px-6 py-3 text-xs border rounded-lg cursor-pointer transition-all hover:scale-105"
+          className="text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
           style={{
             fontFamily: 'var(--font-heading)',
             borderColor: 'var(--color-text-secondary)',
             color: 'var(--color-text-secondary)',
             background: 'transparent',
+            padding: '8px 14px',
           }}
         >
-          Simulate
+          Sim
         </button>
       )}
 
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="ml-3 text-sm cursor-pointer transition-all hover:scale-110"
+        className="text-sm cursor-pointer transition-all hover:scale-110"
         style={{ color: 'var(--color-text-secondary)' }}
       >
         ✕

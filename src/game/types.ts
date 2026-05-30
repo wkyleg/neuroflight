@@ -86,6 +86,25 @@ export interface LandmarkConfig {
   rotationY?: number;
 }
 
+export type MissionWaypointKind = 'ring' | 'landmark' | 'low_pass' | 'climb' | 'postcard' | 'combat_anchor';
+
+export interface MissionWaypointConfig {
+  id: string;
+  label: string;
+  description: string;
+  kind: MissionWaypointKind;
+  position: [number, number, number];
+  radius?: number;
+  score?: number;
+  color?: number;
+}
+
+export interface MapMissionRoutes {
+  zen: MissionWaypointConfig[];
+  expedition: MissionWaypointConfig[];
+  dogfight: MissionWaypointConfig[];
+}
+
 export interface SkyObjectLayerConfig {
   assetPath: string;
   count: number;
@@ -190,6 +209,10 @@ export interface MapDefinition {
   id: string;
   name: string;
   description: string;
+  storyName?: string;
+  storyDescription?: string;
+  storyTagline?: string;
+  missionRoutes?: MapMissionRoutes;
   environmentPresetId: string;
   playerSpawn: [number, number, number];
   scatterLayers: ScatterLayerConfig[];
