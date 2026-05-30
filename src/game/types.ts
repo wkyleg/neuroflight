@@ -26,11 +26,19 @@ export interface AircraftDefinition {
   modelFormat?: 'gltf' | 'obj';
   modelPath: string;
   texturePath?: string;
+  orientationPreset?: 'obj-z-forward' | 'gltf-z-forward' | 'gltf-x-forward' | 'gltf-recon-level';
   scale: number;
   modelRotationY: number;
   modelRotationX?: number;
   modelRotationZ?: number;
   modelOffset?: [number, number, number];
+  propellerBlur?: {
+    offset: [number, number, number];
+    radius: number;
+    axis?: 'x' | 'y' | 'z';
+    color?: number;
+    opacity?: number;
+  };
   /** Target max model dimension in world units after source model normalization. */
   targetVisualSize?: number;
   /** Hint for cameras/collision/debug views around unusually wide source models. */

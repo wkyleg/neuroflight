@@ -9,6 +9,7 @@ export class PlaneController {
   private modelObject: THREE.Object3D | null = null;
   private aircraft: AircraftDefinition;
   private propellers: THREE.Object3D[] = [];
+  private syntheticPropellers: THREE.Object3D[] = [];
   private objLoader = new OBJLoader();
 
   constructor(aircraft: AircraftDefinition) {
@@ -33,6 +34,7 @@ export class PlaneController {
       });
 
       this.flightModel.object.add(this.modelObject);
+      this.addSyntheticPropellerBlur();
       scene.add(this.flightModel.object);
     } catch (err) {
       console.warn(`Failed to load aircraft model: ${this.aircraft.modelPath}`, err);
@@ -42,6 +44,7 @@ export class PlaneController {
       fallback.rotation.x = Math.PI / 2;
       this.modelObject = fallback;
       this.flightModel.object.add(this.modelObject);
+      this.addSyntheticPropellerBlur();
       scene.add(this.flightModel.object);
     }
   }
@@ -95,7 +98,7 @@ export class PlaneController {
 
   update(dt: number, speed: number, maxSpeed: number): void {
     const spinRate = 5 + (speed / maxSpeed) * 40;
-    for (const prop of this.propellers) {
+    for (const prop of [...this.propellers, ...this.syntheticPropellers]) {
       prop.rotation.z += spinRate * dt;
     }
   }
@@ -106,5 +109,62 @@ export class PlaneController {
 
   getObject(): THREE.Object3D {
     return this.flightModel.object;
+  }
+
+  private addSyntheticPropellerBlur(): void {
+    this.syntheticPropellers = [];
+    const blur = this.aircraft.propellerBlur;
+    if (!blur || this.propellers.length > 0) return;
+
+    const group = new THREE.Group();
+    group.name = `${this.aircraft.id}-synthetic-propeller-blur`;
+    group.position.set(...blur.offset);
+    switch (blur.axis ?? 'z') {
+      case 'x':
+        group.rotation.y = Math.PI / 2;
+        break;
+      case 'y':
+        group.rotation.x = Math.PI / 2;
+        break;
+      case 'z':
+      default:
+        break;
+    }
+
+    const material = new THREE.MeshBasicMaterial({
+      color: blur.color ?? 0xfff2b8,
+      transparent: true,
+      opacity: blur.opacity ?? 0.3,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(blur.radius, 48), material);
+    disc.name = `${this.aircraft.id}-propeller-disc`;
+
+    const bladeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfff8dc,
+      transparent: true,
+      opacity: Math.min(0.52, (blur.opacity ?? 0.3) + 0.16),
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const blade = new THREE.Mesh(new THREE.PlaneGeometry(blur.radius * 1.85, blur.radius * 0.16), bladeMaterial);
+    blade.name = `${this.aircraft.id}-propeller-blade-a`;
+    const bladeCross = blade.clone();
+    bladeCross.name = `${this.aircraft.id}-propeller-blade-b`;
+    bladeCross.rotation.z = Math.PI / 2;
+
+    const hub = new THREE.Mesh(
+      new THREE.CircleGeometry(Math.max(0.12, blur.radius * 0.12), 24),
+      new THREE.MeshBasicMaterial({ color: 0xfff8dc, transparent: true, opacity: 0.8, depthWrite: false }),
+    );
+    hub.name = `${this.aircraft.id}-synthetic-propeller-hub`;
+
+    group.add(disc);
+    group.add(blade);
+    group.add(bladeCross);
+    group.add(hub);
+    this.syntheticPropellers.push(group);
+    this.flightModel.object.add(group);
   }
 }

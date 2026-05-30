@@ -45,4 +45,26 @@ describe('AircraftRegistry', () => {
       }
     }
   });
+
+  it('available aircraft declare explicit orientation metadata', () => {
+    for (const aircraft of getAvailableAircraft()) {
+      expect(aircraft.orientationPreset).toBeDefined();
+      expect(Number.isFinite(aircraft.modelRotationY)).toBe(true);
+      if (aircraft.modelRotationX !== undefined) expect(Number.isFinite(aircraft.modelRotationX)).toBe(true);
+      if (aircraft.modelRotationZ !== undefined) expect(Number.isFinite(aircraft.modelRotationZ)).toBe(true);
+    }
+  });
+
+  it('keeps propeller blur only on propeller aircraft', () => {
+    expect(getAircraft('storybook_biplane').propellerBlur).toBeDefined();
+    expect(getAircraft('spitfire').propellerBlur).toBeDefined();
+    expect(getAircraft('il28').propellerBlur).toBeUndefined();
+  });
+
+  it('levels the recon jet without the old nose-down compensation', () => {
+    const recon = getAircraft('il28');
+    expect(recon.orientationPreset).toBe('gltf-recon-level');
+    expect(recon.modelRotationX).toBe(0);
+    expect(recon.modelRotationZ).toBe(0);
+  });
 });
