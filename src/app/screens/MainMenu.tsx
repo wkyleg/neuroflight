@@ -73,7 +73,14 @@ export function MainMenu() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-full w-full max-w-[1360px] flex-col px-8 py-9 md:px-12 lg:px-16">
+      <div
+        className="relative mx-auto flex min-h-full w-full flex-col py-9"
+        style={{
+          maxWidth: 1360,
+          paddingLeft: 'clamp(32px, 4vw, 72px)',
+          paddingRight: 'clamp(32px, 4vw, 72px)',
+        }}
+      >
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p

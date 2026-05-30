@@ -401,7 +401,7 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
 export function FlightHud() {
   const hud = useGameStore((s) => s.hud);
   const game = useGameStore((s) => s.game);
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(false);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);

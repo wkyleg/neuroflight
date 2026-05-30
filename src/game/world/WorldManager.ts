@@ -62,12 +62,13 @@ export class WorldManager {
       metalness: 0.0,
       transparent: (config.opacity ?? 1) < 1,
       opacity: config.opacity ?? 1,
-      emissive: config.emissive ?? 0x000000,
-      emissiveIntensity: config.emissiveIntensity ?? 0,
+      emissive: config.emissive ?? config.color,
+      emissiveIntensity: config.emissiveIntensity ?? 0.16,
       polygonOffset: true,
       polygonOffsetFactor: 1,
       polygonOffsetUnits: 1,
     });
+    mat.toneMapped = false;
     this.groundMesh = new THREE.Mesh(geo, mat);
     this.groundMesh.rotation.x = -Math.PI / 2;
     this.groundMesh.position.y = -2;

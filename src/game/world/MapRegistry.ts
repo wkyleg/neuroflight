@@ -162,6 +162,8 @@ export const MAPS: MapDefinition[] = [
     groundPlane: {
       color: 0xd3a65f,
       size: 22000,
+      emissive: 0x9d6c2d,
+      emissiveIntensity: 0.28,
     },
     skyObjectLayers: [
       {
@@ -631,8 +633,8 @@ export const MAPS: MapDefinition[] = [
       color: 0x0f8ec4,
       size: 22000,
       opacity: 1.0,
-      emissive: 0x076b98,
-      emissiveIntensity: 0.22,
+      emissive: 0x0a78a8,
+      emissiveIntensity: 0.55,
     },
     skyObjectLayers: [
       {

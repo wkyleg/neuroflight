@@ -88,7 +88,7 @@ function CameraPreview({ active }: { active: boolean }) {
       if (previousParent) {
         previousParent.insertBefore(video, previousNext);
       } else if (video.parentElement === host) {
-        host.removeChild(video);
+        video.remove();
       }
     };
   }, [active]);

@@ -9,7 +9,7 @@ import { CameraManager } from './core/CameraManager.ts';
 import { eventBus } from './core/EventBus.ts';
 import { InputManager } from './core/InputManager.ts';
 import { Renderer } from './core/Renderer.ts';
-import { getNextPresetId, getPreset } from './dev/EnvironmentPresets.ts';
+import { getPreset } from './dev/EnvironmentPresets.ts';
 import { AIController } from './flight/AIController.ts';
 import { DEFAULT_AIRCRAFT_ID, getAircraft } from './flight/AircraftRegistry.ts';
 import { PlaneController } from './flight/PlaneController.ts';
@@ -102,7 +102,6 @@ export class Game {
   private lastTime = 0;
   private currentAircraftId = DEFAULT_AIRCRAFT_ID;
   private difficulty: GameDifficulty = 'rookie';
-  private currentPresetId = 'nevada';
   private currentMapId = 'desert_expanse';
   private hudUpdateTimer = 0;
   private audioStarted = false;
@@ -225,7 +224,6 @@ export class Game {
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
-    this.currentPresetId = map.environmentPresetId;
 
     this.skySystem = new SkySystem(this.scene);
     this.skySystem.setRenderer(this.renderer.renderer);
@@ -318,9 +316,15 @@ export class Game {
     this.applyVisualGrade(mapId);
 
     const modeMeta = getModeMeta(mode);
+    const initialInput = this.inputManager.getInput();
+    const initialDogfightGoal = map.missionRoutes?.dogfight.length ? 3 : 0;
     useGameStore.getState().updateHud({
       mode,
       aircraftId: this.currentAircraftId,
+      speed: Math.round(this.planeController.flightModel.getSpeed()),
+      altitude: Math.round(this.planeController.flightModel.getAltitude()),
+      heading: Math.round(this.planeController.flightModel.getHeading()),
+      throttle: initialInput.throttle,
       missionTitle: modeMeta.title,
       missionSubtitle: map.storyName ?? map.name,
       scoreLabel: modeMeta.scoreLabel,
@@ -333,7 +337,7 @@ export class Game {
           ? (map.missionRoutes?.zen.length ?? 0)
           : mode === 'free'
             ? (map.missionRoutes?.expedition.length ?? 0)
-            : 0,
+            : initialDogfightGoal,
     });
   }
 
@@ -787,12 +791,6 @@ export class Game {
 
   private render(): void {
     this.renderer.render(this.scene, this.cameraManager.camera);
-  }
-
-  private switchEnvironment(): void {
-    this.currentPresetId = getNextPresetId(this.currentPresetId);
-    const preset = getPreset(this.currentPresetId);
-    this.skySystem?.setConfig(preset.sky);
   }
 
   private restart(): void {
