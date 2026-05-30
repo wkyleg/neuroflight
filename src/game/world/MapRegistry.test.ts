@@ -64,6 +64,15 @@ describe('MapRegistry', () => {
     expect(ocean.seaTraffic?.vessels.every((vessel) => vessel.wake && vessel.speedRange[1] > 0)).toBe(true);
   });
 
+  it('defines richer map-specific cloud and ground texture profiles', () => {
+    for (const map of MAPS) {
+      expect(map.cloudProfile?.layers.length).toBeGreaterThanOrEqual(3);
+      expect(map.cloudProfile?.layers.reduce((sum, layer) => sum + layer.count, 0)).toBeGreaterThanOrEqual(70);
+      expect(map.cloudProfile?.texturePath).toContain('/assets/weather/oga-clouds-soft-01.png');
+      expect(map.groundPlane?.textureStyle).toBeDefined();
+    }
+  });
+
   it('authors hero landmarks near mission route set pieces', () => {
     const desert = getMap('desert_expanse');
     const ocean = getMap('ocean_islands');

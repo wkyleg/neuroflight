@@ -103,6 +103,7 @@ export interface GroundPlaneConfig {
   opacity?: number;
   emissive?: number;
   emissiveIntensity?: number;
+  textureStyle?: 'sand-ripples' | 'water-foam';
 }
 
 export interface LandmarkConfig {
@@ -212,6 +213,29 @@ export interface AtmosphereVfxConfig {
   lightning?: boolean;
   lightningTexturePath: string;
   lightningColor: number;
+}
+
+export interface CloudLayerProfileConfig {
+  id: string;
+  count: number;
+  band: 'low' | 'mid' | 'high';
+  radius?: number;
+  minDistance?: number;
+  altitudeRange: [number, number];
+  scaleRange: [number, number];
+  widthMultiplierRange?: [number, number];
+  heightMultiplierRange?: [number, number];
+  opacityRange: [number, number];
+  driftSpeedRange: [number, number];
+  color?: number;
+}
+
+export interface CloudProfileConfig {
+  seed?: number;
+  texturePath?: string;
+  cullDistance?: number;
+  respawnRadius?: number;
+  layers: CloudLayerProfileConfig[];
 }
 
 export type WorldLandmarkPlacementKind = 'island' | 'shoreline' | 'waterline' | 'floating';
@@ -333,6 +357,7 @@ export interface MapDefinition {
   environmentPresetId: string;
   playerSpawn: [number, number, number];
   scatterLayers: ScatterLayerConfig[];
+  cloudProfile?: CloudProfileConfig;
   skyObjectLayers?: SkyObjectLayerConfig[];
   atmosphere?: AtmosphereVfxConfig;
   worldLandmarkLayers?: WorldLandmarkLayerConfig[];

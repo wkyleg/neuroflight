@@ -284,7 +284,7 @@ export class Game {
     this.skySystem = new SkySystem(this.scene);
     this.skySystem.setRenderer(this.renderer.renderer);
     this.skySystem.setConfig(preset.sky);
-    this.cloudSystem = new CloudSystem(this.scene);
+    this.cloudSystem = new CloudSystem(this.scene, map.cloudProfile);
     this.skyObjectSystem = new SkyObjectSystem(this.scene);
     await this.skyObjectSystem.load(map.skyObjectLayers ?? []);
     this.atmosphereVfxSystem = new AtmosphereVfxSystem(this.scene, map.atmosphere);

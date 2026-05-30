@@ -198,6 +198,13 @@ These runtime assets were copied from `asset-inbox` after preview for the world-
 - Author: wreaderror
 - Attribution: Lightning 1 by wreaderror, CC0.
 
+## Clouds
+- Runtime files: /assets/weather/oga-clouds-soft-01.png
+- Source: OpenGameArt (https://opengameart.org/content/clouds)
+- License: CC0
+- Author: Igor Gundarev
+- Attribution: Clouds by Igor Gundarev, CC0.
+
 ## 16 Toon Muzzle Flash
 - Runtime files: /assets/vfx/muzzle-flash-02.png
 - Source: OpenGameArt (https://opengameart.org/content/16-toon-muzzle-flash)
