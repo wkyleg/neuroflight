@@ -46,6 +46,7 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     mode: 'zen',
     mapId: 'test-map',
     aircraftId: 'wright_flyer',
+    difficulty: 'rookie',
     durationMs: 1000,
     ringsPassed: 0,
     score: 0,

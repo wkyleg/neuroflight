@@ -271,3 +271,5 @@ export interface MapDefinition {
 }
 
 export type GameMode = 'zen' | 'free' | 'dogfight';
+
+export type GameDifficulty = 'rookie' | 'pilot' | 'ace';

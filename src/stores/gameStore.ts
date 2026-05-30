@@ -2,12 +2,13 @@ import { create } from 'zustand';
 import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
-import type { GameMode } from '@/game/types.ts';
+import type { GameDifficulty, GameMode } from '@/game/types.ts';
 
 export interface SessionSummary {
   mode: string;
   mapId: string;
   aircraftId: string;
+  difficulty: GameDifficulty;
   durationMs: number;
   ringsPassed: number;
   score: number;

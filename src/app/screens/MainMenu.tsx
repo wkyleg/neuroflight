@@ -2,18 +2,24 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { DEFAULT_AIRCRAFT_ID, getAircraft, getAvailableAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { getModeMeta, MODE_META } from '@/game/modes.ts';
-import type { GameMode } from '@/game/types.ts';
+import type { GameDifficulty, GameMode } from '@/game/types.ts';
 import { MAPS } from '@/game/world/MapRegistry.ts';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
 const MODE_ORDER: GameMode[] = ['zen', 'free', 'dogfight'];
+const DIFFICULTY_OPTIONS: Array<{ id: GameDifficulty; label: string; description: string }> = [
+  { id: 'rookie', label: 'Rookie', description: 'Forgiving rivals and softer scoring.' },
+  { id: 'pilot', label: 'Pilot', description: 'Balanced arcade challenge.' },
+  { id: 'ace', label: 'Ace', description: 'Sharper rivals and higher score ceiling.' },
+];
 
 export function MainMenu() {
   const navigate = useNavigate();
   const [selectedMap, setSelectedMap] = useState(MAPS[0].id);
   const [selectedMode, setSelectedMode] = useState<GameMode>('zen');
   const [selectedAircraft, setSelectedAircraft] = useState(DEFAULT_AIRCRAFT_ID);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('rookie');
   const { eegConnected, cameraActive, connecting, mockEnabled } = useNeuroConnection();
 
   const map = useMemo(() => MAPS.find((m) => m.id === selectedMap) ?? MAPS[0], [selectedMap]);
@@ -26,7 +32,7 @@ export function MainMenu() {
   const sensorReady = eegConnected || cameraActive || mockEnabled;
 
   const launchGame = () => {
-    navigate(`/fly?mode=${selectedMode}&map=${selectedMap}&aircraft=${aircraft.id}`);
+    navigate(`/fly?mode=${selectedMode}&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=${selectedDifficulty}`);
   };
 
   const connectHeadband = async () => {
@@ -223,6 +229,48 @@ export function MainMenu() {
                       </span>
                       <span className="mt-1 block text-xs" style={{ color: 'rgba(240,236,224,0.58)' }}>
                         {option.handlingLabel ?? option.era}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className="rounded-lg border"
+              style={{
+                borderColor: 'rgba(255,255,255,0.16)',
+                background: 'rgba(5,14,18,0.54)',
+                backdropFilter: 'blur(12px)',
+                padding: 20,
+              }}
+            >
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: '#facc15', fontFamily: 'var(--font-mono)' }}
+              >
+                Challenge
+              </p>
+              <div className="mt-3 grid gap-2">
+                {DIFFICULTY_OPTIONS.map((option) => {
+                  const active = option.id === selectedDifficulty;
+                  return (
+                    <button
+                      type="button"
+                      key={option.id}
+                      onClick={() => setSelectedDifficulty(option.id)}
+                      className="cursor-pointer rounded-lg border text-left transition-transform hover:translate-x-1"
+                      style={{
+                        borderColor: active ? '#facc15' : 'rgba(255,255,255,0.14)',
+                        background: active ? 'rgba(250,204,21,0.12)' : 'rgba(255,255,255,0.04)',
+                        padding: '10px 12px',
+                      }}
+                    >
+                      <span className="block text-sm font-bold" style={{ color: '#fff8e2' }}>
+                        {option.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5" style={{ color: 'rgba(240,236,224,0.58)' }}>
+                        {option.description}
                       </span>
                     </button>
                   );

@@ -5,6 +5,12 @@ const PLAYER_DAMAGE_PER_HIT = 10;
 const MAX_HEALTH = 100;
 const RESPAWN_DELAY = 2.0;
 
+export interface DogfightDifficultySettings {
+  playerDamageMultiplier: number;
+  rivalDamageMultiplier: number;
+  respawnDelayMultiplier: number;
+}
+
 export interface DogfightState {
   playerHealth: number;
   aiHealth: number;
@@ -23,6 +29,17 @@ export class DogfightManager {
   private shotsHit = 0;
   private aiRespawnTimer = 0;
   private aiDead = false;
+  private readonly difficulty: DogfightDifficultySettings;
+
+  constructor(
+    difficulty: DogfightDifficultySettings = {
+      playerDamageMultiplier: 1,
+      rivalDamageMultiplier: 1,
+      respawnDelayMultiplier: 1,
+    },
+  ) {
+    this.difficulty = difficulty;
+  }
 
   recordPlayerShot(): void {
     this.shotsFired++;
@@ -31,7 +48,10 @@ export class DogfightManager {
   applyDamage(target: 'player' | 'ai'): void {
     this.shotsHit++;
     if (target === 'player') {
-      this.playerHealth = Math.max(0, this.playerHealth - PLAYER_DAMAGE_PER_HIT);
+      this.playerHealth = Math.max(
+        0,
+        this.playerHealth - PLAYER_DAMAGE_PER_HIT * this.difficulty.rivalDamageMultiplier,
+      );
       eventBus.emit('dogfight:player_hit');
       if (this.playerHealth <= 0) {
         this.deaths++;
@@ -40,12 +60,12 @@ export class DogfightManager {
         eventBus.emit('dogfight:player_death');
       }
     } else {
-      this.aiHealth = Math.max(0, this.aiHealth - AI_DAMAGE_PER_HIT);
+      this.aiHealth = Math.max(0, this.aiHealth - AI_DAMAGE_PER_HIT * this.difficulty.playerDamageMultiplier);
       eventBus.emit('dogfight:ai_hit');
       if (this.aiHealth <= 0) {
         this.kills++;
         this.aiDead = true;
-        this.aiRespawnTimer = RESPAWN_DELAY;
+        this.aiRespawnTimer = RESPAWN_DELAY * this.difficulty.respawnDelayMultiplier;
         console.warn(`[Dogfight] Rival tagged — wins: ${this.kills}`);
         eventBus.emit('dogfight:ai_kill');
       }

@@ -4,9 +4,13 @@ import { FlightHud } from '@/app/ui/hud/FlightHud.tsx';
 import { DEFAULT_AIRCRAFT_ID, getAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { Game } from '@/game/Game.ts';
 import { getModeMeta } from '@/game/modes.ts';
-import type { GameMode } from '@/game/types.ts';
+import type { GameDifficulty, GameMode } from '@/game/types.ts';
 import { getMap } from '@/game/world/MapRegistry.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
+
+function parseDifficulty(value: string | null): GameDifficulty {
+  return value === 'pilot' || value === 'ace' || value === 'rookie' ? value : 'rookie';
+}
 
 export function GameScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,6 +20,7 @@ export function GameScreen() {
   const mode = (searchParams.get('mode') ?? 'dogfight') as GameMode;
   const mapId = searchParams.get('map') ?? 'desert_expanse';
   const aircraftId = searchParams.get('aircraft') ?? DEFAULT_AIRCRAFT_ID;
+  const difficulty = parseDifficulty(searchParams.get('difficulty'));
   const [loading, setLoading] = useState(true);
 
   const map = getMap(mapId);
@@ -33,12 +38,12 @@ export function GameScreen() {
       navigate('/summary');
     });
 
-    await game.init(mode, mapId, aircraft.id);
+    await game.init(mode, mapId, aircraft.id, difficulty);
     game.start();
 
     useGameStore.getState().setGame(game);
     setLoading(false);
-  }, [mode, mapId, aircraft.id, navigate]);
+  }, [mode, mapId, aircraft.id, difficulty, navigate]);
 
   useEffect(() => {
     initGame();
@@ -76,7 +81,7 @@ export function GameScreen() {
             className="text-xs"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', opacity: 0.6 }}
           >
-            {aircraft.name} &middot; {modeMeta.title}
+            {aircraft.name} &middot; {modeMeta.title} &middot; {difficulty.toUpperCase()}
           </p>
           <p className="mt-3 max-w-md text-center text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
             {modeMeta.loadingLine}

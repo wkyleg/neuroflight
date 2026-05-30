@@ -423,6 +423,7 @@ export function SummaryScreen() {
   const hasNeuro = lastSession.neuroSource !== 'none';
   const map = getMap(lastSession.mapId);
   const modeMeta = getModeMeta(lastSession.mode as 'zen' | 'free' | 'dogfight');
+  const difficulty = lastSession.difficulty ?? 'rookie';
 
   const ringEvents = lastSession.events.filter((e) => e.type === 'ring_hit');
   const killEvents = lastSession.events.filter((e) => e.type === 'kill');
@@ -439,7 +440,7 @@ export function SummaryScreen() {
       {/* Header */}
       <p className="tracking-[0.3em] uppercase" style={{ color: COLORS.textDim, fontSize: 13, marginBottom: 16 }}>
         {modeLabel} &middot; {map.storyName ?? map.name} &middot;{' '}
-        {lastSession.aircraftId.replace(/_/g, ' ').toUpperCase()}
+        {lastSession.aircraftId.replace(/_/g, ' ').toUpperCase()} &middot; {difficulty.toUpperCase()}
       </p>
       <h1
         className="font-bold tracking-wider"
@@ -1306,7 +1307,11 @@ export function SummaryScreen() {
         <button
           type="button"
           onClick={() =>
-            navigate(lastSession ? `/fly?mode=${lastSession.mode}&map=${lastSession.mapId}` : '/fly?mode=zen')
+            navigate(
+              lastSession
+                ? `/fly?mode=${lastSession.mode}&map=${lastSession.mapId}&aircraft=${lastSession.aircraftId}&difficulty=${difficulty}`
+                : '/fly?mode=zen',
+            )
           }
           className="px-10 py-4 border-2 text-sm font-bold tracking-widest cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-lg"
           style={{

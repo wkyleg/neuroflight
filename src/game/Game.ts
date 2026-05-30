@@ -22,7 +22,7 @@ import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { WeaponSystem } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
-import type { GameMode, MissionWaypointConfig } from './types.ts';
+import type { GameDifficulty, GameMode, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
 import { LivingWorldDirector } from './world/LivingWorldDirector.ts';
@@ -33,6 +33,44 @@ import { SkySystem } from './world/SkySystem.ts';
 import { WeatherIdentitySystem } from './world/WeatherIdentitySystem.ts';
 import { WorldLandmarkSystem } from './world/WorldLandmarkSystem.ts';
 import { WorldManager } from './world/WorldManager.ts';
+
+const DIFFICULTY_CONFIG: Record<
+  GameDifficulty,
+  {
+    scoreMultiplier: number;
+    ai: {
+      speedMultiplier: number;
+      turnRateMultiplier: number;
+      fireCooldownMultiplier: number;
+      attackRangeMultiplier: number;
+    };
+    dogfight: {
+      playerDamageMultiplier: number;
+      rivalDamageMultiplier: number;
+      respawnDelayMultiplier: number;
+    };
+  }
+> = {
+  rookie: {
+    scoreMultiplier: 0.9,
+    ai: { speedMultiplier: 0.78, turnRateMultiplier: 0.78, fireCooldownMultiplier: 1.55, attackRangeMultiplier: 0.82 },
+    dogfight: { playerDamageMultiplier: 1.18, rivalDamageMultiplier: 0.62, respawnDelayMultiplier: 1.18 },
+  },
+  pilot: {
+    scoreMultiplier: 1,
+    ai: { speedMultiplier: 1, turnRateMultiplier: 1, fireCooldownMultiplier: 1, attackRangeMultiplier: 1 },
+    dogfight: { playerDamageMultiplier: 1, rivalDamageMultiplier: 1, respawnDelayMultiplier: 1 },
+  },
+  ace: {
+    scoreMultiplier: 1.18,
+    ai: { speedMultiplier: 1.16, turnRateMultiplier: 1.18, fireCooldownMultiplier: 0.78, attackRangeMultiplier: 1.12 },
+    dogfight: { playerDamageMultiplier: 0.92, rivalDamageMultiplier: 1.28, respawnDelayMultiplier: 0.86 },
+  },
+};
+
+function getDifficultyConfig(difficulty: GameDifficulty) {
+  return DIFFICULTY_CONFIG[difficulty] ?? DIFFICULTY_CONFIG.rookie;
+}
 
 export class Game {
   private renderer: Renderer;
@@ -63,6 +101,7 @@ export class Game {
   private rafId = 0;
   private lastTime = 0;
   private currentAircraftId = DEFAULT_AIRCRAFT_ID;
+  private difficulty: GameDifficulty = 'rookie';
   private currentPresetId = 'nevada';
   private currentMapId = 'desert_expanse';
   private hudUpdateTimer = 0;
@@ -136,7 +175,7 @@ export class Game {
 
     eventBus.on('dogfight:ai_hit', () => {
       this.audioManager.playHit();
-      this.scoreManager.addBonus(65);
+      this.scoreManager.addBonus(65 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.sessionRecorder.recordEvent('shot_hit');
     });
 
@@ -146,8 +185,9 @@ export class Game {
 
     eventBus.on('dogfight:ai_kill', () => {
       this.audioManager.playExplosion();
-      this.scoreManager.addBonus(550);
-      this.sessionRecorder.recordEvent('kill', { label: 'Rival tagged', score: 550 });
+      const points = Math.round(550 * getDifficultyConfig(this.difficulty).scoreMultiplier);
+      this.scoreManager.addBonus(points);
+      this.sessionRecorder.recordEvent('kill', { label: 'Rival tagged', score: points });
     });
 
     eventBus.on('dogfight:player_death', () => {
@@ -172,10 +212,16 @@ export class Game {
     this.onSessionEnd = cb;
   }
 
-  async init(mode: GameMode, mapId = 'desert_expanse', aircraftId = DEFAULT_AIRCRAFT_ID): Promise<void> {
+  async init(
+    mode: GameMode,
+    mapId = 'desert_expanse',
+    aircraftId = DEFAULT_AIRCRAFT_ID,
+    difficulty: GameDifficulty = 'rookie',
+  ): Promise<void> {
     this.mode = mode;
     this.currentMapId = mapId;
     this.currentAircraftId = getAircraft(aircraftId).id;
+    this.difficulty = difficulty;
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -210,7 +256,7 @@ export class Game {
     if (mode === 'dogfight') {
       this.weaponSystem = new WeaponSystem(this.scene);
       this.combatVfxSystem = new CombatVfxSystem(this.scene, map.combatVfx);
-      this.dogfightManager = new DogfightManager();
+      this.dogfightManager = new DogfightManager(getDifficultyConfig(this.difficulty).dogfight);
 
       const aiAircraft = getAircraft('spitfire');
       const aiSpawn = new THREE.Vector3(
@@ -219,6 +265,7 @@ export class Game {
         map.playerSpawn[2] - 500,
       );
       this.aiController = new AIController(aiAircraft, aiSpawn);
+      this.aiController.setDifficulty(getDifficultyConfig(this.difficulty).ai);
       await this.aiController.loadModel(this.assetManager, this.scene);
 
       const markerCanvas = document.createElement('canvas');
@@ -386,14 +433,20 @@ export class Game {
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.getQuaternion());
       const hits = this.ringManager.update(this.planeController.flightModel.getPosition(), forward);
       for (let i = 0; i < hits; i++) {
-        this.scoreManager.addRing(this.planeController.flightModel.getSpeed(), adaptation.scoreMultiplier);
+        this.scoreManager.addRing(
+          this.planeController.flightModel.getSpeed(),
+          adaptation.scoreMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier,
+        );
       }
     }
 
     const objectiveState = this.missionObjectiveSystem?.update(dt, this.planeController.flightModel.getPosition());
     if (objectiveState?.completion) {
       const completion = objectiveState.completion;
-      this.scoreManager.addObjective(completion.score, adaptation.scoreMultiplier);
+      this.scoreManager.addObjective(
+        completion.score,
+        adaptation.scoreMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier,
+      );
       this.audioManager.playChime();
       this.audioPolishSystem?.playUi();
       this.sessionRecorder.recordEvent(completion.waypoint.kind === 'postcard' ? 'postcard' : 'objective_complete', {
@@ -851,6 +904,7 @@ export class Game {
       mode: this.mode,
       mapId: this.currentMapId,
       aircraftId: this.currentAircraftId,
+      difficulty: this.difficulty,
       durationMs: this.scoreManager.getElapsedMs(),
       ringsPassed: this.scoreManager.getRingsPassed(),
       score: this.scoreManager.getScore(),

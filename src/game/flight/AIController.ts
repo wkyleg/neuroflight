@@ -22,6 +22,13 @@ const _lookMatrix = new THREE.Matrix4();
 const _worldUp = new THREE.Vector3(0, 1, 0);
 const _strafeTarget = new THREE.Vector3();
 
+export interface AiDifficultySettings {
+  speedMultiplier: number;
+  turnRateMultiplier: number;
+  fireCooldownMultiplier: number;
+  attackRangeMultiplier: number;
+}
+
 export class AIController {
   readonly planeController: PlaneController;
   private object: THREE.Object3D;
@@ -32,6 +39,12 @@ export class AIController {
   private lastDotForward = 0;
   private speed = CRUISE_SPEED;
   private strafeTimer = 0;
+  private difficulty: AiDifficultySettings = {
+    speedMultiplier: 1,
+    turnRateMultiplier: 1,
+    fireCooldownMultiplier: 1,
+    attackRangeMultiplier: 1,
+  };
 
   constructor(aircraft: AircraftDefinition, spawnPos: THREE.Vector3) {
     this.planeController = new PlaneController(aircraft);
@@ -46,6 +59,10 @@ export class AIController {
 
   setHealth(_h: number): void {
     // Health is tracked by DogfightManager; kept for API compatibility
+  }
+
+  setDifficulty(settings: AiDifficultySettings): void {
+    this.difficulty = settings;
   }
 
   getPosition(): THREE.Vector3 {
@@ -89,7 +106,7 @@ export class AIController {
 
     switch (this.state) {
       case 'pursue':
-        if (distance < ATTACK_RANGE && dotForward > ATTACK_ALIGNMENT) {
+        if (distance < ATTACK_RANGE * this.difficulty.attackRangeMultiplier && dotForward > ATTACK_ALIGNMENT) {
           this.state = 'attack';
         }
         if (distance < 80 && dotForward < -0.2) {
@@ -98,7 +115,7 @@ export class AIController {
         }
         break;
       case 'attack':
-        if (distance > ATTACK_RANGE * 1.5 || dotForward < 0.3) {
+        if (distance > ATTACK_RANGE * 1.5 * this.difficulty.attackRangeMultiplier || dotForward < 0.3) {
           this.state = 'pursue';
         }
         if (distance < 60) {
@@ -141,7 +158,7 @@ export class AIController {
         this.speed = CRUISE_SPEED * 0.75;
         if (dotForward > ATTACK_ALIGNMENT && this.fireCooldown <= 0) {
           this.wantsToFire = true;
-          this.fireCooldown = FIRE_COOLDOWN;
+          this.fireCooldown = FIRE_COOLDOWN * this.difficulty.fireCooldownMultiplier;
         }
         break;
       default: {
@@ -158,6 +175,9 @@ export class AIController {
         break;
       }
     }
+
+    this.speed *= this.difficulty.speedMultiplier;
+    turnSpeed *= this.difficulty.turnRateMultiplier;
 
     // Rotate toward target using slerp
     if (this.object.position.distanceTo(targetPos) > 1) {
