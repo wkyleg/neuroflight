@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import type { AssetManager } from '@/game/core/AssetManager.ts';
 import type { AircraftDefinition } from '@/game/types.ts';
 import { FlightModel } from './FlightModel.ts';
@@ -8,6 +9,7 @@ export class PlaneController {
   private modelObject: THREE.Object3D | null = null;
   private aircraft: AircraftDefinition;
   private propellers: THREE.Object3D[] = [];
+  private objLoader = new OBJLoader();
 
   constructor(aircraft: AircraftDefinition) {
     this.aircraft = aircraft;
@@ -16,13 +18,12 @@ export class PlaneController {
 
   async loadModel(assetManager: AssetManager, scene: THREE.Scene): Promise<void> {
     try {
-      const gltf = await assetManager.loadGLTF(this.aircraft.modelPath);
-      this.modelObject = gltf.scene.clone();
-      this.modelObject.scale.setScalar(this.aircraft.scale);
-      this.modelObject.rotation.y = this.aircraft.modelRotationY;
-      if (this.aircraft.modelRotationX) {
-        this.modelObject.rotation.x = this.aircraft.modelRotationX;
-      }
+      this.modelObject =
+        this.aircraft.modelFormat === 'obj'
+          ? await this.loadObjModel(assetManager)
+          : (await assetManager.loadGLTF(this.aircraft.modelPath)).scene.clone();
+
+      this.applyModelTransform();
 
       this.propellers = [];
       this.modelObject.traverse((child) => {
@@ -42,6 +43,53 @@ export class PlaneController {
       this.modelObject = fallback;
       this.flightModel.object.add(this.modelObject);
       scene.add(this.flightModel.object);
+    }
+  }
+
+  private async loadObjModel(assetManager: AssetManager): Promise<THREE.Object3D> {
+    const object = await this.objLoader.loadAsync(this.aircraft.modelPath);
+    if (this.aircraft.texturePath) {
+      const texture = await assetManager.loadTexture(this.aircraft.texturePath);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.72,
+        metalness: 0.02,
+        side: THREE.DoubleSide,
+      });
+      object.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = material;
+        }
+      });
+    }
+    return object;
+  }
+
+  private applyModelTransform(): void {
+    if (!this.modelObject) return;
+
+    this.modelObject.rotation.set(
+      this.aircraft.modelRotationX ?? 0,
+      this.aircraft.modelRotationY,
+      this.aircraft.modelRotationZ ?? 0,
+    );
+
+    if (this.aircraft.targetVisualSize) {
+      this.modelObject.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().setFromObject(this.modelObject);
+      const size = bounds.getSize(new THREE.Vector3());
+      const sourceSize = Math.max(size.x, size.y, size.z, 1);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const normalizedScale = this.aircraft.targetVisualSize / sourceSize;
+      this.modelObject.scale.setScalar(normalizedScale);
+      this.modelObject.position.addScaledVector(center, -normalizedScale);
+    } else {
+      this.modelObject.scale.setScalar(this.aircraft.scale);
+    }
+
+    if (this.aircraft.modelOffset) {
+      this.modelObject.position.add(new THREE.Vector3(...this.aircraft.modelOffset));
     }
   }
 

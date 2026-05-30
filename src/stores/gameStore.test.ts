@@ -11,7 +11,7 @@ const DEFAULT_HUD = {
   elapsedMs: 0,
   mode: 'zen' as const,
   paused: false,
-  aircraftId: 'wright_flyer',
+  aircraftId: 'storybook_biplane',
   nextRingDir: null,
   playerHealth: 100,
   aiHealth: 100,
@@ -45,7 +45,7 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
   return {
     mode: 'zen',
     mapId: 'test-map',
-    aircraftId: 'wright_flyer',
+    aircraftId: 'storybook_biplane',
     difficulty: 'rookie',
     durationMs: 1000,
     ringsPassed: 0,
@@ -109,7 +109,7 @@ describe('gameStore', () => {
     expect(hud.score).toBe(50);
     expect(hud.paused).toBe(true);
     expect(hud.altitude).toBe(0);
-    expect(hud.aircraftId).toBe('wright_flyer');
+    expect(hud.aircraftId).toBe('storybook_biplane');
   });
 
   it('setLastSession() persists to sessionStorage', () => {

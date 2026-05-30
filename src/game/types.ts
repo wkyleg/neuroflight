@@ -23,10 +23,18 @@ export interface AircraftDefinition {
   difficulty?: 'gentle' | 'standard' | 'ace';
   available?: boolean;
   previewImage?: string;
+  modelFormat?: 'gltf' | 'obj';
   modelPath: string;
+  texturePath?: string;
   scale: number;
   modelRotationY: number;
   modelRotationX?: number;
+  modelRotationZ?: number;
+  modelOffset?: [number, number, number];
+  /** Target max model dimension in world units after source model normalization. */
+  targetVisualSize?: number;
+  /** Hint for cameras/collision/debug views around unusually wide source models. */
+  cameraSafeRadius?: number;
 
   tuning: {
     minSpeed: number;

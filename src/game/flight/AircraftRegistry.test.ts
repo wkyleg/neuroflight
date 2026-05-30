@@ -10,8 +10,10 @@ import {
 describe('AircraftRegistry', () => {
   it('defaults to the available storybook flyer', () => {
     const plane = getAircraft(DEFAULT_AIRCRAFT_ID);
-    expect(plane.id).toBe('wright_flyer');
+    expect(plane.id).toBe('storybook_biplane');
     expect(plane.available).toBe(true);
+    expect(plane.modelFormat).toBe('obj');
+    expect(plane.targetVisualSize).toBeGreaterThan(0);
   });
 
   it('getAircraft("spitfire") returns the Spitfire definition', () => {
@@ -38,6 +40,9 @@ describe('AircraftRegistry', () => {
       expect(a.tuning).toBeDefined();
       expect(typeof a.tuning.minSpeed).toBe('number');
       expect(typeof a.tuning.maxSpeed).toBe('number');
+      if (a.available !== false) {
+        expect(a.modelPath).toMatch(/^\/assets\//);
+      }
     }
   });
 });
