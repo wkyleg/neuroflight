@@ -196,6 +196,29 @@ describe('WeaponSystem', () => {
     weapons.destroy();
   });
 
+  it('applies difficulty hit radius and cooldown settings', () => {
+    const weapons = new WeaponSystem(scene);
+    weapons.setDifficulty({
+      playerHitRadius: 24,
+      rivalHitRadius: 32,
+      playerFireCooldown: 0.22,
+    });
+
+    expect(weapons.getPlayerFireCooldown()).toBe(0.22);
+
+    weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
+    const playerMesh = getVisibleProjectileMesh(weapons);
+    playerMesh.position.set(0, 0, 0);
+    expect(weapons.checkHits([{ position: new THREE.Vector3(28, 0, 0), owner: 'ai' }])).toHaveLength(0);
+
+    weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'ai');
+    const aiMesh = getVisibleProjectileMesh(weapons);
+    aiMesh.position.set(0, 0, 0);
+    expect(weapons.checkHits([{ position: new THREE.Vector3(28, 0, 0), owner: 'player' }])).toHaveLength(1);
+
+    weapons.destroy();
+  });
+
   it('setAiTargets() accepts positions for magnetism path', () => {
     const weapons = new WeaponSystem(scene);
     const t1 = new THREE.Vector3(100, 0, 0);

@@ -20,9 +20,9 @@ import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
 import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
-import { WeaponSystem } from './gameplay/WeaponSystem.ts';
+import { WeaponSystem, type WeaponDifficultySettings } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
-import type { GameDifficulty, GameMode, MissionWaypointConfig } from './types.ts';
+import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
 import { LivingWorldDirector } from './world/LivingWorldDirector.ts';
@@ -48,23 +48,75 @@ const DIFFICULTY_CONFIG: Record<
       playerDamageMultiplier: number;
       rivalDamageMultiplier: number;
       respawnDelayMultiplier: number;
+      spawnDistanceRange: [number, number];
+      spawnAltitudeOffsetRange: [number, number];
+      attackWarmupSeconds: number;
     };
+    weapon: WeaponDifficultySettings;
   }
 > = {
   rookie: {
     scoreMultiplier: 0.9,
-    ai: { speedMultiplier: 0.78, turnRateMultiplier: 0.78, fireCooldownMultiplier: 1.55, attackRangeMultiplier: 0.82 },
-    dogfight: { playerDamageMultiplier: 1.18, rivalDamageMultiplier: 0.62, respawnDelayMultiplier: 1.18 },
+    ai: { speedMultiplier: 0.76, turnRateMultiplier: 0.72, fireCooldownMultiplier: 1.75, attackRangeMultiplier: 0.76 },
+    dogfight: {
+      playerDamageMultiplier: 1.18,
+      rivalDamageMultiplier: 0.58,
+      respawnDelayMultiplier: 1.2,
+      spawnDistanceRange: [1120, 1480],
+      spawnAltitudeOffsetRange: [120, 260],
+      attackWarmupSeconds: 3.2,
+    },
+    weapon: {
+      playerProjectileSpeed: 420,
+      rivalProjectileSpeed: 210,
+      playerHitRadius: 66,
+      rivalHitRadius: 14,
+      magnetismRange: 125,
+      magnetismStrength: 3.1,
+      playerFireCooldown: 0.13,
+    },
   },
   pilot: {
     scoreMultiplier: 1,
     ai: { speedMultiplier: 1, turnRateMultiplier: 1, fireCooldownMultiplier: 1, attackRangeMultiplier: 1 },
-    dogfight: { playerDamageMultiplier: 1, rivalDamageMultiplier: 1, respawnDelayMultiplier: 1 },
+    dogfight: {
+      playerDamageMultiplier: 1,
+      rivalDamageMultiplier: 1,
+      respawnDelayMultiplier: 1,
+      spawnDistanceRange: [980, 1320],
+      spawnAltitudeOffsetRange: [90, 220],
+      attackWarmupSeconds: 2.2,
+    },
+    weapon: {
+      playerProjectileSpeed: 400,
+      rivalProjectileSpeed: 250,
+      playerHitRadius: 50,
+      rivalHitRadius: 18,
+      magnetismRange: 80,
+      magnetismStrength: 2.5,
+      playerFireCooldown: 0.15,
+    },
   },
   ace: {
     scoreMultiplier: 1.18,
-    ai: { speedMultiplier: 1.16, turnRateMultiplier: 1.18, fireCooldownMultiplier: 0.78, attackRangeMultiplier: 1.12 },
-    dogfight: { playerDamageMultiplier: 0.92, rivalDamageMultiplier: 1.28, respawnDelayMultiplier: 0.86 },
+    ai: { speedMultiplier: 1.18, turnRateMultiplier: 1.22, fireCooldownMultiplier: 0.72, attackRangeMultiplier: 1.16 },
+    dogfight: {
+      playerDamageMultiplier: 0.9,
+      rivalDamageMultiplier: 1.3,
+      respawnDelayMultiplier: 0.86,
+      spawnDistanceRange: [900, 1240],
+      spawnAltitudeOffsetRange: [70, 190],
+      attackWarmupSeconds: 1.35,
+    },
+    weapon: {
+      playerProjectileSpeed: 380,
+      rivalProjectileSpeed: 285,
+      playerHitRadius: 38,
+      rivalHitRadius: 23,
+      magnetismRange: 58,
+      magnetismStrength: 1.75,
+      playerFireCooldown: 0.18,
+    },
   },
 };
 
@@ -114,6 +166,7 @@ export class Game {
   private aiMarker: THREE.Mesh | null = null;
   private firing = false;
   private fireCooldown = 0;
+  private dogfightSpawnCursor = 0;
 
   // Session metrics
   private maxAltitude = 0;
@@ -221,6 +274,7 @@ export class Game {
     this.currentMapId = mapId;
     this.currentAircraftId = getAircraft(aircraftId).id;
     this.difficulty = difficulty;
+    this.dogfightSpawnCursor = 0;
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -253,17 +307,15 @@ export class Game {
 
     if (mode === 'dogfight') {
       this.weaponSystem = new WeaponSystem(this.scene);
+      this.weaponSystem.setDifficulty(getDifficultyConfig(this.difficulty).weapon);
       this.combatVfxSystem = new CombatVfxSystem(this.scene, map.combatVfx);
       this.dogfightManager = new DogfightManager(getDifficultyConfig(this.difficulty).dogfight);
 
       const aiAircraft = getAircraft('spitfire');
-      const aiSpawn = new THREE.Vector3(
-        map.playerSpawn[0] + 400,
-        Math.max(map.playerSpawn[1], 150) + 50,
-        map.playerSpawn[2] - 500,
-      );
+      const aiSpawn = this.getDogfightSpawnPosition(map, new THREE.Vector3(...map.playerSpawn));
       this.aiController = new AIController(aiAircraft, aiSpawn);
       this.aiController.setDifficulty(getDifficultyConfig(this.difficulty).ai);
+      this.aiController.setAttackWarmup(getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds);
       await this.aiController.loadModel(this.assetManager, this.scene);
 
       const markerCanvas = document.createElement('canvas');
@@ -345,6 +397,49 @@ export class Game {
     if (mode === 'free') return expeditionRoute?.[0]?.label ?? 'Find the first expedition beacon';
     if (mode === 'dogfight') return 'Acquire the patrol target';
     return 'Follow the glowing route';
+  }
+
+  private getDogfightSpawnPosition(map: MapDefinition, playerPos: THREE.Vector3): THREE.Vector3 {
+    const dogfight = getDifficultyConfig(this.difficulty).dogfight;
+    const [minDistance, maxDistance] = dogfight.spawnDistanceRange;
+    const [minAltitudeOffset, maxAltitudeOffset] = dogfight.spawnAltitudeOffsetRange;
+    const anchorCandidates = map.missionRoutes?.dogfight ?? [];
+
+    if (anchorCandidates.length > 0) {
+      const orderedAnchors = [...anchorCandidates].sort((a, b) => a.id.localeCompare(b.id));
+      for (let i = 0; i < orderedAnchors.length; i++) {
+        const waypoint = orderedAnchors[(this.dogfightSpawnCursor + i) % orderedAnchors.length];
+        const candidate = new THREE.Vector3(...waypoint.position);
+        const horizontalDistance = Math.hypot(candidate.x - playerPos.x, candidate.z - playerPos.z);
+        if (horizontalDistance >= minDistance * 0.75) {
+          this.dogfightSpawnCursor++;
+          candidate.y = Math.max(
+            candidate.y,
+            playerPos.y + THREE.MathUtils.lerp(minAltitudeOffset, maxAltitudeOffset, Math.random()),
+          );
+          return candidate;
+        }
+      }
+    }
+
+    const distance = THREE.MathUtils.lerp(minDistance, maxDistance, Math.random());
+    const playerForward = this.planeController
+      ? new THREE.Vector3(0, 0, -1).applyQuaternion(this.planeController.flightModel.object.quaternion)
+      : new THREE.Vector3(0, 0, -1);
+    playerForward.y = 0;
+    if (playerForward.lengthSq() < 0.01) playerForward.set(0, 0, -1);
+    playerForward.normalize();
+
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const offsetAngle = side * THREE.MathUtils.degToRad(38 + Math.random() * 42);
+    const spawnDir = playerForward.applyAxisAngle(new THREE.Vector3(0, 1, 0), offsetAngle).normalize();
+    const altitudeOffset = THREE.MathUtils.lerp(minAltitudeOffset, maxAltitudeOffset, Math.random());
+
+    return new THREE.Vector3(
+      playerPos.x + spawnDir.x * distance,
+      Math.max(map.playerSpawn[1] + 120, playerPos.y + altitudeOffset),
+      playerPos.z + spawnDir.z * distance,
+    );
   }
 
   start(): void {
@@ -498,7 +593,7 @@ export class Game {
       const wantsFire = this.firing || this.inputManager.wantsFire();
       if (wantsFire && this.fireCooldown <= 0) {
         this.firePlayerWeapon();
-        this.fireCooldown = 0.15;
+        this.fireCooldown = this.weaponSystem.getPlayerFireCooldown();
       }
 
       // Provide AI target positions for bullet magnetism
@@ -536,15 +631,9 @@ export class Game {
       const shouldRespawn = this.dogfightManager.update(dt);
       if (shouldRespawn) {
         const playerPos = this.planeController.flightModel.getPosition();
-        const playerFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(
-          this.planeController.flightModel.object.quaternion,
-        );
-        const respawnPos = new THREE.Vector3(
-          playerPos.x + playerFwd.x * 500 + (Math.random() - 0.5) * 200,
-          Math.max(playerPos.y, 150) + 40 + Math.random() * 60,
-          playerPos.z + playerFwd.z * 500 + (Math.random() - 0.5) * 200,
-        );
+        const respawnPos = this.getDogfightSpawnPosition(map, playerPos);
         this.aiController.respawn(respawnPos);
+        this.aiController.setAttackWarmup(getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds);
         this.aiController.setHealth(100);
         this.sessionRecorder.recordEvent('respawn', { label: 'Rival rejoined the route' });
       } else if (!this.dogfightManager.isAiDead()) {

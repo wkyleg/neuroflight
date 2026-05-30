@@ -39,6 +39,7 @@ export class AIController {
   private lastDotForward = 0;
   private speed = CRUISE_SPEED;
   private strafeTimer = 0;
+  private attackWarmupTimer = 0;
   private difficulty: AiDifficultySettings = {
     speedMultiplier: 1,
     turnRateMultiplier: 1,
@@ -63,6 +64,11 @@ export class AIController {
 
   setDifficulty(settings: AiDifficultySettings): void {
     this.difficulty = settings;
+  }
+
+  setAttackWarmup(seconds: number): void {
+    this.attackWarmupTimer = Math.max(0, seconds);
+    this.fireCooldown = Math.max(this.fireCooldown, seconds);
   }
 
   getPosition(): THREE.Vector3 {
@@ -90,10 +96,12 @@ export class AIController {
     this.object.quaternion.identity();
     this.state = 'pursue';
     this.strafeTimer = 0;
+    this.attackWarmupTimer = 0;
     this.speed = CRUISE_SPEED;
   }
 
   update(dt: number, playerPos: THREE.Vector3): void {
+    this.attackWarmupTimer = Math.max(0, this.attackWarmupTimer - dt);
     _toTarget.subVectors(playerPos, this.object.position);
     const distance = _toTarget.length();
 
@@ -156,7 +164,7 @@ export class AIController {
       case 'attack':
         targetPos = playerPos;
         this.speed = CRUISE_SPEED * 0.75;
-        if (dotForward > ATTACK_ALIGNMENT && this.fireCooldown <= 0) {
+        if (dotForward > ATTACK_ALIGNMENT && this.attackWarmupTimer <= 0 && this.fireCooldown <= 0) {
           this.wantsToFire = true;
           this.fireCooldown = FIRE_COOLDOWN * this.difficulty.fireCooldownMultiplier;
         }

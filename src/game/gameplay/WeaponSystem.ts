@@ -1,13 +1,27 @@
 import * as THREE from 'three';
 
-const PLAYER_PROJECTILE_SPEED = 400;
-const AI_PROJECTILE_SPEED = 250;
 const PROJECTILE_LIFETIME = 2.5;
-const PLAYER_HIT_RADIUS = 50;
-const AI_HIT_RADIUS = 18;
 const POOL_SIZE = 60;
-const MAGNETISM_RANGE = 80;
-const MAGNETISM_STRENGTH = 2.5;
+
+export interface WeaponDifficultySettings {
+  playerProjectileSpeed: number;
+  rivalProjectileSpeed: number;
+  playerHitRadius: number;
+  rivalHitRadius: number;
+  magnetismRange: number;
+  magnetismStrength: number;
+  playerFireCooldown: number;
+}
+
+const DEFAULT_WEAPON_SETTINGS: WeaponDifficultySettings = {
+  playerProjectileSpeed: 400,
+  rivalProjectileSpeed: 250,
+  playerHitRadius: 50,
+  rivalHitRadius: 18,
+  magnetismRange: 80,
+  magnetismStrength: 2.5,
+  playerFireCooldown: 0.15,
+};
 
 interface Projectile {
   mesh: THREE.Mesh;
@@ -36,6 +50,7 @@ export class WeaponSystem {
   private muzzleFadeTimer = 0;
   private aiTargets: THREE.Vector3[] = [];
   private aimAssistMultiplier = 1;
+  private difficulty: WeaponDifficultySettings = DEFAULT_WEAPON_SETTINGS;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -71,6 +86,14 @@ export class WeaponSystem {
     this.aimAssistMultiplier = THREE.MathUtils.clamp(multiplier, 0.8, 1.45);
   }
 
+  setDifficulty(settings: Partial<WeaponDifficultySettings>): void {
+    this.difficulty = { ...DEFAULT_WEAPON_SETTINGS, ...settings };
+  }
+
+  getPlayerFireCooldown(): number {
+    return this.difficulty.playerFireCooldown;
+  }
+
   fire(origin: THREE.Vector3, direction: THREE.Vector3, owner: 'player' | 'ai'): void {
     const proj = this.projectiles.find((p) => !p.active);
     if (!proj) {
@@ -78,7 +101,7 @@ export class WeaponSystem {
       return;
     }
 
-    const speed = owner === 'player' ? PLAYER_PROJECTILE_SPEED : AI_PROJECTILE_SPEED;
+    const speed = owner === 'player' ? this.difficulty.playerProjectileSpeed : this.difficulty.rivalProjectileSpeed;
 
     proj.active = true;
     proj.age = 0;
@@ -117,7 +140,7 @@ export class WeaponSystem {
         proj.mesh.visible = false;
         continue;
       }
-      // Bullet magnetism: player projectiles curve toward AI targets
+      // Tag magnetism: player ribbons curve gently toward rival targets.
       if (proj.owner === 'player' && this.aiTargets.length > 0) {
         let closestDist = Infinity;
         let closestTarget: THREE.Vector3 | null = null;
@@ -128,11 +151,11 @@ export class WeaponSystem {
             closestTarget = t;
           }
         }
-        if (closestTarget && closestDist < MAGNETISM_RANGE * this.aimAssistMultiplier) {
+        if (closestTarget && closestDist < this.difficulty.magnetismRange * this.aimAssistMultiplier) {
           _magnetDir.subVectors(closestTarget, proj.mesh.position).normalize();
           const currentSpeed = proj.velocity.length();
           const currentDir = proj.velocity.clone().normalize();
-          currentDir.lerp(_magnetDir, MAGNETISM_STRENGTH * this.aimAssistMultiplier * dt);
+          currentDir.lerp(_magnetDir, this.difficulty.magnetismStrength * this.aimAssistMultiplier * dt);
           currentDir.normalize();
           proj.velocity.copy(currentDir).multiplyScalar(currentSpeed);
         }
@@ -149,8 +172,10 @@ export class WeaponSystem {
         const target = targets[ti];
         if (target.owner === proj.owner) continue;
         const dist = proj.mesh.position.distanceTo(target.position);
-        // Player shooting AI gets a larger hit radius
-        const hitRadius = proj.owner === 'player' ? PLAYER_HIT_RADIUS * this.aimAssistMultiplier : AI_HIT_RADIUS;
+        const hitRadius =
+          proj.owner === 'player'
+            ? this.difficulty.playerHitRadius * this.aimAssistMultiplier
+            : this.difficulty.rivalHitRadius;
         if (dist < hitRadius) {
           hits.push({ targetIndex: ti, owner: proj.owner, position: proj.mesh.position.clone() });
           proj.active = false;
