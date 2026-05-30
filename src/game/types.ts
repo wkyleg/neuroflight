@@ -212,6 +212,18 @@ export interface WorldLandmarkLayerConfig {
     color?: number;
     flatten?: number;
   };
+  placements?: Array<{
+    position: [number, number, number];
+    targetSize?: number;
+    rotationY?: number;
+    collisionRadius?: number;
+    islandBase?: {
+      radius: number;
+      height?: number;
+      color?: number;
+      flatten?: number;
+    };
+  }>;
 }
 
 export interface WeatherBillboardLayerConfig {

@@ -40,4 +40,15 @@ describe('MapRegistry', () => {
       true,
     );
   });
+
+  it('authors hero landmarks near mission route set pieces', () => {
+    const desert = getMap('desert_expanse');
+    const ocean = getMap('ocean_islands');
+    expect(desert.worldLandmarkLayers?.some((layer) => layer.label === 'stone arch' && layer.placements?.length)).toBe(
+      true,
+    );
+    expect(ocean.worldLandmarkLayers?.some((layer) => layer.label === 'shipwreck' && layer.placements?.length)).toBe(
+      true,
+    );
+  });
 });

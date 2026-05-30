@@ -302,6 +302,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [720, 980],
         groundY: 0,
         collisionRadius: 260,
+        placements: [{ position: [-660, 0, -1280], targetSize: 920, rotationY: 0.4, collisionRadius: 280 }],
       },
       {
         label: 'ruined temple',
@@ -313,6 +314,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [560, 760],
         groundY: 0,
         collisionRadius: 210,
+        placements: [{ position: [-420, 0, -1550], targetSize: 680, rotationY: -0.2, collisionRadius: 220 }],
       },
       {
         label: 'temple',
@@ -324,6 +326,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [420, 620],
         groundY: 0,
         collisionRadius: 170,
+        placements: [{ position: [120, 0, -780], targetSize: 520, rotationY: 0.12, collisionRadius: 185 }],
       },
       {
         label: 'stone arch',
@@ -335,6 +338,10 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [320, 560],
         groundY: 0,
         collisionRadius: 150,
+        placements: [
+          { position: [980, 0, -2140], targetSize: 540, rotationY: 0.35, collisionRadius: 155 },
+          { position: [430, 0, -560], targetSize: 420, rotationY: -0.6, collisionRadius: 130 },
+        ],
       },
       {
         assetPath: '/assets/world/desert-canyon-01.glb',
@@ -364,6 +371,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [240, 340],
         groundY: 0,
         collisionRadius: 120,
+        placements: [{ position: [-920, 0, -3820], targetSize: 320, rotationY: 0.8, collisionRadius: 125 }],
       },
       {
         label: 'radio tower',
@@ -375,6 +383,7 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [300, 430],
         groundY: 0,
         collisionRadius: 115,
+        placements: [{ position: [-1350, 0, -4300], targetSize: 390, rotationY: -0.3, collisionRadius: 120 }],
       },
       {
         label: 'floating island',
@@ -387,6 +396,10 @@ export const MAPS: MapDefinition[] = [
         driftSpeedRange: [0.8, 2.4],
         rotationSpeedRange: [-0.01, 0.01],
         collisionRadius: 250,
+        placements: [
+          { position: [320, 760, -3000], targetSize: 620, rotationY: 0.2, collisionRadius: 270 },
+          { position: [1120, 920, -4860], targetSize: 560, rotationY: -0.5, collisionRadius: 240 },
+        ],
       },
     ],
     livingWorld: {
@@ -872,6 +885,22 @@ export const MAPS: MapDefinition[] = [
         groundY: 0,
         collisionRadius: 130,
         islandBase: { radius: 260, height: 18, color: 0xe1c891, flatten: 0.76 },
+        placements: [
+          {
+            position: [420, 0, -760],
+            targetSize: 340,
+            rotationY: 0.35,
+            collisionRadius: 140,
+            islandBase: { radius: 300, height: 18, color: 0xe5cc94, flatten: 0.78 },
+          },
+          {
+            position: [1180, 0, -2920],
+            targetSize: 300,
+            rotationY: -0.2,
+            collisionRadius: 130,
+            islandBase: { radius: 250, height: 16, color: 0xdcc38c, flatten: 0.7 },
+          },
+        ],
       },
       {
         label: 'harbor island',
@@ -883,6 +912,14 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [900, 1350],
         groundY: 0,
         islandBase: { radius: 620, height: 22, color: 0xd6bd84, flatten: 0.68 },
+        placements: [
+          {
+            position: [-820, 0, -1580],
+            targetSize: 1180,
+            rotationY: -0.45,
+            islandBase: { radius: 700, height: 24, color: 0xd9bd80, flatten: 0.66 },
+          },
+        ],
       },
       {
         label: 'seaport island',
@@ -906,6 +943,15 @@ export const MAPS: MapDefinition[] = [
         groundY: 0,
         collisionRadius: 190,
         islandBase: { radius: 420, height: 14, color: 0xcab07d, flatten: 0.6 },
+        placements: [
+          {
+            position: [-980, 0, -4380],
+            targetSize: 560,
+            rotationY: 0.7,
+            collisionRadius: 200,
+            islandBase: { radius: 460, height: 14, color: 0xc7ad78, flatten: 0.62 },
+          },
+        ],
       },
       {
         label: 'cruise ship',
@@ -929,6 +975,14 @@ export const MAPS: MapDefinition[] = [
         scaleRange: [520, 780],
         groundY: 0,
         islandBase: { radius: 460, height: 16, color: 0xd8bf87, flatten: 0.7 },
+        placements: [
+          {
+            position: [-520, 0, -1080],
+            targetSize: 640,
+            rotationY: 0.28,
+            islandBase: { radius: 500, height: 16, color: 0xdac28c, flatten: 0.72 },
+          },
+        ],
       },
       {
         label: 'floating island',

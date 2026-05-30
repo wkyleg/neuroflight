@@ -8,6 +8,7 @@ interface WorldLandmarkInstance {
   drift: THREE.Vector3;
   rotationSpeed: number;
   collisionRadius: number | null;
+  fixed: boolean;
 }
 
 function seededRng(seed: number) {
@@ -36,6 +37,7 @@ export class WorldLandmarkSystem {
     for (const instance of this.instances) {
       instance.root.position.addScaledVector(instance.drift, dt);
       instance.root.rotation.y += instance.rotationSpeed * dt;
+      if (instance.fixed) continue;
 
       const dx = instance.root.position.x - cameraPos.x;
       const dz = instance.root.position.z - cameraPos.z;
@@ -81,26 +83,32 @@ export class WorldLandmarkSystem {
       const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
       const largestDimension = Math.max(sourceSize.x, sourceSize.y, sourceSize.z, 1);
 
-      for (let i = 0; i < layer.count; i++) {
-        const targetSize = THREE.MathUtils.lerp(layer.scaleRange[0], layer.scaleRange[1], this.rng());
+      const placements = layer.placements ?? [];
+      const totalInstances = layer.count + placements.length;
+
+      for (let i = 0; i < totalInstances; i++) {
+        const placement = placements[i];
+        const targetSize =
+          placement?.targetSize ?? THREE.MathUtils.lerp(layer.scaleRange[0], layer.scaleRange[1], this.rng());
         const scale = targetSize / largestDimension;
         const clone = gltf.scene.clone(true);
         const root = new THREE.Group();
         root.add(clone);
 
-        if (layer.islandBase) {
-          const baseHeight = layer.islandBase.height ?? 18;
-          const baseRadius = layer.islandBase.radius;
+        const islandBase = placement?.islandBase ?? layer.islandBase;
+        if (islandBase) {
+          const baseHeight = islandBase.height ?? 18;
+          const baseRadius = islandBase.radius;
           const baseGeometry = new THREE.CylinderGeometry(1, 1.28, 1, 18);
           const baseMaterial = new THREE.MeshStandardMaterial({
-            color: layer.islandBase.color ?? 0xd9c294,
+            color: islandBase.color ?? 0xd9c294,
             roughness: 0.92,
             metalness: 0.02,
             flatShading: true,
           });
           const base = new THREE.Mesh(baseGeometry, baseMaterial);
           base.name = `${layer.label ?? 'landmark'} island base`;
-          base.scale.set(baseRadius, baseHeight, baseRadius * (layer.islandBase.flatten ?? 0.72));
+          base.scale.set(baseRadius, baseHeight, baseRadius * (islandBase.flatten ?? 0.72));
           base.position.y = -baseHeight * 0.5;
           base.receiveShadow = true;
           root.add(base);
@@ -130,9 +138,15 @@ export class WorldLandmarkSystem {
             layer.rotationSpeedRange?.[1] ?? 0.008,
             this.rng(),
           ),
-          collisionRadius: layer.collisionRadius ?? null,
+          collisionRadius: placement?.collisionRadius ?? layer.collisionRadius ?? null,
+          fixed: Boolean(placement),
         };
-        this.placeInstance(instance, new THREE.Vector3());
+        if (placement) {
+          root.position.set(...placement.position);
+          root.rotation.set(0, placement.rotationY ?? 0, 0);
+        } else {
+          this.placeInstance(instance, new THREE.Vector3());
+        }
         this.scene.add(root);
         this.instances.push(instance);
       }
