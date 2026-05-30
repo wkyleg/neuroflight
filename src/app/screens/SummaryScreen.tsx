@@ -333,7 +333,7 @@ function generateInsights(session: SessionSummary): string[] {
           .reduce((a, b) => a + b, 0) / combatEvents.length;
 
       if (session.avgCalm !== null && calmDuringCombat < session.avgCalm * 0.8) {
-        insights.push('Combat events lined up with lower calm proxy readings than the flight average.');
+        insights.push('Duel moments lined up with lower calm proxy readings than the flight average.');
       }
     }
   }
@@ -507,7 +507,7 @@ export function SummaryScreen() {
           <StatBox label="Wins" value={lastSession.kills} color={COLORS.red} />
           <StatBox label="Losses" value={lastSession.deaths} color={COLORS.red} />
           <StatBox
-            label="W/L Ratio"
+            label="Win Ratio"
             value={
               lastSession.deaths > 0
                 ? (lastSession.kills / lastSession.deaths).toFixed(2)
@@ -612,12 +612,12 @@ export function SummaryScreen() {
                 )}
                 {killEvents.length > 0 && (
                   <span>
-                    <span style={{ color: COLORS.green }}>|</span> Victory
+                    <span style={{ color: COLORS.green }}>|</span> Rival Tag
                   </span>
                 )}
                 {deathEvents.length > 0 && (
                   <span>
-                    <span style={{ color: COLORS.red }}>|</span> Defeated
+                    <span style={{ color: COLORS.red }}>|</span> Reset
                   </span>
                 )}
               </div>

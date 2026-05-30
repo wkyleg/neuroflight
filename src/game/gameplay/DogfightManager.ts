@@ -36,7 +36,7 @@ export class DogfightManager {
       if (this.playerHealth <= 0) {
         this.deaths++;
         this.playerHealth = MAX_HEALTH;
-        console.warn(`[Dogfight] Player DESTROYED — deaths: ${this.deaths}`);
+        console.warn(`[Dogfight] Player reset — losses: ${this.deaths}`);
         eventBus.emit('dogfight:player_death');
       }
     } else {
@@ -46,7 +46,7 @@ export class DogfightManager {
         this.kills++;
         this.aiDead = true;
         this.aiRespawnTimer = RESPAWN_DELAY;
-        console.warn(`[Dogfight] AI DESTROYED — kills: ${this.kills}`);
+        console.warn(`[Dogfight] Rival tagged — wins: ${this.kills}`);
         eventBus.emit('dogfight:ai_kill');
       }
     }

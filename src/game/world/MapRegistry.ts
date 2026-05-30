@@ -128,7 +128,7 @@ export const MAPS: MapDefinition[] = [
         {
           id: 'desert-dogfight-arch',
           label: 'Arch Patrol',
-          description: 'Keep the enemy framed near the stone gate.',
+          description: 'Keep the rival framed near the stone gate.',
           kind: 'combat_anchor',
           position: [600, 360, -1500],
           radius: 420,
@@ -519,7 +519,7 @@ export const MAPS: MapDefinition[] = [
         {
           id: 'ocean-dogfight-storm',
           label: 'Storm Shelf',
-          description: 'Watch the enemy against the rain bank silhouette.',
+          description: 'Watch the rival against the rain bank silhouette.',
           kind: 'combat_anchor',
           position: [-780, 760, -3300],
           radius: 620,

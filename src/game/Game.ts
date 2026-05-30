@@ -146,12 +146,12 @@ export class Game {
     eventBus.on('dogfight:ai_kill', () => {
       this.audioManager.playExplosion();
       this.scoreManager.addBonus(550);
-      this.sessionRecorder.recordEvent('kill');
+      this.sessionRecorder.recordEvent('kill', { label: 'Rival tagged', score: 550 });
     });
 
     eventBus.on('dogfight:player_death', () => {
       this.audioManager.playExplosion();
-      this.sessionRecorder.recordEvent('death');
+      this.sessionRecorder.recordEvent('death', { label: 'Reset and rally' });
     });
   }
 
@@ -481,7 +481,7 @@ export class Game {
         );
         this.aiController.respawn(respawnPos);
         this.aiController.setHealth(100);
-        this.sessionRecorder.recordEvent('respawn', { label: 'Enemy re-entered patrol' });
+        this.sessionRecorder.recordEvent('respawn', { label: 'Rival rejoined the route' });
       } else if (!this.dogfightManager.isAiDead()) {
         this.aiController.setHealth(this.dogfightManager.getAiHealthFraction() * 100);
       }

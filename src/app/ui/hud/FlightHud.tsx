@@ -624,7 +624,7 @@ export function FlightHud() {
             <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff4444" large />
           </div>
 
-          {/* Enemy direction compass */}
+          {/* Rival direction compass */}
           {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff4444" label="RIVAL" />}
         </>
       )}
