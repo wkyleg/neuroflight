@@ -64,8 +64,22 @@ describe('MapRegistry', () => {
     for (const map of MAPS) {
       const staticBalloons = map.skyObjectLayers?.filter((layer) => layer.behavior === 'balloon') ?? [];
       const livingBalloons = map.livingWorld?.events.filter((event) => event.behavior === 'balloon-hover') ?? [];
-      expect(staticBalloons.every((layer) => !layer.rotationOffset || layer.rotationOffset[0] === 0)).toBe(true);
-      expect(livingBalloons.every((event) => !event.rotationOffset || event.rotationOffset[0] === 0)).toBe(true);
+      expect(staticBalloons.every((layer) => layer.maintainUpright && layer.faceVelocity === false)).toBe(true);
+      expect(livingBalloons.every((event) => event.maintainUpright && event.faceVelocity === false)).toBe(true);
+      expect(
+        [...staticBalloons, ...livingBalloons].every((entry) => entry.orientationPreset?.startsWith('balloon')),
+      ).toBe(true);
+    }
+  });
+
+  it('marks moving sky traffic to face its path', () => {
+    for (const map of MAPS) {
+      const movingStatic =
+        map.skyObjectLayers?.filter((layer) => ['airship', 'bird', 'traffic'].includes(layer.behavior ?? '')) ?? [];
+      const movingEvents =
+        map.livingWorld?.events.filter((event) => ['airship-pass', 'plane-pass', 'bird-pass', 'ufo-dart'].includes(event.behavior)) ??
+        [];
+      expect([...movingStatic, ...movingEvents].every((entry) => entry.faceVelocity !== false)).toBe(true);
     }
   });
 });

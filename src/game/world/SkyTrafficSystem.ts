@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import type { LivingWorldEventConfig } from '@/game/types.ts';
+import type { LivingWorldEventConfig, SkyOrientationPreset } from '@/game/types.ts';
 
 interface LoadedTrafficAsset {
   scene: THREE.Object3D;
@@ -52,18 +52,19 @@ export class SkyTrafficSystem {
     let spawned = 0;
     for (let i = 0; i < count; i++) {
       const root = new THREE.Group();
+      const pivot = new THREE.Group();
       const model = asset.scene.clone(true);
       const targetSize = THREE.MathUtils.lerp(config.scaleRange[0], config.scaleRange[1], rng());
       const scale = targetSize / asset.sourceSize;
       model.scale.setScalar(scale);
       model.position.set(-asset.sourceCenter.x * scale, -asset.sourceCenter.y * scale, -asset.sourceCenter.z * scale);
-      const rotationOffset = config.rotationOffset ?? [0, 0, 0];
-      model.rotation.set(rotationOffset[0], rotationOffset[1], rotationOffset[2]);
-      root.add(model);
+      pivot.rotation.copy(this.orientationFor(config.orientationPreset, config.rotationOffset));
+      pivot.add(model);
+      root.add(pivot);
 
       const { position, velocity, side } = this.makeRoute(config, center, rng);
       root.position.copy(position);
-      if (velocity.lengthSq() > 0.001 && !this.shouldHoverUpright(config)) {
+      if (velocity.lengthSq() > 0.001 && this.shouldFaceVelocity(config)) {
         root.lookAt(position.clone().add(velocity));
       }
 
@@ -114,7 +115,7 @@ export class SkyTrafficSystem {
       actor.root.position.copy(actor.basePosition).addScaledVector(actor.side, wiggle);
       actor.root.position.y = actor.basePosition.y + bob;
 
-      if (actor.velocity.lengthSq() > 0.001 && !this.shouldHoverUpright(actor.config)) {
+      if (actor.velocity.lengthSq() > 0.001 && this.shouldFaceVelocity(actor.config)) {
         actor.root.lookAt(actor.root.position.clone().add(actor.velocity));
       }
       actor.root.rotation.y += actor.rotationSpeed * dt;
@@ -278,7 +279,12 @@ export class SkyTrafficSystem {
   }
 
   private shouldHoverUpright(config: LivingWorldEventConfig): boolean {
-    return config.behavior === 'balloon-hover' || config.behavior === 'kite-drift';
+    return config.maintainUpright ?? (config.behavior === 'balloon-hover' || config.behavior === 'kite-drift');
+  }
+
+  private shouldFaceVelocity(config: LivingWorldEventConfig): boolean {
+    if (this.shouldHoverUpright(config)) return false;
+    return config.faceVelocity ?? true;
   }
 
   private minSpeed(config: LivingWorldEventConfig): number {
@@ -302,6 +308,24 @@ export class SkyTrafficSystem {
     if (config.behavior === 'ufo-dart') return this.randomRange([-1.2, 1.2], rng);
     if (config.behavior === 'balloon-hover') return this.randomRange([-0.035, 0.035], rng);
     return this.randomRange([-0.08, 0.08], rng);
+  }
+
+  private orientationFor(preset: SkyOrientationPreset | undefined, fallback?: [number, number, number]): THREE.Euler {
+    switch (preset) {
+      case 'x-forward':
+        return new THREE.Euler(0, Math.PI / 2, 0);
+      case 'negative-x-forward':
+        return new THREE.Euler(0, -Math.PI / 2, 0);
+      case 'z-forward':
+        return new THREE.Euler(0, Math.PI, 0);
+      case 'balloon-z-up':
+        return new THREE.Euler(-Math.PI / 2, 0, 0);
+      case 'balloon-upright':
+      case 'native':
+        return new THREE.Euler(0, 0, 0);
+      default:
+        return new THREE.Euler(...(fallback ?? [0, 0, 0]));
+    }
   }
 
   private randomRange(range: [number, number], rng: () => number): number {

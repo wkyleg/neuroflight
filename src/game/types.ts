@@ -131,6 +131,14 @@ export interface MapMissionRoutes {
   dogfight: MissionWaypointConfig[];
 }
 
+export type SkyOrientationPreset =
+  | 'native'
+  | 'x-forward'
+  | 'negative-x-forward'
+  | 'z-forward'
+  | 'balloon-upright'
+  | 'balloon-z-up';
+
 export interface SkyObjectLayerConfig {
   assetPath: string;
   count: number;
@@ -140,6 +148,9 @@ export interface SkyObjectLayerConfig {
   /** Target max model dimension in world units after source GLB normalization. */
   scaleRange: [number, number];
   behavior?: 'balloon' | 'airship' | 'cloud' | 'bird' | 'floating-island' | 'traffic' | 'ufo';
+  orientationPreset?: SkyOrientationPreset;
+  maintainUpright?: boolean;
+  faceVelocity?: boolean;
   rotationOffset?: [number, number, number];
   bobAmplitude?: number;
   driftSpeedRange?: [number, number];
@@ -169,6 +180,9 @@ export interface LivingWorldEventConfig {
   scaleRange: [number, number];
   speedRange?: [number, number];
   durationRange?: [number, number];
+  orientationPreset?: SkyOrientationPreset;
+  maintainUpright?: boolean;
+  faceVelocity?: boolean;
   rotationOffset?: [number, number, number];
 }
 

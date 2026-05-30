@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import type { SkyObjectLayerConfig } from '@/game/types.ts';
+import type { SkyObjectLayerConfig, SkyOrientationPreset } from '@/game/types.ts';
 
 interface SkyObjectInstance {
   object: THREE.Object3D;
@@ -11,6 +11,12 @@ interface SkyObjectInstance {
   bobPhase: number;
   bobSpeed: number;
   bobAmplitude: number;
+}
+
+interface SkyObjectAsset {
+  scene: THREE.Object3D;
+  sourceCenter: THREE.Vector3;
+  sourceSize: number;
 }
 
 function seededRng(seed: number) {
@@ -41,7 +47,11 @@ export class SkyObjectSystem {
       instance.object.position.y =
         instance.baseY +
         Math.sin(performance.now() * 0.001 * instance.bobSpeed + instance.bobPhase) * instance.bobAmplitude;
-      instance.object.rotation.y += instance.rotationSpeed * dt;
+      if (this.shouldFaceVelocity(instance.layer) && instance.drift.lengthSq() > 0.001) {
+        instance.object.lookAt(instance.object.position.clone().add(instance.drift));
+      } else {
+        instance.object.rotation.y += instance.rotationSpeed * dt;
+      }
 
       const dx = instance.object.position.x - cameraPos.x;
       const dz = instance.object.position.z - cameraPos.z;
@@ -73,11 +83,18 @@ export class SkyObjectSystem {
   private async loadLayer(layer: SkyObjectLayerConfig): Promise<void> {
     try {
       const gltf = await this.loader.loadAsync(layer.assetPath);
-      const sourceSize = this.getSourceSize(gltf.scene);
+      const asset = this.makeAsset(gltf.scene);
       for (let i = 0; i < layer.count; i++) {
-        const object = gltf.scene.clone(true);
+        const object = new THREE.Group();
+        const pivot = new THREE.Group();
+        const model = asset.scene.clone(true);
         const targetSize = THREE.MathUtils.lerp(layer.scaleRange[0], layer.scaleRange[1], this.rng());
-        object.scale.setScalar(targetSize / sourceSize);
+        const scale = targetSize / asset.sourceSize;
+        model.scale.setScalar(scale);
+        model.position.set(-asset.sourceCenter.x * scale, -asset.sourceCenter.y * scale, -asset.sourceCenter.z * scale);
+        pivot.rotation.copy(this.orientationFor(layer.orientationPreset, layer.rotationOffset));
+        pivot.add(model);
+        object.add(pivot);
         const baseY = this.placeObject(object, layer, new THREE.Vector3());
         object.traverse((child) => {
           if (!(child instanceof THREE.Mesh)) return;
@@ -85,11 +102,15 @@ export class SkyObjectSystem {
           child.receiveShadow = false;
           child.frustumCulled = false;
         });
+        const drift = this.makeDrift(layer);
+        if (this.shouldFaceVelocity(layer) && drift.lengthSq() > 0.001) {
+          object.lookAt(object.position.clone().add(drift));
+        }
         this.scene.add(object);
         this.instances.push({
           object,
           layer,
-          drift: this.makeDrift(layer),
+          drift,
           rotationSpeed: THREE.MathUtils.lerp(
             layer.rotationSpeedRange?.[0] ?? -0.05,
             layer.rotationSpeedRange?.[1] ?? 0.05,
@@ -112,15 +133,18 @@ export class SkyObjectSystem {
     const distance = THREE.MathUtils.lerp(minDistance, layer.radius, Math.sqrt(this.rng()));
     const y = THREE.MathUtils.lerp(layer.altitudeRange[0], layer.altitudeRange[1], this.rng());
     object.position.set(center.x + Math.cos(angle) * distance, y, center.z + Math.sin(angle) * distance);
-    const rotationOffset = layer.rotationOffset ?? [0, 0, 0];
-    object.rotation.set(rotationOffset[0], rotationOffset[1] + this.rng() * Math.PI * 2, rotationOffset[2]);
+    object.rotation.set(0, this.rng() * Math.PI * 2, 0);
     return y;
   }
 
-  private getSourceSize(object: THREE.Object3D): number {
+  private makeAsset(object: THREE.Object3D): SkyObjectAsset {
     const bounds = new THREE.Box3().setFromObject(object);
     const size = bounds.getSize(new THREE.Vector3());
-    return Math.max(size.x, size.y, size.z, 1);
+    return {
+      scene: object,
+      sourceCenter: bounds.getCenter(new THREE.Vector3()),
+      sourceSize: Math.max(size.x, size.y, size.z, 1),
+    };
   }
 
   private makeDrift(layer: SkyObjectLayerConfig): THREE.Vector3 {
@@ -143,6 +167,29 @@ export class SkyObjectSystem {
         return 5;
       default:
         return 8;
+    }
+  }
+
+  private shouldFaceVelocity(layer: SkyObjectLayerConfig): boolean {
+    if (layer.maintainUpright || layer.behavior === 'balloon' || layer.behavior === 'floating-island') return false;
+    return layer.faceVelocity ?? ['airship', 'bird', 'traffic'].includes(layer.behavior ?? '');
+  }
+
+  private orientationFor(preset: SkyOrientationPreset | undefined, fallback?: [number, number, number]): THREE.Euler {
+    switch (preset) {
+      case 'x-forward':
+        return new THREE.Euler(0, Math.PI / 2, 0);
+      case 'negative-x-forward':
+        return new THREE.Euler(0, -Math.PI / 2, 0);
+      case 'z-forward':
+        return new THREE.Euler(0, Math.PI, 0);
+      case 'balloon-z-up':
+        return new THREE.Euler(-Math.PI / 2, 0, 0);
+      case 'balloon-upright':
+      case 'native':
+        return new THREE.Euler(0, 0, 0);
+      default:
+        return new THREE.Euler(...(fallback ?? [0, 0, 0]));
     }
   }
 }
