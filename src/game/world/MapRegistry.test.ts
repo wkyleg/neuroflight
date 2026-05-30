@@ -59,4 +59,13 @@ describe('MapRegistry', () => {
       false,
     );
   });
+
+  it('keeps balloon assets upright in static and living sky configs', () => {
+    for (const map of MAPS) {
+      const staticBalloons = map.skyObjectLayers?.filter((layer) => layer.behavior === 'balloon') ?? [];
+      const livingBalloons = map.livingWorld?.events.filter((event) => event.behavior === 'balloon-hover') ?? [];
+      expect(staticBalloons.every((layer) => !layer.rotationOffset || layer.rotationOffset[0] === 0)).toBe(true);
+      expect(livingBalloons.every((event) => !event.rotationOffset || event.rotationOffset[0] === 0)).toBe(true);
+    }
+  });
 });

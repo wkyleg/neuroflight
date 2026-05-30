@@ -216,7 +216,6 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [650, 1450],
         scaleRange: [120, 220],
         behavior: 'balloon',
-        rotationOffset: [-Math.PI / 2, 0, 0],
         bobAmplitude: 20,
         driftSpeedRange: [2, 7],
         rotationSpeedRange: [-0.02, 0.02],
@@ -419,7 +418,6 @@ export const MAPS: MapDefinition[] = [
           scaleRange: [130, 230],
           speedRange: [2, 7],
           durationRange: [42, 78],
-          rotationOffset: [-Math.PI / 2, 0, 0],
         },
         {
           id: 'desert-glider-pass',
@@ -720,7 +718,6 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [620, 1500],
         scaleRange: [120, 220],
         behavior: 'balloon',
-        rotationOffset: [-Math.PI / 2, 0, 0],
         bobAmplitude: 20,
         driftSpeedRange: [2, 7],
         rotationSpeedRange: [-0.02, 0.02],
@@ -833,7 +830,6 @@ export const MAPS: MapDefinition[] = [
           scaleRange: [125, 220],
           speedRange: [2, 7],
           durationRange: [42, 78],
-          rotationOffset: [-Math.PI / 2, 0, 0],
         },
         {
           id: 'ocean-ufo-dart',

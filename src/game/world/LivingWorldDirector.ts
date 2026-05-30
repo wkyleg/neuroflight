@@ -16,12 +16,13 @@ export class LivingWorldDirector {
   private readonly config: LivingWorldConfig | undefined;
   private elapsed = 0;
   private nextEventAt = 0;
+  private initialEventSpawned = false;
 
   constructor(scene: THREE.Scene, config: LivingWorldConfig | undefined, mode: GameMode, mapId: string) {
     this.config = config;
     this.rng = seededRng((config?.seed ?? 7001) + this.hashString(`${mapId}:${mode}`));
     this.trafficSystem = new SkyTrafficSystem(scene);
-    this.nextEventAt = this.randomRange(config?.eventIntervalRange ?? [10, 18]);
+    this.nextEventAt = config ? 1.4 : this.randomRange([10, 18]);
   }
 
   async load(): Promise<void> {
@@ -39,9 +40,11 @@ export class LivingWorldDirector {
       const active = this.trafficSystem.countActive(event.id);
       if (active < (event.maxActive ?? 3) && this.rng() <= (event.chance ?? 1)) {
         this.trafficSystem.spawn(event, cameraPos, this.rng);
+        this.initialEventSpawned = true;
       }
     }
-    this.nextEventAt = this.elapsed + this.randomRange(this.config.eventIntervalRange);
+    this.nextEventAt =
+      this.elapsed + (this.initialEventSpawned ? this.randomRange(this.config.eventIntervalRange) : 1.8);
   }
 
   destroy(): void {

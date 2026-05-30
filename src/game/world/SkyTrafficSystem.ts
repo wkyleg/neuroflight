@@ -63,7 +63,7 @@ export class SkyTrafficSystem {
 
       const { position, velocity, side } = this.makeRoute(config, center, rng);
       root.position.copy(position);
-      if (velocity.lengthSq() > 0.001) {
+      if (velocity.lengthSq() > 0.001 && !this.shouldHoverUpright(config)) {
         root.lookAt(position.clone().add(velocity));
       }
 
@@ -114,10 +114,14 @@ export class SkyTrafficSystem {
       actor.root.position.copy(actor.basePosition).addScaledVector(actor.side, wiggle);
       actor.root.position.y = actor.basePosition.y + bob;
 
-      if (actor.velocity.lengthSq() > 0.001) {
+      if (actor.velocity.lengthSq() > 0.001 && !this.shouldHoverUpright(actor.config)) {
         actor.root.lookAt(actor.root.position.clone().add(actor.velocity));
       }
       actor.root.rotation.y += actor.rotationSpeed * dt;
+      if (actor.config.behavior === 'bird-pass') {
+        actor.model.rotation.z = Math.sin(actor.age * 9 + actor.bobPhase) * 0.22;
+        actor.model.rotation.x = Math.sin(actor.age * 5.5 + actor.bobPhase) * 0.08;
+      }
       if (actor.config.behavior === 'ufo-dart') {
         actor.model.rotation.y += dt * 5.5;
         actor.model.rotation.z = Math.sin(actor.age * 7.5 + actor.bobPhase) * 0.18;
@@ -170,7 +174,10 @@ export class SkyTrafficSystem {
       altitude,
       center.z + Math.sin(angle) * distance,
     );
-    const speed = this.randomRange(config.speedRange ?? this.defaultSpeed(config), rng);
+    const speed = Math.max(
+      this.randomRange(config.speedRange ?? this.defaultSpeed(config), rng),
+      this.minSpeed(config),
+    );
 
     let direction: THREE.Vector3;
     if (config.behavior === 'balloon-hover' || config.behavior === 'kite-drift') {
@@ -268,6 +275,27 @@ export class SkyTrafficSystem {
 
   private defaultWiggleSpeed(config: LivingWorldEventConfig): number {
     return config.behavior === 'ufo-dart' ? 7.2 : 0.55;
+  }
+
+  private shouldHoverUpright(config: LivingWorldEventConfig): boolean {
+    return config.behavior === 'balloon-hover' || config.behavior === 'kite-drift';
+  }
+
+  private minSpeed(config: LivingWorldEventConfig): number {
+    switch (config.behavior) {
+      case 'balloon-hover':
+        return 1.4;
+      case 'airship-pass':
+        return 10;
+      case 'bird-pass':
+        return 38;
+      case 'ufo-dart':
+        return 180;
+      case 'plane-pass':
+        return 50;
+      default:
+        return 4;
+    }
   }
 
   private defaultRotationSpeed(config: LivingWorldEventConfig, rng: () => number): number {
