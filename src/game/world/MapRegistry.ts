@@ -1246,8 +1246,9 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [420, 980],
         scaleRange: [90, 160],
         driftSpeedRange: [18, 34],
-        rotationSpeedRange: [-0.02, 0.02],
-        faceCenter: true,
+        rotationSpeedRange: [0, 0],
+        orientationPreset: 'x-forward',
+        faceDrift: true,
       },
       {
         assetPath: '/assets/world/traffic-glider-01.glb',
@@ -1257,7 +1258,9 @@ export const MAPS: MapDefinition[] = [
         altitudeRange: [760, 1600],
         scaleRange: [70, 130],
         driftSpeedRange: [10, 24],
-        rotationSpeedRange: [-0.025, 0.025],
+        rotationSpeedRange: [0, 0],
+        orientationPreset: 'x-forward',
+        faceDrift: true,
       },
       {
         assetPath: '/assets/world/traffic-seagull-01.glb',

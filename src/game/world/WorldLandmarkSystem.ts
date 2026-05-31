@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import type { WorldLandmarkLayerConfig, WorldLandmarkPlacementKind } from '@/game/types.ts';
+import type { SkyOrientationPreset, WorldLandmarkLayerConfig, WorldLandmarkPlacementKind } from '@/game/types.ts';
 
 interface WorldLandmarkInstance {
   root: THREE.Group;
@@ -36,7 +36,11 @@ export class WorldLandmarkSystem {
   update(dt: number, cameraPos: THREE.Vector3): void {
     for (const instance of this.instances) {
       instance.root.position.addScaledVector(instance.drift, dt);
-      instance.root.rotation.y += instance.rotationSpeed * dt;
+      if (instance.layer.faceDrift && instance.drift.lengthSq() > 0.001) {
+        this.faceAlongDrift(instance);
+      } else {
+        instance.root.rotation.y += instance.rotationSpeed * dt;
+      }
       if (instance.fixed) continue;
 
       const dx = instance.root.position.x - cameraPos.x;
@@ -93,7 +97,10 @@ export class WorldLandmarkSystem {
         const scale = targetSize / largestDimension;
         const clone = gltf.scene.clone(true);
         const root = new THREE.Group();
-        root.add(clone);
+        const modelPivot = new THREE.Group();
+        modelPivot.rotation.copy(this.orientationFor(layer.orientationPreset, layer.rotationOffset));
+        modelPivot.add(clone);
+        root.add(modelPivot);
 
         const placementKind = placement?.placementKind ?? layer.placementKind ?? this.defaultPlacementKind(layer);
         const islandBase = placement?.islandBase ?? layer.islandBase;
@@ -164,7 +171,9 @@ export class WorldLandmarkSystem {
     const y = layer.groundY ?? THREE.MathUtils.lerp(layer.altitudeRange[0], layer.altitudeRange[1], this.rng());
 
     root.position.set(center.x + Math.cos(angle) * distance, y, center.z + Math.sin(angle) * distance);
-    if (layer.faceCenter) {
+    if (layer.faceDrift && instance.drift.lengthSq() > 0.001) {
+      this.faceAlongDrift(instance);
+    } else if (layer.faceCenter) {
       root.lookAt(center.x, root.position.y, center.z);
       root.rotateY(Math.PI);
     } else {
@@ -179,6 +188,28 @@ export class WorldLandmarkSystem {
     const angle = this.rng() * Math.PI * 2;
     const speed = THREE.MathUtils.lerp(speedRange[0], speedRange[1], this.rng());
     return new THREE.Vector3(Math.cos(angle) * speed, 0, Math.sin(angle) * speed);
+  }
+
+  private faceAlongDrift(instance: WorldLandmarkInstance): void {
+    instance.root.lookAt(instance.root.position.clone().add(instance.drift));
+  }
+
+  private orientationFor(preset: SkyOrientationPreset | undefined, fallback?: [number, number, number]): THREE.Euler {
+    switch (preset) {
+      case 'x-forward':
+        return new THREE.Euler(0, Math.PI / 2, 0);
+      case 'negative-x-forward':
+        return new THREE.Euler(0, -Math.PI / 2, 0);
+      case 'z-forward':
+        return new THREE.Euler(0, Math.PI, 0);
+      case 'balloon-z-up':
+        return new THREE.Euler(-Math.PI / 2, 0, 0);
+      case 'balloon-upright':
+      case 'native':
+        return new THREE.Euler(0, 0, 0);
+      default:
+        return new THREE.Euler(...(fallback ?? [0, 0, 0]));
+    }
   }
 
   private defaultPlacementKind(layer: WorldLandmarkLayerConfig): WorldLandmarkPlacementKind {

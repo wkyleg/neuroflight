@@ -251,8 +251,11 @@ export interface WorldLandmarkLayerConfig {
   scaleRange: [number, number];
   driftSpeedRange?: [number, number];
   rotationSpeedRange?: [number, number];
+  orientationPreset?: SkyOrientationPreset;
+  rotationOffset?: [number, number, number];
   groundY?: number;
   faceCenter?: boolean;
+  faceDrift?: boolean;
   collisionRadius?: number;
   placementKind?: WorldLandmarkPlacementKind;
   islandBase?: {

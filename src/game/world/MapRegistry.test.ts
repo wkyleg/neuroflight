@@ -142,4 +142,23 @@ describe('MapRegistry', () => {
       expect([...movingStatic, ...movingEvents].every((entry) => entry.faceVelocity !== false)).toBe(true);
     }
   });
+
+  it('points drifting landmark aircraft along their travel path', () => {
+    const driftingAircraft =
+      getMap('ocean_islands').worldLandmarkLayers?.filter((layer) =>
+        ['traffic-seaplane-01.glb', 'traffic-glider-01.glb'].some((asset) => layer.assetPath.includes(asset)),
+      ) ?? [];
+
+    expect(driftingAircraft.length).toBe(2);
+    expect(
+      driftingAircraft.every(
+        (layer) =>
+          layer.orientationPreset === 'x-forward' &&
+          layer.faceDrift === true &&
+          layer.faceCenter !== true &&
+          layer.rotationSpeedRange?.[0] === 0 &&
+          layer.rotationSpeedRange?.[1] === 0,
+      ),
+    ).toBe(true);
+  });
 });
