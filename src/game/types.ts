@@ -26,7 +26,7 @@ export interface AircraftDefinition {
   modelFormat?: 'gltf' | 'obj';
   modelPath: string;
   texturePath?: string;
-  orientationPreset?: 'obj-z-forward' | 'gltf-z-forward' | 'gltf-x-forward' | 'gltf-recon-level';
+  orientationPreset?: 'obj-z-forward' | 'obj-x-forward' | 'gltf-z-forward' | 'gltf-x-forward' | 'gltf-recon-level';
   scale: number;
   modelRotationY: number;
   modelRotationX?: number;

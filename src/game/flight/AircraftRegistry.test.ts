@@ -61,6 +61,16 @@ describe('AircraftRegistry', () => {
     expect(getAircraft('il28').propellerBlur).toBeUndefined();
   });
 
+  it('corrects side-axis propeller planes to face the flight path', () => {
+    const biplane = getAircraft('storybook_biplane');
+    const spitfire = getAircraft('spitfire');
+
+    expect(biplane.orientationPreset).toBe('obj-x-forward');
+    expect(biplane.modelRotationY).toBeCloseTo(Math.PI / 2);
+    expect(spitfire.orientationPreset).toBe('gltf-x-forward');
+    expect(spitfire.modelRotationY).toBeCloseTo(Math.PI / 2);
+  });
+
   it('levels the recon jet without the old nose-down compensation', () => {
     const recon = getAircraft('il28');
     expect(recon.orientationPreset).toBe('gltf-recon-level');
