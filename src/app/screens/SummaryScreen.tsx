@@ -20,6 +20,7 @@ import { getModeMeta, getModeTitle } from '@/game/modes.ts';
 import { getMap } from '@/game/world/MapRegistry.ts';
 import type { SessionSummary } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
+import { buildDebriefInsights, type DebriefInsightTone } from './summaryInsights.ts';
 
 /* ─── Shared styling constants ─── */
 
@@ -110,6 +111,49 @@ function ChartContainer({ title, children }: { title: string; children: React.Re
         {title}
       </h3>
       {children}
+    </div>
+  );
+}
+
+function insightToneColor(tone: DebriefInsightTone): string {
+  switch (tone) {
+    case 'signal':
+      return COLORS.cyan;
+    case 'reward':
+      return COLORS.gold;
+    case 'warning':
+      return COLORS.orange;
+    case 'next':
+      return COLORS.green;
+    default:
+      return COLORS.blue;
+  }
+}
+
+function InsightCard({ title, body, tone }: { title: string; body: string; tone: DebriefInsightTone }) {
+  const color = insightToneColor(tone);
+  return (
+    <div
+      className="rounded-xl border"
+      style={{
+        borderColor: `${color}30`,
+        background: `linear-gradient(135deg, ${color}12, rgba(255,255,255,0.025))`,
+        padding: '20px 22px',
+        minHeight: 150,
+      }}
+    >
+      <p
+        className="tracking-[0.18em] uppercase"
+        style={{ color: `${color}cc`, fontSize: 10, fontFamily: 'var(--font-body)', marginBottom: 12 }}
+      >
+        {tone}
+      </p>
+      <h3 className="font-bold" style={{ color, fontFamily: 'var(--font-heading)', fontSize: 18, marginBottom: 10 }}>
+        {title}
+      </h3>
+      <p className="leading-6" style={{ color: COLORS.text, fontSize: 13 }}>
+        {body}
+      </p>
     </div>
   );
 }
@@ -380,6 +424,7 @@ export function SummaryScreen() {
       insights: generateInsights(lastSession),
     };
   }, [lastSession]);
+  const debriefInsights = useMemo(() => (lastSession ? buildDebriefInsights(lastSession) : []), [lastSession]);
 
   const formatTime = (ms: number) => {
     const totalSec = Math.floor(ms / 1000);
@@ -459,6 +504,16 @@ export function SummaryScreen() {
           {lastSession.scoreLabel.toUpperCase()}
         </div>
       </div>
+
+      {debriefInsights.length > 0 && (
+        <div className="w-full max-w-4xl" style={{ marginBottom: 56 }}>
+          <div className="grid gap-4 md:grid-cols-2">
+            {debriefInsights.map((insight) => (
+              <InsightCard key={insight.id} title={insight.title} body={insight.body} tone={insight.tone} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── SECTION: Performance Stats ── */}
       <SectionHeading title="FLIGHT PERFORMANCE" color={COLORS.cyan} />
