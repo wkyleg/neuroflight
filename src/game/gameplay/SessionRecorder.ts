@@ -35,6 +35,7 @@ export interface FlightSample {
 
 export type FlightEventType =
   | 'ring_hit'
+  | 'route_complete'
   | 'objective_complete'
   | 'landmark_discovered'
   | 'postcard'

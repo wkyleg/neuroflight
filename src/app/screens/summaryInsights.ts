@@ -23,6 +23,8 @@ function eventDisplayLabel(event: FlightEvent): string {
       return 'Flight reset';
     case 'ring_hit':
       return 'Route gate';
+    case 'route_complete':
+      return 'Route complete';
     case 'objective_complete':
       return 'Objective complete';
     case 'landmark_discovered':
@@ -49,9 +51,15 @@ function eventDisplayLabel(event: FlightEvent): string {
 }
 
 function isRewardEvent(event: FlightEvent): boolean {
-  return ['ring_hit', 'objective_complete', 'landmark_discovered', 'postcard', 'kill', 'neuro_recovery'].includes(
-    event.type,
-  );
+  return [
+    'ring_hit',
+    'route_complete',
+    'objective_complete',
+    'landmark_discovered',
+    'postcard',
+    'kill',
+    'neuro_recovery',
+  ].includes(event.type);
 }
 
 function closestSample(samples: FlightSample[], event: FlightEvent): FlightSample | null {

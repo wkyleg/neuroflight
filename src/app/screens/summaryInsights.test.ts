@@ -153,4 +153,18 @@ describe('buildDebriefInsights', () => {
 
     expect(insights.some((insight) => insight.id === 'event-window')).toBe(true);
   });
+
+  it('treats full route completion as a reward moment', () => {
+    const insights = buildDebriefInsights(
+      summary({
+        ringsPassed: 6,
+        objectivesCompleted: 6,
+        objectiveGoal: 6,
+        events: [{ t: 52, type: 'route_complete', label: 'Glowing route complete', score: 650 }],
+      }),
+    );
+
+    expect(insights.some((insight) => insight.title === 'Glowing route complete')).toBe(true);
+    expect(insights.map((insight) => insight.body).join(' ')).toContain('Worth 650 points');
+  });
 });

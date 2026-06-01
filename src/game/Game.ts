@@ -35,6 +35,9 @@ import { WeatherIdentitySystem } from './world/WeatherIdentitySystem.ts';
 import { WorldLandmarkSystem } from './world/WorldLandmarkSystem.ts';
 import { WorldManager } from './world/WorldManager.ts';
 
+const ZEN_ROUTE_COMPLETE_BONUS = 650;
+const EXPEDITION_ROUTE_COMPLETE_BONUS = 850;
+
 const DIFFICULTY_CONFIG: Record<
   GameDifficulty,
   {
@@ -160,6 +163,8 @@ export class Game {
   private hudUpdateTimer = 0;
   private audioStarted = false;
   private readonly HUD_UPDATE_INTERVAL = 1 / 10;
+  private zenRouteComplete = false;
+  private expeditionRouteComplete = false;
 
   // Dogfight systems
   private aiController: AIController | null = null;
@@ -285,6 +290,8 @@ export class Game {
     this.currentAircraftId = getAircraft(aircraftId).id;
     this.difficulty = difficulty;
     this.dogfightSpawnCursor = 0;
+    this.zenRouteComplete = false;
+    this.expeditionRouteComplete = false;
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -548,6 +555,7 @@ export class Game {
           adaptation.scoreMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier,
         );
       }
+      this.maybeCompleteZenRoute(map, adaptation.scoreMultiplier);
     }
 
     const objectiveState = this.missionObjectiveSystem?.update(dt, this.planeController.flightModel.getPosition());
@@ -566,6 +574,7 @@ export class Game {
       if (completion.waypoint.kind === 'landmark' || completion.waypoint.kind === 'low_pass') {
         this.sessionRecorder.recordEvent('landmark_discovered', { label: completion.waypoint.label });
       }
+      this.maybeCompleteExpeditionRoute(adaptation.scoreMultiplier);
     }
 
     if (adaptation.recovery > 0.76 && this.scoreManager.getElapsedMs() / 1000 - this.lastRecoveryEventAt > 12) {
@@ -866,6 +875,29 @@ export class Game {
     this.sessionRecorder.recordEvent('shot_fired');
   }
 
+  private awardRouteCompletion(label: string, basePoints: number, adaptationMultiplier: number): void {
+    const points = Math.round(basePoints * adaptationMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier);
+    this.scoreManager.addBonus(points);
+    this.audioPolishSystem?.playUi();
+    this.sessionRecorder.recordEvent('route_complete', { label, score: points });
+  }
+
+  private maybeCompleteZenRoute(map: MapDefinition, adaptationMultiplier: number): void {
+    if (this.mode !== 'zen' || this.zenRouteComplete) return;
+    const goal = map.missionRoutes?.zen.length ?? 0;
+    if (goal <= 0 || this.scoreManager.getRingsPassed() < goal) return;
+    this.zenRouteComplete = true;
+    this.awardRouteCompletion('Glowing route complete', ZEN_ROUTE_COMPLETE_BONUS, adaptationMultiplier);
+  }
+
+  private maybeCompleteExpeditionRoute(adaptationMultiplier: number): void {
+    if (this.mode !== 'free' || this.expeditionRouteComplete || !this.missionObjectiveSystem) return;
+    const goal = this.missionObjectiveSystem.getTotalCount();
+    if (goal <= 0 || this.missionObjectiveSystem.getCompletedCount() < goal) return;
+    this.expeditionRouteComplete = true;
+    this.awardRouteCompletion('Expedition route complete', EXPEDITION_ROUTE_COMPLETE_BONUS, adaptationMultiplier);
+  }
+
   private applyVisualGrade(mapId: string): void {
     if (mapId === 'ocean_islands') {
       this.renderer.setVisualGrade({
@@ -901,6 +933,8 @@ export class Game {
     this.scoreManager.reset();
     this.ringManager?.clear();
     this.dogfightManager?.reset();
+    this.zenRouteComplete = false;
+    this.expeditionRouteComplete = false;
 
     const map = getMap(this.currentMapId);
 

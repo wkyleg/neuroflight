@@ -287,7 +287,12 @@ function buildEventWindows(samples: FlightSample[], events: FlightEvent[]) {
 function buildNotableMoments(samples: FlightSample[], events: FlightEvent[]) {
   const moments: Array<{ time: number; title: string; detail: string }> = [];
   for (const event of events) {
-    if (event.type === 'postcard' || event.type === 'objective_complete' || event.type === 'kill') {
+    if (
+      event.type === 'postcard' ||
+      event.type === 'route_complete' ||
+      event.type === 'objective_complete' ||
+      event.type === 'kill'
+    ) {
       moments.push({
         time: Math.round(event.t),
         title: event.label ?? event.type.replace(/_/g, ' '),
@@ -474,7 +479,11 @@ export function SummaryScreen() {
   const killEvents = lastSession.events.filter((e) => e.type === 'kill');
   const deathEvents = lastSession.events.filter((e) => e.type === 'death');
   const objectiveEvents = lastSession.events.filter(
-    (e) => e.type === 'objective_complete' || e.type === 'postcard' || e.type === 'landmark_discovered',
+    (e) =>
+      e.type === 'route_complete' ||
+      e.type === 'objective_complete' ||
+      e.type === 'postcard' ||
+      e.type === 'landmark_discovered',
   );
 
   return (
