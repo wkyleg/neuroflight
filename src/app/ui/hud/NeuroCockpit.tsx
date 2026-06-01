@@ -3,25 +3,149 @@ import { useNeuroConnection, useNeuroSignals } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 import { BandPowerBars } from './BandPowerBars.tsx';
 
+export type BiofeedbackDisplayStateKind =
+  | 'none'
+  | 'permission-denied'
+  | 'warming'
+  | 'low-confidence'
+  | 'ready'
+  | 'simulated'
+  | 'eeg-active';
+
+export type BiofeedbackDisplayTone = 'neutral' | 'warming' | 'ready' | 'warning' | 'simulated' | 'advanced';
+
+export interface BiofeedbackDisplayInput {
+  source: string;
+  cameraActive: boolean;
+  eegConnected: boolean;
+  mockEnabled: boolean;
+  signalQuality: number;
+  bpmQuality: number;
+  cameraError?: string | null;
+}
+
+export interface BiofeedbackDisplayState {
+  state: BiofeedbackDisplayStateKind;
+  primaryLabel: string;
+  guidance: string;
+  detail: string;
+  tone: BiofeedbackDisplayTone;
+  showCameraMetrics: boolean;
+  showEegAdvanced: boolean;
+}
+
 function pct(value: number): string {
   return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
 }
 
-function signalTone(value: number): string {
-  if (value >= 0.72) return '#42e9a8';
-  if (value >= 0.38) return '#facc15';
-  return '#fb7185';
+function isPermissionError(error?: string | null): boolean {
+  if (!error) return false;
+  const normalized = error.toLowerCase();
+  return normalized.includes('permission') || normalized.includes('denied') || normalized.includes('blocked');
 }
 
-function signalLabel(source: string, cameraActive: boolean, signalQuality: number): string {
-  if (source === 'mock') return 'Simulated flight signals';
-  if (source === 'eeg') return 'EEG connected';
-  if (cameraActive || source === 'rppg') {
-    if (signalQuality >= 0.72) return 'Camera signal ready';
-    if (signalQuality >= 0.38) return 'Camera warming up';
-    return 'More light or steadier face';
+export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): BiofeedbackDisplayState {
+  const signalQuality = Math.max(0, Math.min(1, input.signalQuality));
+  const bpmQuality = Math.max(0, Math.min(1, input.bpmQuality));
+
+  if (input.source === 'mock' || input.mockEnabled) {
+    return {
+      state: 'simulated',
+      primaryLabel: 'SIM',
+      guidance: 'Simulated flight signals',
+      detail: 'Mock signals are driving ambience and debrief notes.',
+      tone: 'simulated',
+      showCameraMetrics: false,
+      showEegAdvanced: false,
+    };
   }
-  return 'Signals optional';
+
+  if (input.source === 'eeg' || input.eegConnected) {
+    return {
+      state: 'eeg-active',
+      primaryLabel: 'EEG',
+      guidance: 'Advanced headset connected',
+      detail: 'Camera remains optional; EEG details are available in advanced view.',
+      tone: 'advanced',
+      showCameraMetrics: false,
+      showEegAdvanced: true,
+    };
+  }
+
+  if (!input.cameraActive && isPermissionError(input.cameraError)) {
+    return {
+      state: 'permission-denied',
+      primaryLabel: 'CAMERA BLOCKED',
+      guidance: 'Camera blocked in browser settings',
+      detail: 'You can still fly; the debrief will focus on flight events.',
+      tone: 'warning',
+      showCameraMetrics: false,
+      showEegAdvanced: false,
+    };
+  }
+
+  if (input.cameraActive || input.source === 'rppg') {
+    if (signalQuality >= 0.72 || bpmQuality >= 0.72) {
+      return {
+        state: 'ready',
+        primaryLabel: 'CAMERA',
+        guidance: 'Camera signal ready',
+        detail: 'Signal proxies are tracking with useful confidence.',
+        tone: 'ready',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    }
+    if (signalQuality >= 0.28 || bpmQuality >= 0.28) {
+      return {
+        state: 'warming',
+        primaryLabel: 'CAMERA',
+        guidance: 'Camera warming up',
+        detail: 'Face the camera while the signal settles.',
+        tone: 'warming',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    }
+    return {
+      state: 'low-confidence',
+      primaryLabel: 'CAMERA',
+      guidance: 'More light or steadier face',
+      detail: 'Low-confidence moments stay out of signal insights.',
+      tone: 'warning',
+      showCameraMetrics: true,
+      showEegAdvanced: false,
+    };
+  }
+
+  return {
+    state: 'none',
+    primaryLabel: 'OPTIONAL',
+    guidance: 'Signals optional',
+    detail: 'Fly normally; camera can add debrief notes later.',
+    tone: 'neutral',
+    showCameraMetrics: false,
+    showEegAdvanced: false,
+  };
+}
+
+function toneColor(tone: BiofeedbackDisplayTone, value: number): string {
+  switch (tone) {
+    case 'ready':
+      return '#42e9a8';
+    case 'warming':
+      return '#facc15';
+    case 'warning':
+      return '#fb7185';
+    case 'simulated':
+      return '#c4b5fd';
+    case 'advanced':
+      return '#5eead4';
+    default:
+      if (value >= 0.72) return '#42e9a8';
+      if (value >= 0.38) return '#facc15';
+      return 'rgba(240,236,224,0.72)';
+  }
 }
 
 function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
@@ -146,21 +270,35 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const displayHrv = useThrottledDisplayValue(neuro.hrvRmssd, 1000);
   const displayResp = useThrottledDisplayValue(neuro.respirationRate, 1000);
 
-  const primary = useMemo(() => {
-    if (neuro.source === 'eeg') return 'EEG';
-    if (neuro.source === 'mock') return 'SIM';
-    if (connection.cameraActive || neuro.source === 'rppg') return 'CAMERA';
-    return 'OPTIONAL';
-  }, [connection.cameraActive, neuro.source]);
+  const displayState = useMemo(
+    () =>
+      getBiofeedbackDisplayState({
+        source: neuro.source,
+        cameraActive: connection.cameraActive,
+        eegConnected: connection.eegConnected,
+        mockEnabled: connection.mockEnabled,
+        signalQuality: displaySignalQuality,
+        bpmQuality: displayBpmQuality,
+        cameraError: connection.error.camera,
+      }),
+    [
+      neuro.source,
+      connection.cameraActive,
+      connection.eegConnected,
+      connection.mockEnabled,
+      connection.error.camera,
+      displaySignalQuality,
+      displayBpmQuality,
+    ],
+  );
 
-  const label = signalLabel(neuro.source, connection.cameraActive, displaySignalQuality);
-  const tone = signalTone(displaySignalQuality);
+  const tone = toneColor(displayState.tone, displaySignalQuality);
   const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';
   const hrv = displayHrv !== null ? `${Math.round(displayHrv)}ms` : '--';
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
     neuro.baselineDelta !== null ? `${neuro.baselineDelta > 0 ? '+' : ''}${Math.round(neuro.baselineDelta)}` : '--';
-  const showAdvanced = expanded || neuro.source === 'eeg';
+  const showAdvanced = expanded || displayState.showEegAdvanced;
 
   return (
     <div
@@ -189,12 +327,15 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
               </div>
               <div className="flex items-center" style={{ gap: 8 }}>
                 <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-heading)' }}>
-                  {primary}
+                  {displayState.primaryLabel}
                 </span>
                 <SignalBars value={displaySignalQuality} />
               </div>
               <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
-                {label}
+                {displayState.guidance}
+              </div>
+              <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                {displayState.detail}
               </div>
             </div>
           </div>
@@ -232,9 +373,13 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
         </div>
 
         <div className="mt-3 grid grid-cols-4" style={{ gap: 8 }}>
-          <MetricChip label="BPM" value={bpm} tone={displayBpmQuality > 0.4 ? '#fb7185' : undefined} />
-          <MetricChip label="HRV" value={hrv} />
-          <MetricChip label="Resp" value={resp} />
+          <MetricChip
+            label="BPM"
+            value={displayState.showCameraMetrics ? bpm : '--'}
+            tone={displayState.showCameraMetrics && displayBpmQuality > 0.4 ? '#fb7185' : undefined}
+          />
+          <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
+          <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
           <MetricChip label="Sig" value={pct(displaySignalQuality)} tone={tone} />
         </div>
 
