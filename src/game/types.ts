@@ -20,6 +20,13 @@ export interface AircraftDefinition {
   era: 'ww1' | 'ww2' | 'coldwar' | 'modern' | 'experimental' | 'scifi';
   displayRole?: 'default' | 'exploration' | 'speed' | 'novelty' | 'dev';
   handlingLabel?: string;
+  bestFor?: string;
+  strengths?: string[];
+  statBars?: {
+    speed: number;
+    handling: number;
+    stability: number;
+  };
   difficulty?: 'gentle' | 'standard' | 'ace';
   available?: boolean;
   previewImage?: string;

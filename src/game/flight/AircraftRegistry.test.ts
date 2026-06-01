@@ -55,6 +55,19 @@ describe('AircraftRegistry', () => {
     }
   });
 
+  it('available aircraft expose player-facing handling identity', () => {
+    for (const aircraft of getAvailableAircraft()) {
+      expect(aircraft.handlingLabel).toBeTruthy();
+      expect(aircraft.bestFor).toBeTruthy();
+      expect(aircraft.strengths?.length).toBeGreaterThanOrEqual(2);
+      expect(aircraft.statBars).toBeDefined();
+      for (const value of Object.values(aircraft.statBars ?? {})) {
+        expect(value).toBeGreaterThanOrEqual(1);
+        expect(value).toBeLessThanOrEqual(5);
+      }
+    }
+  });
+
   it('keeps propeller blur only on propeller aircraft', () => {
     expect(getAircraft('storybook_biplane').propellerBlur).toBeDefined();
     expect(getAircraft('spitfire').propellerBlur).toBeDefined();

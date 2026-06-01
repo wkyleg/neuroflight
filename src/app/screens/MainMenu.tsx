@@ -14,6 +14,29 @@ const DIFFICULTY_OPTIONS: Array<{ id: GameDifficulty; label: string; description
   { id: 'ace', label: 'Ace', description: 'Sharper rivals and higher score ceiling.' },
 ];
 
+function AircraftStatBar({ label, value }: { label: string; value: number }) {
+  const filled = Math.max(0, Math.min(5, Math.round(value)));
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-wider">
+        <span style={{ color: 'rgba(240,236,224,0.64)' }}>{label}</span>
+        <span style={{ color: '#fff4ca' }}>{filled}/5</span>
+      </div>
+      <div className="grid grid-cols-5 gap-1">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <span
+            key={index}
+            className="h-2 rounded-full"
+            style={{
+              background: index < filled ? 'linear-gradient(90deg, #5eead4 0%, #facc15 100%)' : 'rgba(255,255,255,0.1)',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MainMenu() {
   const navigate = useNavigate();
   const [selectedMap, setSelectedMap] = useState(MAPS[0].id);
@@ -216,6 +239,35 @@ export function MainMenu() {
               <p className="mt-2 text-sm leading-6" style={{ color: 'rgba(240,236,224,0.68)' }}>
                 {aircraft.handlingLabel ?? 'Verified flight profile'} · {aircraft.difficulty ?? 'standard'}
               </p>
+              {aircraft.bestFor && (
+                <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.78)' }}>
+                  Best for: {aircraft.bestFor}
+                </p>
+              )}
+              {aircraft.statBars && (
+                <div className="mt-4 grid gap-3">
+                  <AircraftStatBar label="Speed" value={aircraft.statBars.speed} />
+                  <AircraftStatBar label="Handling" value={aircraft.statBars.handling} />
+                  <AircraftStatBar label="Stability" value={aircraft.statBars.stability} />
+                </div>
+              )}
+              {aircraft.strengths && aircraft.strengths.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {aircraft.strengths.map((strength) => (
+                    <span
+                      key={strength}
+                      className="rounded-full border px-3 py-1 text-xs font-semibold"
+                      style={{
+                        borderColor: 'rgba(94,234,212,0.22)',
+                        color: '#ccfbf1',
+                        background: 'rgba(94,234,212,0.08)',
+                      }}
+                    >
+                      {strength}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-4 grid gap-2">
                 {aircraftOptions.map((option) => {
                   const active = option.id === aircraft.id;
@@ -237,6 +289,11 @@ export function MainMenu() {
                       <span className="mt-1 block text-xs" style={{ color: 'rgba(240,236,224,0.58)' }}>
                         {option.handlingLabel ?? option.era}
                       </span>
+                      {option.bestFor && (
+                        <span className="mt-1 block text-xs leading-5" style={{ color: 'rgba(240,236,224,0.5)' }}>
+                          {option.bestFor}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
