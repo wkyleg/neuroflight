@@ -128,6 +128,14 @@ function getDifficultyConfig(difficulty: GameDifficulty) {
   return DIFFICULTY_CONFIG[difficulty] ?? DIFFICULTY_CONFIG.rookie;
 }
 
+export function shouldStartCanvasFire(
+  event: Pick<MouseEvent, 'button' | 'target'>,
+  canvas: HTMLCanvasElement,
+  mode: GameMode,
+): boolean {
+  return mode === 'dogfight' && event.button === 0 && event.target === canvas;
+}
+
 export class Game {
   private renderer: Renderer;
   private cameraManager: CameraManager;
@@ -256,7 +264,7 @@ export class Game {
   }
 
   private handleMouseDown(e: MouseEvent): void {
-    if (e.button === 0 && this.mode === 'dogfight' && e.target === this.canvas) {
+    if (shouldStartCanvasFire(e, this.canvas, this.mode)) {
       this.firing = true;
     }
   }
