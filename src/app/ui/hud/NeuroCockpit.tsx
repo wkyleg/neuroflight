@@ -197,7 +197,7 @@ function SignalBars({ value }: { value: number }) {
           style={{
             width: 5,
             height: 7 + i * 3,
-            background: i < bars ? signalTone(value) : 'rgba(255,255,255,0.14)',
+            background: i < bars ? toneColor('neutral', value) : 'rgba(255,255,255,0.14)',
             transition: 'height 180ms ease, background 220ms ease',
           }}
         />

@@ -15,7 +15,12 @@ function formatCount(value: number, goal: number): string {
 }
 
 function eventDisplayLabel(event: FlightEvent): string {
-  if (event.label) return event.label.replace(/\bkill(s|ed)?\b/gi, 'tag$1');
+  if (event.label) {
+    return event.label
+      .replace(/\bkilled\b/gi, 'tagged')
+      .replace(/\bkills\b/gi, 'tags')
+      .replace(/\bkill\b/gi, 'tag');
+  }
   switch (event.type) {
     case 'kill':
       return 'Rival tagged';
@@ -46,7 +51,7 @@ function eventDisplayLabel(event: FlightEvent): string {
     case 'near_miss':
       return 'Near miss';
     default:
-      return event.type.replace(/_/g, ' ');
+      return String(event.type).replace(/_/g, ' ');
   }
 }
 
