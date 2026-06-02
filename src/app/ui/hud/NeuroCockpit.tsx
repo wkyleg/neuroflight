@@ -306,7 +306,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
       className={embedded ? 'pointer-events-auto' : 'absolute left-6 bottom-6 pointer-events-auto'}
       style={{
         width: embedded ? '100%' : showAdvanced ? 430 : 342,
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-instrument)',
       }}
     >
       <div
@@ -329,7 +329,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
                 Camera biofeedback
               </div>
               <div className="flex items-center" style={{ gap: 8 }}>
-                <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-heading)' }}>
+                <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
                   {displayState.primaryLabel}
                 </span>
                 <SignalBars value={displaySignalQuality} />

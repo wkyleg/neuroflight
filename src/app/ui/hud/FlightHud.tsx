@@ -178,7 +178,7 @@ function ControlsLegend({
         <div className="flex items-start justify-between gap-6">
           <h3
             className="text-sm font-bold tracking-widest"
-            style={{ color: 'var(--color-accent-gold)', fontFamily: 'var(--font-heading)', marginBottom: 22 }}
+            style={{ color: 'var(--color-accent-gold)', fontFamily: 'var(--font-instrument)', marginBottom: 22 }}
           >
             HOW TO FLY
           </h3>
@@ -289,7 +289,7 @@ function DirectionIndicator({ dir, color, label }: { dir: { x: number; y: number
           opacity="0.9"
         />
         {label && (
-          <text x="50" y="53" textAnchor="middle" fill={`${color}80`} fontSize="7" fontFamily="var(--font-body)">
+          <text x="50" y="53" textAnchor="middle" fill={`${color}80`} fontSize="7" fontFamily="var(--font-instrument)">
             {label}
           </text>
         )}
@@ -322,7 +322,7 @@ function HealthBar({
         style={{
           color: 'var(--color-text-secondary)',
           width: large ? 54 : 64,
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--font-instrument)',
           fontSize,
         }}
       >
@@ -453,7 +453,7 @@ function MissionCard({
         WebkitBackdropFilter: 'blur(20px) saturate(1.55)',
       }}
     >
-      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-body)' }}>
+      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-instrument)' }}>
         {title}
       </div>
       <div className="waypoint-serif mt-1 text-sm font-bold" style={{ color: '#fff8e2' }}>
@@ -462,7 +462,7 @@ function MissionCard({
       <div className="waypoint-serif mt-2 text-sm font-bold leading-5" style={{ color: '#ffffff' }}>
         {objective}
       </div>
-      <div className="mt-1 min-h-5 text-[11px] leading-4" style={{ color: 'rgba(240,236,224,0.68)' }}>
+      <div className="waypoint-serif mt-1 min-h-5 text-[11px] leading-4" style={{ color: 'rgba(240,236,224,0.68)' }}>
         {subtext}
       </div>
       {goal > 0 && (
@@ -740,7 +740,7 @@ export function FlightHud() {
   return (
     <div
       className="neuroflight-hud absolute inset-0 pointer-events-none select-none"
-      style={{ fontFamily: 'var(--font-body)' }}
+      style={{ fontFamily: 'var(--font-instrument)' }}
     >
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
       {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}

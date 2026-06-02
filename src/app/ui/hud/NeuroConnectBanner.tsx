@@ -58,7 +58,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
     >
       <span
         className="text-[11px] tracking-wide"
-        style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-heading)' }}
+        style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-instrument)' }}
       >
         Signals optional
       </span>
@@ -69,7 +69,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
         disabled={connecting.camera || cameraActive}
         className="glass-button text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--font-instrument)',
           borderColor: '#facc15',
           color: '#facc15',
           background: cameraActive ? 'rgba(250,204,21,0.13)' : 'rgba(250,204,21,0.06)',
@@ -85,7 +85,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
         disabled={connecting.eeg || eegConnected}
         className="glass-button text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--font-instrument)',
           borderColor: 'rgba(94,234,212,0.45)',
           color: '#5eead4',
           background: eegConnected ? 'rgba(94,234,212,0.12)' : 'transparent',
@@ -100,7 +100,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
         onClick={enableMock}
         className="glass-button text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
         style={{
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--font-instrument)',
           borderColor: 'var(--color-text-secondary)',
           color: 'var(--color-text-secondary)',
           background: 'transparent',
