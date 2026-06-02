@@ -13,6 +13,7 @@ export interface VisualGradeConfig {
   exposure: number;
   bloomStrength: number;
   hueShift: number;
+  hueDrift: number;
   grain: number;
 }
 
@@ -24,6 +25,7 @@ const DEFAULT_GRADE: VisualGradeConfig = {
   exposure: 1.02,
   bloomStrength: 0.12,
   hueShift: 0,
+  hueDrift: 0.012,
   grain: 0.012,
 };
 
@@ -35,7 +37,9 @@ const VisualGradeShader = {
     warmth: { value: DEFAULT_GRADE.warmth },
     vignette: { value: DEFAULT_GRADE.vignette },
     hueShift: { value: DEFAULT_GRADE.hueShift },
+    hueDrift: { value: DEFAULT_GRADE.hueDrift },
     grain: { value: DEFAULT_GRADE.grain },
+    time: { value: 0 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -51,7 +55,9 @@ const VisualGradeShader = {
     uniform float warmth;
     uniform float vignette;
     uniform float hueShift;
+    uniform float hueDrift;
     uniform float grain;
+    uniform float time;
     varying vec2 vUv;
 
     vec3 hueRotate(vec3 color, float angle) {
@@ -85,9 +91,10 @@ const VisualGradeShader = {
       float luma = dot(color, vec3(0.299, 0.587, 0.114));
       color = mix(vec3(luma), color, saturation);
       color = (color - 0.5) * contrast + 0.5;
-      color = hueRotate(color, hueShift);
+      float drift = sin(time * 0.11 + vUv.y * 2.4) * hueDrift;
+      color = hueRotate(color, hueShift + drift);
       color += vec3(warmth, warmth * 0.45, -warmth * 0.25);
-      color += (noise(vUv * 960.0) - 0.5) * grain;
+      color += (noise(vUv * 960.0 + vec2(time * 19.0, time * 7.0)) - 0.5) * grain;
 
       float dist = distance(vUv, vec2(0.5));
       float edge = 1.0 - smoothstep(0.28, 0.82, dist);
@@ -170,7 +177,9 @@ export class Renderer {
       this.gradePass.uniforms.warmth.value = DEFAULT_GRADE.warmth;
       this.gradePass.uniforms.vignette.value = DEFAULT_GRADE.vignette;
       this.gradePass.uniforms.hueShift.value = DEFAULT_GRADE.hueShift;
+      this.gradePass.uniforms.hueDrift.value = DEFAULT_GRADE.hueDrift;
       this.gradePass.uniforms.grain.value = DEFAULT_GRADE.grain;
+      this.gradePass.uniforms.time.value = 0;
     }
     if (this.bloomPass) {
       this.bloomPass.strength = DEFAULT_GRADE.bloomStrength;
@@ -192,10 +201,17 @@ export class Renderer {
       this.gradePass.uniforms.warmth.value = grade.warmth;
       this.gradePass.uniforms.vignette.value = grade.vignette;
       this.gradePass.uniforms.hueShift.value = grade.hueShift;
+      this.gradePass.uniforms.hueDrift.value = grade.hueDrift;
       this.gradePass.uniforms.grain.value = grade.grain;
     }
     if (this.bloomPass) {
       this.bloomPass.strength = grade.bloomStrength;
+    }
+  }
+
+  setVisualGradeTime(timeSeconds: number): void {
+    if (this.gradePass) {
+      this.gradePass.uniforms.time.value = timeSeconds;
     }
   }
 
