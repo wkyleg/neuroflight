@@ -7,6 +7,18 @@ import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
+const MODE_HINT_COUNT_PREFIX = 'neuroflight.modeHint.';
+
+const MODE_HINTS: Partial<Record<GameMode, { title: string; body: string }>> = {
+  zen: {
+    title: 'Zen Flight',
+    body: 'Follow the glowing rings. If the next gate is offscreen, the route arrow points the way.',
+  },
+  free: {
+    title: 'Expedition',
+    body: 'Visit one story place at a time. Fly through the floating beacon beside each landmark.',
+  },
+};
 
 export function shouldShowInitialHelp(): boolean {
   if (typeof window === 'undefined') return false;
@@ -357,6 +369,36 @@ function Crosshair() {
   );
 }
 
+function ModeHint({ mode, onDone }: { mode: GameMode; onDone: () => void }) {
+  const hint = MODE_HINTS[mode];
+
+  useEffect(() => {
+    const timer = window.setTimeout(onDone, 6200);
+    return () => window.clearTimeout(timer);
+  }, [onDone]);
+
+  if (!hint) return null;
+
+  return (
+    <div
+      className="absolute left-1/2 top-24 z-30 w-[min(420px,calc(100vw-48px))] -translate-x-1/2 rounded-xl border px-5 py-4 text-center"
+      style={{
+        background: 'rgba(4,18,24,0.74)',
+        borderColor: 'rgba(94,234,212,0.24)',
+        backdropFilter: 'blur(14px)',
+        boxShadow: '0 16px 44px rgba(0,0,0,0.24)',
+      }}
+    >
+      <div className="text-xs uppercase tracking-widest" style={{ color: 'var(--color-accent-cyan)' }}>
+        {hint.title}
+      </div>
+      <div className="mt-2 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.82)' }}>
+        {hint.body}
+      </div>
+    </div>
+  );
+}
+
 function MissionCard({
   title,
   subtitle,
@@ -551,6 +593,7 @@ export function FlightHud() {
   const game = useGameStore((s) => s.game);
   const [showControls, setShowControls] = useState(() => shouldShowInitialHelp());
   const [musicEnabled, setMusicEnabled] = useState(() => game?.isMusicEnabled() ?? true);
+  const [showModeHint, setShowModeHint] = useState(false);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -578,6 +621,26 @@ export function FlightHud() {
   const handleEndFlight = useCallback(() => {
     game?.endSession();
   }, [game]);
+
+  const hideModeHint = useCallback(() => {
+    setShowModeHint(false);
+  }, []);
+
+  useEffect(() => {
+    const hint = MODE_HINTS[hud.mode];
+    if (!hint || typeof window === 'undefined') {
+      setShowModeHint(false);
+      return;
+    }
+    const key = `${MODE_HINT_COUNT_PREFIX}${hud.mode}`;
+    const count = Number.parseInt(window.localStorage.getItem(key) ?? '0', 10);
+    if (!Number.isNaN(count) && count >= 2) {
+      setShowModeHint(false);
+      return;
+    }
+    window.localStorage.setItem(key, String((Number.isNaN(count) ? 0 : count) + 1));
+    setShowModeHint(true);
+  }, [hud.mode]);
 
   useEffect(() => {
     setMusicEnabled(game?.isMusicEnabled() ?? true);
@@ -650,6 +713,7 @@ export function FlightHud() {
       style={{ fontFamily: 'var(--font-body)' }}
     >
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
+      {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}
 
       {displayNextRingDir && <DirectionIndicator dir={displayNextRingDir} color={modeMeta.accent} label="ROUTE" />}
       {displayNextObjectiveDir && (

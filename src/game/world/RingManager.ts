@@ -95,6 +95,9 @@ export class RingManager {
     const ring = new THREE.Mesh(this.geometry, this.material.clone());
     ring.position.copy(pos);
     ring.lookAt(next);
+    const visualScale = index === 0 ? 1.55 : pointIndex === 0 ? 1.18 : 1;
+    ring.scale.setScalar(visualScale);
+    ring.userData.hitScale = visualScale;
 
     const glow = new THREE.Mesh(
       new THREE.TorusGeometry(RING_RADIUS + 4, RING_TUBE * 3.4, 8, RING_SEGMENTS),
@@ -117,8 +120,9 @@ export class RingManager {
     for (let i = this.rings.length - 1; i >= 0; i--) {
       const ring = this.rings[i];
       const dist = ring.position.distanceTo(playerPos);
+      const hitScale = typeof ring.userData.hitScale === 'number' ? ring.userData.hitScale : 1;
 
-      if (dist < PASS_THRESHOLD && !this.passed.has(ring)) {
+      if (dist < PASS_THRESHOLD * hitScale && !this.passed.has(ring)) {
         this.passed.add(ring);
         ringsHit++;
         eventBus.emit('ring:passed');

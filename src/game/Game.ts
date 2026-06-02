@@ -410,7 +410,7 @@ export class Game {
       scoreLabel: modeMeta.scoreLabel,
       objectiveLabel: modeMeta.objectiveLabel,
       objectiveText: this.getInitialObjectiveText(mode, map.missionRoutes?.expedition),
-      objectiveSubtext: map.storyTagline ?? map.description,
+      objectiveSubtext: this.getInitialObjectiveSubtext(mode, map),
       objectiveProgress: 0,
       objectiveGoal:
         mode === 'zen'
@@ -425,7 +425,13 @@ export class Game {
   private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
     if (mode === 'free') return expeditionRoute?.[0]?.label ?? 'Find the first expedition beacon';
     if (mode === 'dogfight') return 'Find the rival tag plane';
-    return 'Follow the glowing route';
+    return 'Aim through the first bright gate';
+  }
+
+  private getInitialObjectiveSubtext(mode: GameMode, map: MapDefinition): string {
+    if (mode === 'free') return 'Visit one story landmark at a time; fly through the beacon beside it.';
+    if (mode === 'zen') return 'Follow the glowing rings. The route arrow points to the next gate.';
+    return map.storyTagline ?? map.description;
   }
 
   private getDogfightSpawnPosition(map: MapDefinition, playerPos: THREE.Vector3): THREE.Vector3 {
@@ -838,15 +844,17 @@ export class Game {
         this.mode === 'free'
           ? (missionNav?.completionToast ?? hudActiveObjective?.label ?? 'Route complete')
           : this.mode === 'zen'
-            ? 'Follow the glowing route'
+            ? 'Aim through the next bright gate'
             : (currentMap.missionRoutes?.dogfight[0]?.label ?? 'Hold the patrol lane');
       const objectiveSubtext =
         this.mode === 'free'
           ? missionNav?.completionToast
             ? 'Logged - next route cue coming up.'
-            : (hudActiveObjective?.description ?? 'All expedition beacons are logged.')
+            : hudActiveObjective
+              ? `${Math.min(expeditionProgress + 1, expeditionGoal)}/${expeditionGoal} - ${hudActiveObjective.description}`
+              : 'All expedition beacons are logged.'
           : this.mode === 'zen'
-            ? adaptation.prompt
+            ? `Gate ${Math.min(this.scoreManager.getRingsPassed() + 1, zenGoal || 1)}/${Math.max(zenGoal, 1)} - use the route arrow when the ring is offscreen.`
             : 'Stay composed, keep visual contact, and use the landmarks.';
 
       useGameStore.getState().updateHud({
