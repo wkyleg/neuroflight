@@ -78,7 +78,7 @@ export function MainMenu() {
 
   return (
     <main
-      className="w-full h-full overflow-y-auto relative"
+      className="neuroflight-menu w-full h-full overflow-y-auto relative"
       style={{
         background: '#071016',
         color: 'var(--color-text-primary)',
@@ -133,8 +133,11 @@ export function MainMenu() {
               style={{
                 borderColor: 'rgba(125,211,252,0.5)',
                 color: '#bae6fd',
-                background: 'rgba(8,47,73,0.44)',
+                background: 'linear-gradient(135deg, rgba(39,91,117,0.48), rgba(8,34,49,0.5))',
                 fontFamily: 'var(--font-heading)',
+                backdropFilter: 'blur(18px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24), 0 12px 32px rgba(0,0,0,0.18)',
               }}
             >
               Asset Lab
@@ -146,8 +149,11 @@ export function MainMenu() {
               style={{
                 borderColor: 'rgba(255,244,202,0.36)',
                 color: '#fff4ca',
-                background: 'rgba(30,26,18,0.42)',
+                background: 'linear-gradient(135deg, rgba(77,65,39,0.48), rgba(25,21,17,0.52))',
                 fontFamily: 'var(--font-heading)',
+                backdropFilter: 'blur(18px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 32px rgba(0,0,0,0.18)',
               }}
             >
               Settings
@@ -171,12 +177,17 @@ export function MainMenu() {
                     type="button"
                     key={item.id}
                     onClick={() => setSelectedMode(item.id)}
-                    className="min-h-[150px] cursor-pointer rounded-lg border text-left transition-transform hover:-translate-y-1 active:translate-y-0"
+                    className="premium-glass min-h-[150px] cursor-pointer rounded-lg border text-left transition-transform hover:-translate-y-1 active:translate-y-0"
                     style={{
                       borderColor: active ? item.accent : 'rgba(255,255,255,0.16)',
-                      background: active ? 'rgba(255,255,255,0.16)' : 'rgba(2,8,12,0.48)',
-                      boxShadow: active ? `0 18px 50px ${item.accent}24` : 'none',
-                      backdropFilter: 'blur(10px)',
+                      background: active
+                        ? `linear-gradient(135deg, ${item.accent}24, rgba(255,255,255,0.12), rgba(4,18,24,0.48))`
+                        : 'linear-gradient(135deg, rgba(8,28,38,0.56), rgba(2,8,12,0.5))',
+                      boxShadow: active
+                        ? `inset 0 1px 0 rgba(255,255,255,0.28), 0 20px 54px ${item.accent}26`
+                        : 'inset 0 1px 0 rgba(255,255,255,0.16), 0 12px 34px rgba(0,0,0,0.16)',
+                      backdropFilter: 'blur(22px) saturate(1.75)',
+                      WebkitBackdropFilter: 'blur(22px) saturate(1.75)',
                       padding: 18,
                     }}
                   >
@@ -201,12 +212,13 @@ export function MainMenu() {
             </div>
 
             <div
-              className="mt-6 rounded-xl border"
+              className="premium-glass mt-6 rounded-xl border"
               style={{
                 borderColor: `${mode.accent}55`,
-                background: 'rgba(3,18,24,0.54)',
+                background: 'linear-gradient(135deg, rgba(3,24,32,0.62), rgba(255,255,255,0.08))',
                 padding: 18,
-                backdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(22px) saturate(1.65)',
+                WebkitBackdropFilter: 'blur(22px) saturate(1.65)',
               }}
             >
               <p
@@ -223,11 +235,12 @@ export function MainMenu() {
 
           <aside className="grid gap-4">
             <div
-              className="rounded-lg border"
+              className="premium-glass rounded-lg border"
               style={{
                 borderColor: 'rgba(94,234,212,0.22)',
-                background: 'rgba(4,28,32,0.58)',
-                backdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(4,38,48,0.68), rgba(255,255,255,0.075))',
+                backdropFilter: 'blur(24px) saturate(1.75)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
                 padding: 20,
               }}
             >
@@ -305,11 +318,12 @@ export function MainMenu() {
             </div>
 
             <div
-              className="rounded-lg border"
+              className="premium-glass rounded-lg border"
               style={{
                 borderColor: 'rgba(255,255,255,0.16)',
-                background: 'rgba(5,14,18,0.54)',
-                backdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(13,20,28,0.66), rgba(255,255,255,0.07))',
+                backdropFilter: 'blur(24px) saturate(1.7)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.7)',
                 padding: 18,
               }}
             >
@@ -347,11 +361,12 @@ export function MainMenu() {
             </div>
 
             <div
-              className="rounded-lg border"
+              className="premium-glass rounded-lg border"
               style={{
                 borderColor: 'rgba(255,244,202,0.18)',
-                background: 'rgba(5,14,18,0.62)',
-                backdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(24,24,18,0.68), rgba(255,235,176,0.08), rgba(5,14,18,0.6))',
+                backdropFilter: 'blur(24px) saturate(1.72)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.72)',
                 padding: 20,
               }}
             >
@@ -395,11 +410,12 @@ export function MainMenu() {
             </div>
 
             <div
-              className="rounded-lg border"
+              className="premium-glass rounded-lg border"
               style={{
                 borderColor: 'rgba(125,211,252,0.22)',
-                background: 'rgba(3,24,32,0.58)',
-                backdropFilter: 'blur(12px)',
+                background: 'linear-gradient(135deg, rgba(3,32,42,0.68), rgba(125,211,252,0.08))',
+                backdropFilter: 'blur(24px) saturate(1.7)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.7)',
                 padding: 18,
               }}
             >
@@ -458,12 +474,14 @@ export function MainMenu() {
         </section>
 
         <div
-          className="sticky bottom-0 z-20 -mx-2 mt-auto rounded-t-2xl border px-4 py-3"
+          className="premium-glass-strong sticky bottom-0 z-20 -mx-2 mt-auto rounded-t-2xl border px-4 py-3"
           style={{
-            background: 'linear-gradient(180deg, rgba(7,24,30,0.82), rgba(5,14,18,0.96))',
+            background: 'linear-gradient(180deg, rgba(18,56,68,0.78), rgba(5,14,18,0.9))',
             borderColor: 'rgba(255,248,226,0.16)',
-            backdropFilter: 'blur(18px) saturate(1.25)',
-            boxShadow: '0 -18px 50px rgba(0,0,0,0.28)',
+            backdropFilter: 'blur(28px) saturate(1.9)',
+            WebkitBackdropFilter: 'blur(28px) saturate(1.9)',
+            boxShadow:
+              'inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -18px 46px rgba(0,0,0,0.16), 0 -18px 56px rgba(0,0,0,0.3)',
           }}
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -486,7 +504,7 @@ export function MainMenu() {
             <button
               type="button"
               onClick={launchGame}
-              className="cursor-pointer rounded-xl px-8 py-4 text-base font-bold transition-transform hover:scale-105 active:scale-95"
+              className="glass-button cursor-pointer rounded-xl px-8 py-4 text-base font-bold transition-transform hover:scale-105 active:scale-95"
               style={{
                 color: '#071016',
                 background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)`,

@@ -1003,27 +1003,27 @@ export class Game {
   private applyVisualGrade(mapId: string): void {
     if (mapId === 'ocean_islands') {
       this.renderer.setVisualGrade({
-        saturation: 1.34,
-        contrast: 1.1,
-        warmth: 0.018,
-        vignette: 0.16,
-        exposure: 1.0,
-        bloomStrength: 0.16,
-        hueShift: 0.018,
-        grain: 0.01,
+        saturation: 1.48,
+        contrast: 1.14,
+        warmth: 0.028,
+        vignette: 0.18,
+        exposure: 1.02,
+        bloomStrength: 0.24,
+        hueShift: 0.035,
+        grain: 0.015,
       });
       return;
     }
 
     this.renderer.setVisualGrade({
-      saturation: 1.3,
-      contrast: 1.11,
-      warmth: 0.06,
-      vignette: 0.18,
-      exposure: 0.99,
-      bloomStrength: 0.15,
-      hueShift: -0.012,
-      grain: 0.012,
+      saturation: 1.44,
+      contrast: 1.16,
+      warmth: 0.084,
+      vignette: 0.2,
+      exposure: 1.0,
+      bloomStrength: 0.23,
+      hueShift: -0.026,
+      grain: 0.016,
     });
   }
 

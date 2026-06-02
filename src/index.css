@@ -10,10 +10,22 @@
   --color-text-primary: #fff6dc;
   --color-text-secondary: #b7bdd8;
 
-  --font-heading: "Fredoka", "Nunito", sans-serif;
+  --font-heading: "Instrument Serif", Georgia, serif;
   --font-body: "Nunito", system-ui, sans-serif;
   --font-mono: "B612", "Nunito", sans-serif;
   --font-instrument: "B612", "Nunito", sans-serif;
+
+  --glass-bg: linear-gradient(135deg, rgba(13, 57, 70, 0.54), rgba(8, 20, 27, 0.58) 48%, rgba(255, 236, 186, 0.12));
+  --glass-bg-strong: linear-gradient(135deg, rgba(20, 74, 89, 0.68), rgba(8, 19, 27, 0.7) 48%, rgba(255, 219, 147, 0.18));
+  --glass-border: rgba(255, 248, 220, 0.24);
+  --glass-border-strong: rgba(255, 248, 220, 0.38);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -18px 42px rgba(0, 0, 0, 0.16), 0 24px 72px rgba(0, 0, 0, 0.3);
+  --glass-shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -12px 28px rgba(0, 0, 0, 0.12), 0 14px 42px rgba(0, 0, 0, 0.22);
+  --glass-blur: blur(24px) saturate(1.85) brightness(1.05);
+  --glass-noise:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 82% 0%, rgba(94, 234, 212, 0.12), transparent 24%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 34%, rgba(255, 219, 147, 0.08) 72%, transparent);
 }
 
 * {
@@ -31,6 +43,10 @@ body,
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M5 4l16 9-7 2-3 7z' fill='%23fff4ca' stroke='%2311222b' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='12' r='2' fill='%235eead4'/%3E%3C/svg%3E")
+    5 4,
+    auto;
 }
 
 .tabular-nums {
@@ -41,6 +57,7 @@ button {
   min-height: 2.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: 0.5rem;
+  font-family: var(--font-instrument);
   transition:
     transform 160ms ease,
     filter 160ms ease,
@@ -62,6 +79,23 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+button,
+a,
+[role="button"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Ccircle cx='15' cy='15' r='11' fill='%2314262d' stroke='%23ffdc7a' stroke-width='2'/%3E%3Cpath d='M15 5v6M15 19v6M5 15h6M19 15h6' stroke='%235eead4' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='15' cy='15' r='3.4' fill='%23fff2b8'/%3E%3C/svg%3E")
+    15 15,
+    pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Ccircle cx='15' cy='15' r='11' fill='%2323282e' stroke='%23858a9f' stroke-width='2'/%3E%3Cpath d='M9 21L21 9' stroke='%23ff746f' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E")
+    15 15,
+    not-allowed;
+}
+
 .neuroflight-hud,
 .neuroflight-hud .tabular-nums {
   font-family: var(--font-instrument);
@@ -71,7 +105,66 @@ button:focus-visible {
 .neuroflight-hud h1,
 .neuroflight-hud h2,
 .neuroflight-hud h3 {
+  font-family: var(--font-instrument);
+}
+
+.neuroflight-menu h1,
+.neuroflight-menu h2,
+.neuroflight-menu h3,
+.neuroflight-menu .expressive-heading {
   font-family: var(--font-heading);
+  font-weight: 400;
+}
+
+.premium-glass,
+.premium-glass-strong,
+.glass-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow-soft);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.premium-glass-strong {
+  border-color: var(--glass-border-strong);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow);
+}
+
+.premium-glass::before,
+.premium-glass-strong::before,
+.glass-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--glass-noise);
+  opacity: 0.78;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.58) 48%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.58) 48%, transparent 100%);
+}
+
+.glass-button {
+  transition:
+    transform 180ms ease,
+    filter 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.glass-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12) saturate(1.12);
+  box-shadow: var(--glass-shadow), 0 0 22px rgba(94, 234, 212, 0.16);
+}
+
+.glass-button:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
 }
 
 canvas {
@@ -82,6 +175,13 @@ canvas {
   cursor:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 L20 15 L30 17 L20 19 L16 30 L12 19 L2 17 L12 15 Z' fill='none' stroke='%23ffdc7a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='17' r='2.5' fill='%235eead4'/%3E%3C/svg%3E")
     16 17,
+    crosshair;
+}
+
+.neuroflight-flight-canvas.dogfight-cursor {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='12' fill='none' stroke='%23ff6f64' stroke-width='2'/%3E%3Cpath d='M18 2v8M18 26v8M2 18h8M26 18h8' stroke='%23ffdc7a' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='18' cy='18' r='3' fill='%235eead4'/%3E%3C/svg%3E")
+    18 18,
     crosshair;
 }
 

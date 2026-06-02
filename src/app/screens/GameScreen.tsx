@@ -58,7 +58,10 @@ export function GameScreen() {
 
   return (
     <div className="relative w-full h-full">
-      <canvas ref={canvasRef} className="neuroflight-flight-canvas absolute inset-0 w-full h-full" />
+      <canvas
+        ref={canvasRef}
+        className={`neuroflight-flight-canvas absolute inset-0 h-full w-full ${mode === 'dogfight' ? 'dogfight-cursor' : ''}`}
+      />
 
       {loading && (
         <div

@@ -43,11 +43,14 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
 
   return (
     <div
-      className={`${docked ? 'flex flex-wrap' : 'absolute top-24 left-1/2 -translate-x-1/2 flex'} items-center rounded-lg pointer-events-auto z-50`}
+      className={`premium-glass ${docked ? 'flex flex-wrap' : 'absolute top-24 left-1/2 -translate-x-1/2 flex'} items-center rounded-lg pointer-events-auto z-50`}
       style={{
-        background: docked ? 'rgba(10, 34, 42, 0.46)' : 'rgba(8, 20, 28, 0.66)',
+        background: docked
+          ? 'linear-gradient(135deg, rgba(10, 44, 52, 0.58), rgba(255,255,255,0.06))'
+          : 'linear-gradient(135deg, rgba(8, 34, 46, 0.72), rgba(255,255,255,0.08))',
         border: docked ? '1px solid rgba(255, 236, 178, 0.16)' : '1px solid rgba(94, 234, 212, 0.26)',
-        backdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(22px) saturate(1.7)',
+        WebkitBackdropFilter: 'blur(22px) saturate(1.7)',
         padding: docked ? '7px 9px' : '8px 10px',
         gap: 10,
         width: docked ? '100%' : undefined,
@@ -64,7 +67,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
         type="button"
         onClick={enableCamera}
         disabled={connecting.camera || cameraActive}
-        className="text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
+        className="glass-button text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
           fontFamily: 'var(--font-heading)',
           borderColor: '#facc15',
@@ -80,7 +83,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
         type="button"
         onClick={connectHeadband}
         disabled={connecting.eeg || eegConnected}
-        className="text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
+        className="glass-button text-[11px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
         style={{
           fontFamily: 'var(--font-heading)',
           borderColor: 'rgba(94,234,212,0.45)',
@@ -95,7 +98,7 @@ export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerP
       <button
         type="button"
         onClick={enableMock}
-        className="text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
+        className="glass-button text-[11px] border rounded-lg cursor-pointer transition-all hover:scale-105"
         style={{
           fontFamily: 'var(--font-heading)',
           borderColor: 'var(--color-text-secondary)',

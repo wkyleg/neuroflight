@@ -162,15 +162,17 @@ function ControlsLegend({
         style={{ background: 'transparent', border: 0, borderRadius: 0, minHeight: 0, padding: 0 }}
       />
       <div
-        className="relative rounded-xl text-left"
+        className="premium-glass-strong relative rounded-xl text-left"
         style={{
-          background: 'rgba(0, 5, 15, 0.9)',
+          background: 'linear-gradient(135deg, rgba(11, 37, 47, 0.78), rgba(0, 5, 15, 0.72))',
           border: '1px solid rgba(255, 200, 100, 0.28)',
-          backdropFilter: 'blur(12px)',
+          backdropFilter: 'blur(28px) saturate(1.9)',
+          WebkitBackdropFilter: 'blur(28px) saturate(1.9)',
           padding: '30px 34px',
           color: 'inherit',
           width: 'min(560px, calc(100vw - 40px))',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.34)',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -18px 42px rgba(0,0,0,0.16), 0 24px 80px rgba(0,0,0,0.34)',
         }}
       >
         <div className="flex items-start justify-between gap-6">
@@ -183,7 +185,7 @@ function ControlsLegend({
           <button
             type="button"
             onClick={onDismiss}
-            className="pointer-events-auto rounded-md border px-2 py-1 text-[10px] font-bold tracking-widest"
+            className="glass-button pointer-events-auto rounded-md border px-2 py-1 text-[10px] font-bold tracking-widest"
             style={{
               borderColor: 'rgba(255,255,255,0.12)',
               color: 'rgba(240,236,224,0.74)',
@@ -242,7 +244,7 @@ function ControlsLegend({
           <button
             type="button"
             onClick={onNeverShow}
-            className="pointer-events-auto rounded-md border px-3 py-2 text-[10px] font-bold tracking-widest"
+            className="glass-button pointer-events-auto rounded-md border px-3 py-2 text-[10px] font-bold tracking-widest"
             style={{
               borderColor: 'rgba(94,234,212,0.24)',
               color: '#a7f3d0',
@@ -403,11 +405,12 @@ function ModeHint({ mode, onDone }: { mode: GameMode; onDone: () => void }) {
 
   return (
     <div
-      className="absolute left-1/2 top-24 z-30 w-[min(420px,calc(100vw-48px))] -translate-x-1/2 rounded-xl border px-5 py-4 text-center"
+      className="premium-glass absolute left-1/2 top-24 z-30 w-[min(420px,calc(100vw-48px))] -translate-x-1/2 rounded-xl border px-5 py-4 text-center"
       style={{
-        background: 'rgba(4,18,24,0.74)',
+        background: 'linear-gradient(135deg, rgba(8,36,48,0.72), rgba(255,255,255,0.08))',
         borderColor: 'rgba(94,234,212,0.24)',
-        backdropFilter: 'blur(14px)',
+        backdropFilter: 'blur(24px) saturate(1.72)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.72)',
         boxShadow: '0 16px 44px rgba(0,0,0,0.24)',
       }}
     >
@@ -441,12 +444,13 @@ function MissionCard({
   const pct = goal > 0 ? Math.max(0, Math.min(100, (progress / goal) * 100)) : 0;
   return (
     <div
-      className="rounded-lg border"
+      className="premium-glass rounded-lg border"
       style={{
         width: '100%',
-        background: 'rgba(5,14,18,0.62)',
+        background: 'linear-gradient(135deg, rgba(5,22,28,0.72), rgba(255,255,255,0.065))',
         borderColor: `${accent}55`,
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(20px) saturate(1.55)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.55)',
         padding: '16px 18px',
         minHeight: 208,
       }}
@@ -513,11 +517,11 @@ function InstrumentTile({
 }) {
   return (
     <div
-      className="rounded-xl border"
+      className="premium-glass rounded-xl border"
       style={{
         minWidth: 118,
         padding: '12px 14px',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
         borderColor: 'rgba(255,248,220,0.16)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
       }}
@@ -541,11 +545,11 @@ function ThrottleInstrument({ value }: { value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
     <div
-      className="rounded-xl border"
+      className="premium-glass rounded-xl border"
       style={{
         minWidth: 150,
         padding: '12px 14px',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055))',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
         borderColor: 'rgba(255,248,220,0.16)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
       }}
@@ -606,7 +610,7 @@ function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: numbe
 
   return (
     <div
-      className="absolute top-24 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest px-7 py-3.5 rounded-xl"
+      className="premium-glass-strong absolute top-24 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest px-8 py-4 rounded-xl"
       style={{
         color: message.includes('DOWN') || message.includes('UFO') ? '#7cff9a' : '#ffb86b',
         background: 'linear-gradient(180deg, rgba(2,18,20,0.78), rgba(4,8,18,0.62))',
@@ -615,7 +619,8 @@ function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: numbe
         }`,
         boxShadow:
           'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 32px rgba(0,0,0,0.28), 0 0 22px rgba(94,234,212,0.16)',
-        backdropFilter: 'blur(18px) saturate(1.45)',
+        backdropFilter: 'blur(24px) saturate(1.9)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.9)',
       }}
     >
       {message}
@@ -773,11 +778,12 @@ export function FlightHud() {
         <div />
         {isDogfight && (
           <div
-            className="text-center rounded-xl border px-5 py-2"
+            className="premium-glass text-center rounded-xl border px-5 py-2"
             style={{
-              background: 'rgba(7,20,28,0.42)',
-              borderColor: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(10px)',
+              background: 'linear-gradient(135deg, rgba(16,48,58,0.58), rgba(7,20,28,0.46))',
+              borderColor: 'rgba(255,255,255,0.16)',
+              backdropFilter: 'blur(24px) saturate(1.75)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
             }}
           >
             <div className="text-lg font-black tabular-nums" style={{ color: '#ffb86b' }}>
@@ -800,11 +806,12 @@ export function FlightHud() {
         )}
         <div className="pointer-events-auto flex items-start gap-3">
           <div
-            className="rounded-xl border px-5 py-3 text-right"
+            className="premium-glass rounded-xl border px-5 py-3 text-right"
             style={{
-              background: 'rgba(7,20,28,0.54)',
-              borderColor: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(12px)',
+              background: 'linear-gradient(135deg, rgba(20,58,68,0.58), rgba(7,20,28,0.56))',
+              borderColor: 'rgba(255,255,255,0.18)',
+              backdropFilter: 'blur(24px) saturate(1.75)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
               minWidth: 130,
             }}
           >
@@ -822,12 +829,14 @@ export function FlightHud() {
               e.stopPropagation();
               setShowControls(true);
             }}
-            className="rounded-xl text-xs font-black tracking-widest"
+            className="glass-button rounded-xl text-xs font-black tracking-widest"
             style={{
               color: 'var(--color-accent-gold)',
-              background: 'linear-gradient(180deg, rgba(41,56,64,0.86), rgba(13,25,31,0.86))',
+              background: 'linear-gradient(180deg, rgba(68,84,92,0.72), rgba(13,25,31,0.7))',
               border: '1px solid rgba(255,220,122,0.38)',
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 10px 24px rgba(0,0,0,0.2)',
+              backdropFilter: 'blur(22px) saturate(1.65)',
+              WebkitBackdropFilter: 'blur(22px) saturate(1.65)',
             }}
           >
             HELP
@@ -839,12 +848,14 @@ export function FlightHud() {
               e.stopPropagation();
               handleEndFlight();
             }}
-            className="rounded-xl text-xs font-black tracking-widest"
+            className="glass-button rounded-xl text-xs font-black tracking-widest"
             style={{
               color: '#fff7e8',
-              background: 'linear-gradient(180deg, rgba(236,92,76,0.95), rgba(173,48,38,0.95))',
+              background: 'linear-gradient(180deg, rgba(236,92,76,0.86), rgba(173,48,38,0.82))',
               border: '1px solid rgba(255,198,178,0.28)',
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24), 0 12px 26px rgba(187,45,35,0.24)',
+              backdropFilter: 'blur(22px) saturate(1.65)',
+              WebkitBackdropFilter: 'blur(22px) saturate(1.65)',
             }}
           >
             END
@@ -853,16 +864,18 @@ export function FlightHud() {
       </div>
 
       <div
-        className="absolute left-4 right-4 bottom-4 pointer-events-auto"
+        className="premium-glass-strong absolute left-4 right-4 bottom-4 pointer-events-auto"
         onPointerDown={stopHudPointer}
         style={{
           borderRadius: 24,
-          padding: 16,
-          background: 'linear-gradient(135deg, rgba(13,56,68,0.68), rgba(12,28,34,0.58) 48%, rgba(92,72,32,0.42))',
-          border: '1px solid rgba(255,248,220,0.18)',
-          backdropFilter: 'blur(18px) saturate(1.35)',
+          padding: 14,
+          background:
+            'linear-gradient(135deg, rgba(19,82,100,0.6), rgba(10,28,36,0.64) 45%, rgba(129,94,40,0.34))',
+          border: '1px solid rgba(255,248,220,0.3)',
+          backdropFilter: 'blur(30px) saturate(1.95) brightness(1.05)',
+          WebkitBackdropFilter: 'blur(30px) saturate(1.95) brightness(1.05)',
           boxShadow:
-            'inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -18px 40px rgba(0,0,0,0.12), 0 22px 70px rgba(0,0,0,0.28)',
+            'inset 0 1px 0 rgba(255,255,255,0.34), inset 0 -20px 48px rgba(0,0,0,0.16), 0 24px 78px rgba(0,0,0,0.3)',
         }}
       >
         <div
@@ -891,10 +904,13 @@ export function FlightHud() {
               <ThrottleInstrument value={displayThrottle} />
             </div>
             <div
-              className="rounded-xl border p-3"
+              className="premium-glass rounded-xl border"
               style={{
-                background: 'rgba(255,255,255,0.07)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(94,234,212,0.06))',
                 borderColor: 'rgba(255,248,220,0.13)',
+                padding: '14px 16px 15px',
+                backdropFilter: 'blur(18px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
               }}
             >
               <div className="mb-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.58)' }}>
@@ -911,8 +927,13 @@ export function FlightHud() {
             </div>
             {isDogfight && (
               <div
-                className="rounded-xl border p-3"
-                style={{ background: 'rgba(0,10,20,0.34)', borderColor: 'rgba(255,184,107,0.22)' }}
+                className="premium-glass rounded-xl border p-3"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0,16,30,0.42), rgba(255,184,107,0.06))',
+                  borderColor: 'rgba(255,184,107,0.22)',
+                  backdropFilter: 'blur(18px) saturate(1.5)',
+                  WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
+                }}
               >
                 <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" large />
                 <div style={{ height: 8 }} />
@@ -935,7 +956,7 @@ export function FlightHud() {
                 e.stopPropagation();
                 handleToggleMusic();
               }}
-              className="rounded-xl text-xs font-black tracking-widest"
+              className="glass-button rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 40,
                 padding: '0 12px',
@@ -964,7 +985,7 @@ export function FlightHud() {
                 setThrottle(false, false);
                 reactivateControls();
               }}
-              className="rounded-xl text-xl font-black"
+              className="glass-button rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
                 padding: '0 12px',
@@ -991,7 +1012,7 @@ export function FlightHud() {
                 setThrottle(false, false);
                 reactivateControls();
               }}
-              className="rounded-xl text-xl font-black"
+              className="glass-button rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
                 padding: '0 12px',
@@ -1018,7 +1039,7 @@ export function FlightHud() {
                 setBoost(false);
                 reactivateControls();
               }}
-              className="rounded-xl text-xs font-black tracking-widest"
+              className="glass-button rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
                 padding: '0 12px',
@@ -1045,7 +1066,7 @@ export function FlightHud() {
                 setBrake(false);
                 reactivateControls();
               }}
-              className="rounded-xl text-xs font-black tracking-widest"
+              className="glass-button rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
                 padding: '0 12px',
@@ -1073,7 +1094,7 @@ export function FlightHud() {
                   setFire(false);
                   reactivateControls();
                 }}
-                className="rounded-xl text-xs font-black tracking-widest"
+                className="glass-button rounded-xl text-xs font-black tracking-widest"
                 style={{
                   minHeight: 46,
                   padding: '0 12px',

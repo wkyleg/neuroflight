@@ -310,13 +310,15 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
       }}
     >
       <div
-        className="rounded-lg border shadow-lg"
+        className="premium-glass rounded-lg border shadow-lg"
         style={{
-          background: 'linear-gradient(135deg, rgba(7,20,28,0.72), rgba(18,26,26,0.58))',
+          background: 'linear-gradient(135deg, rgba(7,30,38,0.74), rgba(255,255,255,0.07), rgba(18,26,26,0.58))',
           borderColor: 'rgba(94,234,212,0.22)',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 14px 34px rgba(0,0,0,0.26)',
-          padding: 12,
+          backdropFilter: 'blur(24px) saturate(1.7)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.7)',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.24), inset 0 -14px 34px rgba(0,0,0,0.12), 0 14px 34px rgba(0,0,0,0.26)',
+          padding: 13,
         }}
       >
         <div className="flex items-center justify-between" style={{ gap: 10 }}>
