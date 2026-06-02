@@ -14,6 +14,11 @@
   --font-body: "Nunito", system-ui, sans-serif;
   --font-mono: "B612", "Nunito", sans-serif;
   --font-instrument: "B612", "Nunito", sans-serif;
+  --radius-apple-sm: 16px;
+  --radius-apple-md: 22px;
+  --radius-apple-lg: 30px;
+  --radius-apple-xl: 38px;
+  --radius-apple-pill: 999px;
 
   --glass-bg: linear-gradient(135deg, rgba(13, 57, 70, 0.54), rgba(8, 20, 27, 0.58) 48%, rgba(255, 236, 186, 0.12));
   --glass-bg-strong: linear-gradient(
@@ -63,7 +68,7 @@ body,
 button {
   min-height: 2.5rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-apple-md);
   font-family: var(--font-instrument);
   transition:
     transform 160ms ease,
@@ -134,6 +139,7 @@ button:disabled,
   box-shadow: var(--glass-shadow-soft);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-apple-lg);
 }
 
 .premium-glass-strong {
@@ -200,4 +206,117 @@ canvas {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%2314262d' stroke='%23ffdc7a' stroke-width='2'/%3E%3Cpath d='M14 5v5M14 18v5M5 14h5M18 14h5' stroke='%235eead4' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23fff2b8'/%3E%3C/svg%3E")
     14 14,
     pointer;
+}
+
+.flight-cockpit-shell {
+  left: clamp(10px, 1vw, 18px);
+  right: clamp(10px, 1vw, 18px);
+  bottom: clamp(8px, 1vw, 16px);
+  padding: clamp(8px, 0.82vw, 12px);
+  max-height: min(24vh, 220px);
+  border-radius: var(--radius-apple-xl);
+  overflow: hidden;
+}
+
+.flight-cockpit-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.82fr) minmax(390px, 1.32fr) minmax(280px, 0.92fr) minmax(104px, 124px);
+  gap: clamp(7px, 0.75vw, 12px);
+  align-items: stretch;
+}
+
+.flight-mission-card {
+  min-height: 136px;
+  height: 100%;
+  padding: clamp(10px, 0.9vw, 14px) clamp(12px, 1vw, 16px);
+  border-radius: var(--radius-apple-lg);
+  overflow: hidden;
+}
+
+.flight-instrument-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: clamp(6px, 0.65vw, 9px);
+}
+
+.flight-instrument-tile {
+  min-width: 0;
+  padding: clamp(8px, 0.75vw, 10px) clamp(10px, 0.8vw, 12px);
+  border-radius: var(--radius-apple-md);
+}
+
+.flight-adaptive-panel {
+  padding: clamp(9px, 0.75vw, 12px) clamp(11px, 0.9vw, 14px);
+  border-radius: var(--radius-apple-md);
+  overflow: hidden;
+}
+
+.flight-controls-stack {
+  display: grid;
+  gap: clamp(6px, 0.65vw, 9px);
+  grid-auto-rows: minmax(32px, auto);
+}
+
+.flight-control-button {
+  min-height: clamp(32px, 4.2vh, 42px);
+  padding: 0 clamp(8px, 0.8vw, 12px);
+  border-radius: var(--radius-apple-md);
+}
+
+.waypoint-serif {
+  font-family: var(--font-heading);
+}
+
+@media (max-width: 1260px), (max-height: 820px) {
+  .flight-cockpit-shell {
+    max-height: min(22vh, 190px);
+    padding: 8px;
+  }
+
+  .flight-cockpit-grid {
+    grid-template-columns: minmax(185px, 0.72fr) minmax(320px, 1.18fr) minmax(240px, 0.86fr) minmax(86px, 100px);
+    gap: 7px;
+  }
+
+  .flight-mission-card {
+    min-height: 116px;
+  }
+
+  .flight-instrument-grid {
+    grid-template-columns: repeat(4, minmax(72px, 1fr));
+  }
+}
+
+@media (max-width: 940px) {
+  .flight-cockpit-shell {
+    max-height: 32vh;
+  }
+
+  .flight-cockpit-grid {
+    grid-template-columns: 1fr minmax(82px, 96px);
+    grid-template-areas:
+      "mission controls"
+      "instruments controls"
+      "bio controls";
+  }
+
+  .flight-cockpit-grid > .flight-zone-mission {
+    grid-area: mission;
+  }
+
+  .flight-cockpit-grid > .flight-zone-instruments {
+    grid-area: instruments;
+  }
+
+  .flight-cockpit-grid > .flight-zone-bio {
+    grid-area: bio;
+  }
+
+  .flight-cockpit-grid > .flight-zone-controls {
+    grid-area: controls;
+  }
+
+  .flight-instrument-grid {
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
+  }
 }

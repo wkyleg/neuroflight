@@ -444,34 +444,29 @@ function MissionCard({
   const pct = goal > 0 ? Math.max(0, Math.min(100, (progress / goal) * 100)) : 0;
   return (
     <div
-      className="premium-glass rounded-lg border"
+      className="premium-glass flight-mission-card border"
       style={{
         width: '100%',
         background: 'linear-gradient(135deg, rgba(5,22,28,0.72), rgba(255,255,255,0.065))',
         borderColor: `${accent}55`,
         backdropFilter: 'blur(20px) saturate(1.55)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.55)',
-        padding: '16px 18px',
-        minHeight: 208,
       }}
     >
       <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-body)' }}>
         {title}
       </div>
-      <div className="mt-1 text-sm font-bold" style={{ color: '#fff8e2', fontFamily: 'var(--font-heading)' }}>
+      <div className="waypoint-serif mt-1 text-sm font-bold" style={{ color: '#fff8e2' }}>
         {subtitle}
       </div>
-      <div
-        className="mt-3 text-base font-bold leading-6"
-        style={{ color: '#ffffff', fontFamily: 'var(--font-heading)' }}
-      >
+      <div className="waypoint-serif mt-2 text-sm font-bold leading-5" style={{ color: '#ffffff' }}>
         {objective}
       </div>
-      <div className="mt-2 min-h-8 text-xs leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+      <div className="mt-1 min-h-5 text-[11px] leading-4" style={{ color: 'rgba(240,236,224,0.68)' }}>
         {subtext}
       </div>
       {goal > 0 && (
-        <div className="mt-4">
+        <div className="mt-3">
           <div className="flex justify-between text-[9px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
             <span>Progress</span>
             <span>
@@ -517,10 +512,8 @@ function InstrumentTile({
 }) {
   return (
     <div
-      className="premium-glass rounded-xl border"
+      className="premium-glass flight-instrument-tile border"
       style={{
-        minWidth: 118,
-        padding: '12px 14px',
         background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
         borderColor: 'rgba(255,248,220,0.16)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
@@ -529,10 +522,10 @@ function InstrumentTile({
       <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
         {label}
       </div>
-      <div className="mt-1 text-2xl font-black tabular-nums" style={{ color: accent }}>
+      <div className="mt-1 text-xl font-black tabular-nums" style={{ color: accent }}>
         {value}
         {unit && (
-          <span className="ml-1 text-sm font-bold" style={{ color: 'rgba(255,246,220,0.62)' }}>
+          <span className="ml-1 text-xs font-bold" style={{ color: 'rgba(255,246,220,0.62)' }}>
             {unit}
           </span>
         )}
@@ -545,10 +538,8 @@ function ThrottleInstrument({ value }: { value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
     <div
-      className="premium-glass rounded-xl border"
+      className="premium-glass flight-instrument-tile border"
       style={{
-        minWidth: 150,
-        padding: '12px 14px',
         background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
         borderColor: 'rgba(255,248,220,0.16)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
@@ -562,7 +553,7 @@ function ThrottleInstrument({ value }: { value: number }) {
           {pct}%
         </span>
       </div>
-      <div className="mt-2 h-3 overflow-hidden rounded-full" style={{ background: 'rgba(0,0,0,0.24)' }}>
+      <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: 'rgba(0,0,0,0.24)' }}>
         <div
           className="h-full rounded-full transition-all duration-200"
           style={{
@@ -863,11 +854,9 @@ export function FlightHud() {
       </div>
 
       <div
-        className="premium-glass-strong absolute left-4 right-4 bottom-4 pointer-events-auto"
+        className="premium-glass-strong flight-cockpit-shell absolute pointer-events-auto"
         onPointerDown={stopHudPointer}
         style={{
-          borderRadius: 24,
-          padding: 14,
           background: 'linear-gradient(135deg, rgba(19,82,100,0.6), rgba(10,28,36,0.64) 45%, rgba(129,94,40,0.34))',
           border: '1px solid rgba(255,248,220,0.3)',
           backdropFilter: 'blur(30px) saturate(1.95) brightness(1.05)',
@@ -877,36 +866,32 @@ export function FlightHud() {
         }}
       >
         <div
-          className="grid items-stretch"
-          style={{
-            gridTemplateColumns: 'minmax(250px, 0.85fr) minmax(430px, 1.35fr) minmax(330px, 1fr) 156px',
-            gap: 14,
-            minWidth: 1180,
-          }}
+          className="flight-cockpit-grid"
         >
-          <MissionCard
-            title={hud.missionTitle}
-            subtitle={hud.missionSubtitle}
-            objective={displayObjectiveText}
-            subtext={displayObjectiveSubtext}
-            progress={displayObjectiveProgress}
-            goal={hud.objectiveGoal}
-            accent={modeMeta.accent}
-          />
+          <div className="flight-zone-mission min-w-0">
+            <MissionCard
+              title={hud.missionTitle}
+              subtitle={hud.missionSubtitle}
+              objective={displayObjectiveText}
+              subtext={displayObjectiveSubtext}
+              progress={displayObjectiveProgress}
+              goal={hud.objectiveGoal}
+              accent={modeMeta.accent}
+            />
+          </div>
 
-          <div className="flex min-w-0 flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
+          <div className="flight-zone-instruments flex min-w-0 flex-col gap-2">
+            <div className="flight-instrument-grid">
               <InstrumentTile label="Speed" value={Math.round(displaySpeed)} unit={`${speedKnots}kt`} />
               <InstrumentTile label="Altitude" value={Math.round(displayAltitude)} unit="ft" />
               <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
               <ThrottleInstrument value={displayThrottle} />
             </div>
             <div
-              className="premium-glass rounded-xl border"
+              className="premium-glass flight-adaptive-panel border"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(94,234,212,0.06))',
                 borderColor: 'rgba(255,248,220,0.13)',
-                padding: '14px 16px 15px',
                 backdropFilter: 'blur(18px) saturate(1.5)',
                 WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
               }}
@@ -925,7 +910,7 @@ export function FlightHud() {
             </div>
             {isDogfight && (
               <div
-                className="premium-glass rounded-xl border p-3"
+                className="premium-glass flight-adaptive-panel border"
                 style={{
                   background: 'linear-gradient(135deg, rgba(0,16,30,0.42), rgba(255,184,107,0.06))',
                   borderColor: 'rgba(255,184,107,0.22)',
@@ -940,12 +925,12 @@ export function FlightHud() {
             )}
           </div>
 
-          <div className="flex min-w-0 flex-col gap-2">
+          <div className="flight-zone-bio flex min-w-0 flex-col gap-2">
             <NeuroConnectBanner variant="dock" />
             <NeuroCockpit embedded />
           </div>
 
-          <div className="grid gap-2.5">
+          <div className="flight-zone-controls flight-controls-stack">
             <button
               type="button"
               aria-label="Toggle music"
@@ -954,10 +939,8 @@ export function FlightHud() {
                 e.stopPropagation();
                 handleToggleMusic();
               }}
-              className="glass-button rounded-xl text-xs font-black tracking-widest"
+              className="glass-button flight-control-button text-xs font-black tracking-widest"
               style={{
-                minHeight: 40,
-                padding: '0 12px',
                 background: musicEnabled
                   ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
                   : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
@@ -983,10 +966,8 @@ export function FlightHud() {
                 setThrottle(false, false);
                 reactivateControls();
               }}
-              className="glass-button rounded-xl text-xl font-black"
+              className="glass-button flight-control-button text-xl font-black"
               style={{
-                minHeight: 42,
-                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
                 border: '1px solid rgba(94,234,212,0.42)',
                 color: 'var(--color-accent-cyan)',
@@ -1010,10 +991,8 @@ export function FlightHud() {
                 setThrottle(false, false);
                 reactivateControls();
               }}
-              className="glass-button rounded-xl text-xl font-black"
+              className="glass-button flight-control-button text-xl font-black"
               style={{
-                minHeight: 42,
-                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
                 border: '1px solid rgba(94,234,212,0.36)',
                 color: 'var(--color-accent-cyan)',
@@ -1037,10 +1016,8 @@ export function FlightHud() {
                 setBoost(false);
                 reactivateControls();
               }}
-              className="glass-button rounded-xl text-xs font-black tracking-widest"
+              className="glass-button flight-control-button text-xs font-black tracking-widest"
               style={{
-                minHeight: 44,
-                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(83,68,28,0.96), rgba(38,35,23,0.96))',
                 border: '1px solid rgba(250,204,21,0.48)',
                 color: 'var(--color-accent-gold)',
@@ -1064,10 +1041,8 @@ export function FlightHud() {
                 setBrake(false);
                 reactivateControls();
               }}
-              className="glass-button rounded-xl text-xs font-black tracking-widest"
+              className="glass-button flight-control-button text-xs font-black tracking-widest"
               style={{
-                minHeight: 44,
-                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(75,34,32,0.96), rgba(35,26,24,0.96))',
                 border: '1px solid rgba(255,107,86,0.5)',
                 color: '#ff745f',
@@ -1092,10 +1067,8 @@ export function FlightHud() {
                   setFire(false);
                   reactivateControls();
                 }}
-                className="glass-button rounded-xl text-xs font-black tracking-widest"
+                className="glass-button flight-control-button text-xs font-black tracking-widest"
                 style={{
-                  minHeight: 46,
-                  padding: '0 12px',
                   background: 'linear-gradient(180deg, rgba(255,226,145,0.62), rgba(94,234,212,0.28))',
                   border: '2px solid rgba(255,224,144,0.76)',
                   color: '#fff2b8',
