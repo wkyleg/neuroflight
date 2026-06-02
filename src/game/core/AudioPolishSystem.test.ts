@@ -13,7 +13,7 @@ describe('AudioPolishSystem music preferences', () => {
 
   it('defaults music on and persists toggles', () => {
     const system = new AudioPolishSystem({
-      musicLoops: [{ path: '/assets/audio/music-jingles-preview-01.ogg', volume: 0.2 }],
+      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.14 }],
     });
 
     expect(system.isMusicEnabled()).toBe(true);
@@ -21,7 +21,7 @@ describe('AudioPolishSystem music preferences', () => {
     expect(window.localStorage.getItem('neuroflight.audio.musicEnabled')).toBe('false');
 
     const restored = new AudioPolishSystem({
-      musicLoops: [{ path: '/assets/audio/music-jingles-preview-01.ogg', volume: 0.2 }],
+      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.14 }],
     });
     expect(restored.isMusicEnabled()).toBe(false);
 

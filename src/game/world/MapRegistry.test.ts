@@ -79,7 +79,7 @@ describe('MapRegistry', () => {
 
   it('adds soft music loops and playful tag sounds per map', () => {
     for (const map of MAPS) {
-      expect(map.audioPolish?.musicLoops?.some((clip) => clip.path.includes('music-jingles-preview'))).toBe(true);
+      expect(map.audioPolish?.musicLoops?.some((clip) => clip.path.includes('heavenly-loop-isaiah658'))).toBe(true);
       expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('music-tag-sparkle'))).toBe(true);
     }
   });

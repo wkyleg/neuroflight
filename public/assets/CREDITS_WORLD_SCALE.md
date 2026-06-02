@@ -232,3 +232,10 @@ These runtime assets were copied from `asset-inbox` after preview for the world-
 - License: CC0 1.0
 - Author: Kenney
 - Attribution: Music Jingles by Kenney, CC0 1.0.
+
+## Heavenly Loop
+- Runtime files: /assets/audio/heavenly-loop-isaiah658.ogg
+- Source: OpenGameArt (https://opengameart.org/content/heavenly-loop)
+- License: CC0
+- Author: isaiah658
+- Attribution: Heavenly Loop by isaiah658, CC0.

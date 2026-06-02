@@ -600,7 +600,7 @@ export const MAPS: MapDefinition[] = [
         { path: '/assets/audio/engine-low-01.ogg', volume: 0.018 },
         { path: '/assets/audio/thruster-fire-01.ogg', volume: 0.012 },
       ],
-      musicLoops: [{ path: '/assets/audio/music-jingles-preview-01.ogg', volume: 0.2 }],
+      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.14 }],
       weaponOneShots: [
         { path: '/assets/audio/music-tag-sparkle-01.ogg', volume: 0.055, rateRange: [1.08, 1.24] },
         { path: '/assets/audio/laser-small-01.ogg', volume: 0.028, rateRange: [1.02, 1.16] },
@@ -1336,7 +1336,7 @@ export const MAPS: MapDefinition[] = [
         { path: '/assets/audio/engine-low-01.ogg', volume: 0.016 },
         { path: '/assets/audio/thruster-fire-01.ogg', volume: 0.012 },
       ],
-      musicLoops: [{ path: '/assets/audio/music-jingles-preview-01.ogg', volume: 0.18 }],
+      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.13 }],
       weaponOneShots: [
         { path: '/assets/audio/music-tag-sparkle-01.ogg', volume: 0.052, rateRange: [1.04, 1.2] },
         { path: '/assets/audio/laser-small-01.ogg', volume: 0.026, rateRange: [1.02, 1.16] },

@@ -7,6 +7,7 @@ interface AmbientLoop {
 
 const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
 const MUSIC_VOLUME_KEY = 'neuroflight.audio.musicVolume';
+const DEFAULT_MUSIC_VOLUME = 0.16;
 
 function readMusicEnabled(): boolean {
   if (typeof window === 'undefined') return true;
@@ -14,9 +15,9 @@ function readMusicEnabled(): boolean {
 }
 
 function readMusicVolume(): number {
-  if (typeof window === 'undefined') return 0.24;
-  const value = Number.parseFloat(window.localStorage.getItem(MUSIC_VOLUME_KEY) ?? '0.24');
-  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.24;
+  if (typeof window === 'undefined') return DEFAULT_MUSIC_VOLUME;
+  const value = Number.parseFloat(window.localStorage.getItem(MUSIC_VOLUME_KEY) ?? String(DEFAULT_MUSIC_VOLUME));
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : DEFAULT_MUSIC_VOLUME;
 }
 
 export class AudioPolishSystem {
@@ -43,7 +44,7 @@ export class AudioPolishSystem {
       const audio = new Audio(clip.path);
       audio.loop = true;
       audio.preload = 'auto';
-      audio.volume = (clip.volume ?? 0.22) * this.musicVolume;
+      audio.volume = (clip.volume ?? 0.16) * this.musicVolume;
       this.musicLoops.push({ clip, audio });
     }
   }
@@ -73,7 +74,7 @@ export class AudioPolishSystem {
       loop.audio.volume = baseVolume * (0.35 + ratio * 0.45 + this.intensity * 0.2);
     }
     for (const loop of this.musicLoops) {
-      const baseVolume = loop.clip.volume ?? 0.22;
+      const baseVolume = loop.clip.volume ?? 0.16;
       loop.audio.volume = this.musicEnabled ? baseVolume * this.musicVolume * (0.82 + this.intensity * 0.18) : 0;
     }
   }
