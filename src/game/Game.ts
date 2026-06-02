@@ -218,6 +218,7 @@ export class Game {
     this.assetManager = new AssetManager();
     this.audioManager = new AudioManager();
     this.proceduralMusicSystem = new ProceduralFlightMusicSystem(this.mode);
+    this.audioManager.setEnabled(this.proceduralMusicSystem.isSoundEnabled());
     this.scoreManager = new ScoreManager();
     this.sessionRecorder = new SessionRecorder();
     this.neuroAdaptationSystem = new NeuroAdaptationSystem();
@@ -295,11 +296,22 @@ export class Game {
   }
 
   toggleMusic(): boolean {
-    return this.proceduralMusicSystem.toggleMusic();
+    return this.toggleSound();
   }
 
   isMusicEnabled(): boolean {
-    return this.proceduralMusicSystem.isMusicEnabled();
+    return this.isSoundEnabled();
+  }
+
+  toggleSound(): boolean {
+    const enabled = this.proceduralMusicSystem.toggleSound();
+    this.audioManager.setEnabled(enabled);
+    this.audioPolishSystem?.setMasterEnabled(enabled);
+    return enabled;
+  }
+
+  isSoundEnabled(): boolean {
+    return this.proceduralMusicSystem.isSoundEnabled();
   }
 
   async init(
@@ -335,6 +347,7 @@ export class Game {
     this.livingWorldDirector = new LivingWorldDirector(this.scene, map.livingWorld, mode, map.id);
     await this.livingWorldDirector.load();
     this.audioPolishSystem = new AudioPolishSystem(map.audioPolish);
+    this.audioPolishSystem.setMasterEnabled(this.isSoundEnabled());
     if (this.audioStarted) this.audioPolishSystem.start();
     if (this.audioStarted) void this.proceduralMusicSystem.start();
 

@@ -124,6 +124,7 @@ export class AudioManager {
   private windGain: GainNode | null = null;
   private windNoise: AudioBufferSourceNode | null = null;
   private started = false;
+  private enabled = true;
 
   private lfo: OscillatorNode | null = null;
   private lfoGain: GainNode | null = null;
@@ -144,7 +145,7 @@ export class AudioManager {
     this.started = true;
 
     this.engineGain = ctx.createGain();
-    this.engineGain.gain.value = 0.02;
+    this.engineGain.gain.value = this.enabled ? 0.02 : 0;
     this.engineGain.connect(ctx.destination);
 
     this.engineFilter = ctx.createBiquadFilter();
@@ -179,7 +180,7 @@ export class AudioManager {
 
     // Wind noise
     this.windGain = ctx.createGain();
-    this.windGain.gain.value = 0.01;
+    this.windGain.gain.value = this.enabled ? 0.01 : 0;
     this.windGain.connect(ctx.destination);
 
     const bufferSize = ctx.sampleRate * 2;
@@ -202,6 +203,10 @@ export class AudioManager {
 
   updateEngine(speed: number, maxSpeed: number, profile?: AircraftAudioProfile): void {
     if (!this.engineOsc1 || !this.engineOsc2 || !this.engineGain || !this.engineFilter) return;
+    if (!this.enabled) {
+      this.engineGain.gain.value = 0;
+      return;
+    }
     const settings = getEngineProfile(profile);
     const ratio = Math.max(0, Math.min(1, speed / maxSpeed));
     const freq = settings.baseFrequency + ratio * settings.frequencyRange;
@@ -216,13 +221,17 @@ export class AudioManager {
 
   updateWind(speed: number, maxSpeed: number): void {
     if (!this.windGain) return;
+    if (!this.enabled) {
+      this.windGain.gain.value = 0;
+      return;
+    }
     const ratio = speed / maxSpeed;
     this.windGain.gain.value = ratio * 0.04;
   }
 
   setBpm(bpm: number | null): void {
     if (!this.lfo || !this.lfoGain) return;
-    if (bpm && bpm > 30 && bpm < 220) {
+    if (this.enabled && bpm && bpm > 30 && bpm < 220) {
       this.lfo.frequency.value = bpm / 60;
       this.lfoGain.gain.value = 0.008;
     } else {
@@ -231,6 +240,7 @@ export class AudioManager {
   }
 
   playChime(): void {
+    if (!this.enabled) return;
     const ctx = this.ensureContext();
 
     const osc1 = ctx.createOscillator();
@@ -260,6 +270,7 @@ export class AudioManager {
   }
 
   playFireLaunch(profile?: AircraftAudioProfile): void {
+    if (!this.enabled) return;
     const ctx = this.ensureContext();
     const settings = getEngineProfile(profile);
     const osc = ctx.createOscillator();
@@ -307,6 +318,7 @@ export class AudioManager {
   }
 
   playFireImpact(): void {
+    if (!this.enabled) return;
     const ctx = this.ensureContext();
     const bufferSize = Math.floor(ctx.sampleRate * 0.07);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -335,6 +347,7 @@ export class AudioManager {
   }
 
   playExplosion(): void {
+    if (!this.enabled) return;
     const ctx = this.ensureContext();
     const bufferSize = Math.floor(ctx.sampleRate * 0.4);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -360,6 +373,19 @@ export class AudioManager {
 
   playHit(): void {
     this.playFireImpact();
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    if (!enabled) {
+      if (this.engineGain) this.engineGain.gain.value = 0;
+      if (this.windGain) this.windGain.gain.value = 0;
+      if (this.lfoGain) this.lfoGain.gain.value = 0;
+    }
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
   }
 
   destroy(): void {

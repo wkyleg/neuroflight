@@ -6,11 +6,12 @@ describe('ProceduralFlightMusicSystem', () => {
     window.localStorage.clear();
   });
 
-  it('persists the music toggle without requiring Tone to boot in tests', () => {
+  it('persists the master sound toggle without requiring Tone to boot in tests', () => {
     const system = new ProceduralFlightMusicSystem('zen');
 
     expect(system.isMusicEnabled()).toBe(true);
-    expect(system.toggleMusic()).toBe(false);
+    expect(system.toggleSound()).toBe(false);
+    expect(window.localStorage.getItem('neuroflight.audio.masterEnabled')).toBe('false');
     expect(window.localStorage.getItem('neuroflight.audio.musicEnabled')).toBe('false');
 
     const restored = new ProceduralFlightMusicSystem('dogfight');

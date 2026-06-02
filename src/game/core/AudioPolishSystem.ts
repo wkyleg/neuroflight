@@ -6,11 +6,14 @@ interface AmbientLoop {
 }
 
 const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
+const MASTER_AUDIO_ENABLED_KEY = 'neuroflight.audio.masterEnabled';
 const MUSIC_VOLUME_KEY = 'neuroflight.audio.musicVolume';
 const DEFAULT_MUSIC_VOLUME = 0.16;
 
 function readMusicEnabled(): boolean {
   if (typeof window === 'undefined') return true;
+  const master = window.localStorage.getItem(MASTER_AUDIO_ENABLED_KEY);
+  if (master !== null) return master !== 'false';
   return window.localStorage.getItem(MUSIC_ENABLED_KEY) !== 'false';
 }
 
@@ -27,7 +30,7 @@ export class AudioPolishSystem {
   private readonly activeOneShots = new Set<HTMLAudioElement>();
   private started = false;
   private intensity = 0.65;
-  private musicEnabled = readMusicEnabled();
+  private masterEnabled = readMusicEnabled();
   private musicVolume = readMusicVolume();
 
   constructor(config?: AudioPolishConfig) {
@@ -52,17 +55,8 @@ export class AudioPolishSystem {
   start(): void {
     if (this.started) return;
     this.started = true;
-    for (const loop of this.ambientLoops) {
-      loop.audio.play().catch(() => {
-        // Browser autoplay policies can still deny playback in some embedded contexts.
-      });
-    }
-    if (this.musicEnabled) {
-      for (const loop of this.musicLoops) {
-        loop.audio.play().catch(() => {
-          // Music stays optional and silent if browser policy blocks this play call.
-        });
-      }
+    if (this.masterEnabled) {
+      this.playLoops();
     }
   }
 
@@ -71,11 +65,11 @@ export class AudioPolishSystem {
     const ratio = Math.min(1, Math.max(0, speed / maxSpeed));
     for (const loop of this.ambientLoops) {
       const baseVolume = loop.clip.volume ?? 0.08;
-      loop.audio.volume = baseVolume * (0.35 + ratio * 0.45 + this.intensity * 0.2);
+      loop.audio.volume = this.masterEnabled ? baseVolume * (0.35 + ratio * 0.45 + this.intensity * 0.2) : 0;
     }
     for (const loop of this.musicLoops) {
       const baseVolume = loop.clip.volume ?? 0.16;
-      loop.audio.volume = this.musicEnabled ? baseVolume * this.musicVolume * (0.82 + this.intensity * 0.18) : 0;
+      loop.audio.volume = this.masterEnabled ? baseVolume * this.musicVolume * (0.82 + this.intensity * 0.18) : 0;
     }
   }
 
@@ -100,29 +94,33 @@ export class AudioPolishSystem {
   }
 
   isMusicEnabled(): boolean {
-    return this.musicEnabled;
+    return this.masterEnabled;
   }
 
   toggleMusic(): boolean {
-    this.setMusicEnabled(!this.musicEnabled);
-    return this.musicEnabled;
+    this.setMusicEnabled(!this.masterEnabled);
+    return this.masterEnabled;
   }
 
   setMusicEnabled(enabled: boolean): void {
-    this.musicEnabled = enabled;
+    this.masterEnabled = enabled;
     if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MASTER_AUDIO_ENABLED_KEY, enabled ? 'true' : 'false');
       window.localStorage.setItem(MUSIC_ENABLED_KEY, enabled ? 'true' : 'false');
     }
-    for (const loop of this.musicLoops) {
+    for (const loop of [...this.ambientLoops, ...this.musicLoops]) {
       if (!enabled) {
         loop.audio.pause();
         loop.audio.volume = 0;
       } else if (this.started) {
-        loop.audio.play().catch(() => {
-          // Optional music can remain silent.
-        });
+        this.playLoops();
+        break;
       }
     }
+  }
+
+  setMasterEnabled(enabled: boolean): void {
+    this.setMusicEnabled(enabled);
   }
 
   setMusicVolume(volume: number): void {
@@ -152,7 +150,7 @@ export class AudioPolishSystem {
   }
 
   private playRandom(clips?: AudioPolishClip[]): void {
-    if (!this.started || !clips?.length) return;
+    if (!this.started || !this.masterEnabled || !clips?.length) return;
     const clip = clips[Math.floor(Math.random() * clips.length)];
     const audio = new Audio(clip.path);
     audio.preload = 'auto';
@@ -170,5 +168,18 @@ export class AudioPolishSystem {
     audio.play().catch(() => {
       this.activeOneShots.delete(audio);
     });
+  }
+
+  private playLoops(): void {
+    for (const loop of this.ambientLoops) {
+      loop.audio.play().catch(() => {
+        // Browser autoplay policies can still deny playback in some embedded contexts.
+      });
+    }
+    for (const loop of this.musicLoops) {
+      loop.audio.play().catch(() => {
+        // Optional music can remain silent.
+      });
+    }
   }
 }

@@ -622,7 +622,7 @@ export function FlightHud() {
   const hud = useGameStore((s) => s.hud);
   const game = useGameStore((s) => s.game);
   const [showControls, setShowControls] = useState(() => shouldShowInitialHelp());
-  const [musicEnabled, setMusicEnabled] = useState(() => game?.isMusicEnabled() ?? true);
+  const [soundEnabled, setSoundEnabled] = useState(() => game?.isSoundEnabled() ?? true);
   const [showModeHint, setShowModeHint] = useState(false);
 
   const formatTime = (ms: number) => {
@@ -673,11 +673,11 @@ export function FlightHud() {
   }, [hud.mode]);
 
   useEffect(() => {
-    setMusicEnabled(game?.isMusicEnabled() ?? true);
+    setSoundEnabled(game?.isSoundEnabled() ?? true);
   }, [game]);
 
-  const handleToggleMusic = useCallback(() => {
-    setMusicEnabled(game?.toggleMusic() ?? false);
+  const handleToggleSound = useCallback(() => {
+    setSoundEnabled(game?.toggleSound() ?? false);
     reactivateControls();
   }, [game, reactivateControls]);
 
@@ -933,22 +933,22 @@ export function FlightHud() {
           <div className="flight-zone-controls flight-controls-stack">
             <button
               type="button"
-              aria-label="Toggle music"
+              aria-label="Toggle sound"
               onPointerDown={stopHudPointer}
               onClick={(e) => {
                 e.stopPropagation();
-                handleToggleMusic();
+                handleToggleSound();
               }}
               className="glass-button flight-control-button text-xs font-black tracking-widest"
               style={{
-                background: musicEnabled
+                background: soundEnabled
                   ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
                   : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
-                border: musicEnabled ? '1px solid rgba(102,183,255,0.5)' : '1px solid rgba(255,255,255,0.16)',
-                color: musicEnabled ? '#9bd8ff' : 'rgba(255,246,220,0.5)',
+                border: soundEnabled ? '1px solid rgba(102,183,255,0.5)' : '1px solid rgba(255,255,255,0.16)',
+                color: soundEnabled ? '#9bd8ff' : 'rgba(255,246,220,0.5)',
               }}
             >
-              {musicEnabled ? 'MUSIC' : 'QUIET'}
+              {soundEnabled ? 'SOUND ON' : 'SOUND OFF'}
             </button>
             <button
               type="button"

@@ -39,6 +39,7 @@ interface MusicProfile {
 }
 
 const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
+const MASTER_AUDIO_ENABLED_KEY = 'neuroflight.audio.masterEnabled';
 const MUSIC_VOLUME_KEY = 'neuroflight.audio.musicVolume';
 const DEFAULT_MUSIC_VOLUME = 0.15;
 
@@ -93,6 +94,8 @@ function clamp01(value: number): number {
 
 function readMusicEnabled(): boolean {
   if (typeof window === 'undefined') return true;
+  const master = window.localStorage.getItem(MASTER_AUDIO_ENABLED_KEY);
+  if (master !== null) return master !== 'false';
   return window.localStorage.getItem(MUSIC_ENABLED_KEY) !== 'false';
 }
 
@@ -170,6 +173,7 @@ export class ProceduralFlightMusicSystem {
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MASTER_AUDIO_ENABLED_KEY, enabled ? 'true' : 'false');
       window.localStorage.setItem(MUSIC_ENABLED_KEY, enabled ? 'true' : 'false');
     }
     this.nodes?.volume.volume.rampTo(volumeDb(this.volume, enabled), 0.4);
@@ -185,6 +189,14 @@ export class ProceduralFlightMusicSystem {
 
   isMusicEnabled(): boolean {
     return this.enabled;
+  }
+
+  toggleSound(): boolean {
+    return this.toggleMusic();
+  }
+
+  isSoundEnabled(): boolean {
+    return this.isMusicEnabled();
   }
 
   setMusicVolume(volume: number): void {
