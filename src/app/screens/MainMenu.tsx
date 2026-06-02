@@ -14,6 +14,12 @@ const DIFFICULTY_OPTIONS: Array<{ id: GameDifficulty; label: string; description
   { id: 'ace', label: 'Ace', description: 'Sharper rivals and higher score ceiling.' },
 ];
 
+const MODE_HELP: Record<GameMode, string> = {
+  zen: 'Follow glowing route gates at an easy pace. Best when you want calm flight practice.',
+  free: 'Visit one highlighted landmark at a time. Fly through the beacon beside each story place.',
+  dogfight: 'Play friendly aerial tag with a rival plane. Rookie keeps the chase forgiving.',
+};
+
 function AircraftStatBar({ label, value }: { label: string; value: number }) {
   const filled = Math.max(0, Math.min(5, Math.round(value)));
   return (
@@ -97,7 +103,7 @@ export function MainMenu() {
       />
 
       <div
-        className="relative mx-auto flex min-h-full w-full flex-col py-9"
+        className="relative mx-auto flex min-h-full w-full flex-col py-7"
         style={{
           maxWidth: 1360,
           paddingLeft: 'clamp(32px, 4vw, 72px)',
@@ -149,11 +155,11 @@ export function MainMenu() {
           </div>
         </header>
 
-        <section className="grid flex-1 items-start gap-8 pb-16 pt-9 lg:grid-cols-[1fr_0.92fr] lg:pt-12">
+        <section className="grid flex-1 items-start gap-6 pb-32 pt-7 lg:grid-cols-[minmax(420px,0.95fr)_minmax(480px,0.85fr)] lg:pt-9">
           <div>
             <p className="max-w-2xl text-base leading-7 md:text-lg" style={{ color: 'rgba(255,248,226,0.86)' }}>
-              Choose a quiet route, a landmark expedition, or a playful dogfight. Sensors are optional; when they are
-              on, the world responds gently to composure, recovery, and signal confidence.
+              Choose a calm route, a landmark expedition, or a playful dogfight. Sensors are optional; the flight is
+              ready whenever you are.
             </p>
 
             <div className="mt-7 grid gap-3 md:grid-cols-3">
@@ -194,37 +200,32 @@ export function MainMenu() {
               })}
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                onClick={launchGame}
-                className="cursor-pointer rounded-lg px-7 py-4 text-base font-bold transition-transform hover:scale-105 active:scale-95"
-                style={{
-                  color: '#071016',
-                  background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)`,
-                  border: '1px solid rgba(255,255,255,0.54)',
-                  boxShadow: `0 18px 45px ${mode.accent}38`,
-                  fontFamily: 'var(--font-heading)',
-                }}
-              >
-                Launch {mode.title}
-              </button>
-              <p className="max-w-sm text-sm leading-6" style={{ color: 'rgba(240,236,224,0.64)' }}>
-                {sensorReady
-                  ? 'Sensors are connected for adaptive ambience and debrief notes.'
-                  : 'You can fly without sensors; simulated signals are available for testing.'}
+            <div
+              className="mt-6 rounded-xl border"
+              style={{
+                borderColor: `${mode.accent}55`,
+                background: 'rgba(3,18,24,0.54)',
+                padding: 18,
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <p className="text-xs uppercase tracking-widest" style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}>
+                How {mode.title} works
+              </p>
+              <p className="mt-2 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.76)' }}>
+                {MODE_HELP[selectedMode]}
               </p>
             </div>
           </div>
 
-          <aside className="grid gap-5">
+          <aside className="grid gap-4">
             <div
               className="rounded-lg border"
               style={{
                 borderColor: 'rgba(94,234,212,0.22)',
                 background: 'rgba(4,28,32,0.58)',
                 backdropFilter: 'blur(12px)',
-                padding: 24,
+                padding: 20,
               }}
             >
               <p
@@ -306,7 +307,7 @@ export function MainMenu() {
                 borderColor: 'rgba(255,255,255,0.16)',
                 background: 'rgba(5,14,18,0.54)',
                 backdropFilter: 'blur(12px)',
-                padding: 20,
+                padding: 18,
               }}
             >
               <p
@@ -348,7 +349,7 @@ export function MainMenu() {
                 borderColor: 'rgba(255,244,202,0.18)',
                 background: 'rgba(5,14,18,0.62)',
                 backdropFilter: 'blur(12px)',
-                padding: 24,
+                padding: 20,
               }}
             >
               <p
@@ -396,7 +397,7 @@ export function MainMenu() {
                 borderColor: 'rgba(125,211,252,0.22)',
                 background: 'rgba(3,24,32,0.58)',
                 backdropFilter: 'blur(12px)',
-                padding: 24,
+                padding: 18,
               }}
             >
               <p
@@ -452,6 +453,47 @@ export function MainMenu() {
             </div>
           </aside>
         </section>
+
+        <div
+          className="sticky bottom-0 z-20 -mx-2 mt-auto rounded-t-2xl border px-4 py-3"
+          style={{
+            background: 'linear-gradient(180deg, rgba(7,24,30,0.82), rgba(5,14,18,0.96))',
+            borderColor: 'rgba(255,248,226,0.16)',
+            backdropFilter: 'blur(18px) saturate(1.25)',
+            boxShadow: '0 -18px 50px rgba(0,0,0,0.28)',
+          }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-widest" style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}>
+                Ready to fly
+              </p>
+              <p className="mt-1 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.82)' }}>
+                {mode.title} · {map.storyName ?? map.name} · {aircraft.name} · {selectedDifficulty}
+              </p>
+              <p className="text-xs leading-5" style={{ color: 'rgba(240,236,224,0.6)' }}>
+                {sensorReady
+                  ? 'Biofeedback is connected for adaptive ambience and debrief notes.'
+                  : 'No sensor setup required; camera and simulation are optional.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={launchGame}
+              className="cursor-pointer rounded-xl px-8 py-4 text-base font-bold transition-transform hover:scale-105 active:scale-95"
+              style={{
+                color: '#071016',
+                background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)`,
+                border: '1px solid rgba(255,255,255,0.58)',
+                boxShadow: `0 18px 45px ${mode.accent}38`,
+                fontFamily: 'var(--font-heading)',
+                minWidth: 220,
+              }}
+            >
+              Launch {mode.title}
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
