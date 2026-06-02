@@ -24,6 +24,9 @@ export class InputManager {
   private uiBrake = false;
   private uiBoost = false;
   private uiFire = false;
+  private touchPitch = 0;
+  private touchRoll = 0;
+  private touchYaw = 0;
 
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
@@ -91,6 +94,7 @@ export class InputManager {
     this.uiBrake = false;
     this.uiBoost = false;
     this.uiFire = false;
+    this.setTouchAxes({ pitch: 0, roll: 0, yaw: 0 });
   };
 
   onDevKey(cb: (key: string) => void): void {
@@ -114,6 +118,12 @@ export class InputManager {
     this.uiFire = active;
   }
 
+  setTouchAxes(axes: { pitch: number; roll: number; yaw?: number }): void {
+    this.touchPitch = Math.max(-1, Math.min(1, axes.pitch));
+    this.touchRoll = Math.max(-1, Math.min(1, axes.roll));
+    this.touchYaw = Math.max(-1, Math.min(1, axes.yaw ?? axes.roll * 0.35));
+  }
+
   isUiFiring(): boolean {
     return this.uiFire;
   }
@@ -133,6 +143,10 @@ export class InputManager {
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) targetRoll += 1;
     if (this.keys.has('KeyQ')) targetYaw -= 1;
     if (this.keys.has('KeyE')) targetYaw += 1;
+
+    targetPitch = Math.max(-1, Math.min(1, targetPitch + this.touchPitch));
+    targetRoll = Math.max(-1, Math.min(1, targetRoll + this.touchRoll));
+    targetYaw = Math.max(-1, Math.min(1, targetYaw + this.touchYaw));
 
     const rampUp = 1 - Math.exp(-INPUT_SMOOTHING * dt);
     const rampDown = 1 - Math.exp(-INPUT_DECAY * dt);

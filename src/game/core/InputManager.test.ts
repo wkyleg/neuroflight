@@ -98,6 +98,20 @@ describe('InputManager', () => {
     expect(input.isUiFiring()).toBe(false);
   });
 
+  it('uses touch axes for mobile pitch, roll, and yaw', () => {
+    input.setTouchAxes({ pitch: 0.8, roll: -0.6 });
+    input.update(0.5);
+    const flight = input.getInput();
+    expect(flight.pitch).toBeGreaterThan(0);
+    expect(flight.roll).toBeLessThan(0);
+    expect(flight.yaw).toBeLessThan(0);
+
+    window.dispatchEvent(new PointerEvent('pointerup'));
+    for (let i = 0; i < 20; i++) input.update(0.05);
+    expect(input.getInput().pitch).toBeLessThan(0.05);
+    expect(Math.abs(input.getInput().roll)).toBeLessThan(0.05);
+  });
+
   it('clears momentary UI controls on global pointer release', () => {
     input.setUiFire(true);
     input.setUiBoost(true);

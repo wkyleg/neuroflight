@@ -263,6 +263,10 @@ canvas {
   border-radius: var(--radius-apple-md);
 }
 
+.mobile-flight-stick {
+  display: none;
+}
+
 .waypoint-serif {
   font-family: var(--font-heading);
 }
@@ -318,5 +322,30 @@ canvas {
 
   .flight-instrument-grid {
     grid-template-columns: repeat(2, minmax(92px, 1fr));
+  }
+}
+
+@media (pointer: coarse), (max-width: 760px) {
+  .mobile-flight-stick {
+    display: block;
+    position: absolute;
+    left: max(12px, env(safe-area-inset-left));
+    bottom: calc(34vh + 18px);
+    width: clamp(96px, 28vw, 142px);
+    height: clamp(96px, 28vw, 142px);
+    pointer-events: auto;
+    border-radius: var(--radius-apple-pill);
+    touch-action: none;
+  }
+
+  .flight-cockpit-shell {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    max-height: 34vh;
+  }
+
+  .flight-control-button {
+    min-height: 38px;
   }
 }

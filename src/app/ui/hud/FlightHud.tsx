@@ -567,6 +567,96 @@ function ThrottleInstrument({ value }: { value: number }) {
   );
 }
 
+function TouchFlightStick({
+  onAxes,
+  onRelease,
+}: {
+  onAxes: (axes: { pitch: number; roll: number; yaw?: number }) => void;
+  onRelease: () => void;
+}) {
+  const padRef = useRef<HTMLDivElement | null>(null);
+  const activeRef = useRef(false);
+  const [knob, setKnob] = useState({ x: 0, y: 0, active: false });
+
+  const updateAxes = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      const pad = padRef.current;
+      if (!pad) return;
+      const rect = pad.getBoundingClientRect();
+      const maxRadius = rect.width * 0.38;
+      const rawX = event.clientX - (rect.left + rect.width / 2);
+      const rawY = event.clientY - (rect.top + rect.height / 2);
+      const distance = Math.hypot(rawX, rawY);
+      const scale = distance > maxRadius ? maxRadius / distance : 1;
+      const x = rawX * scale;
+      const y = rawY * scale;
+      const roll = x / maxRadius;
+      const pitch = -y / maxRadius;
+      onAxes({ pitch, roll, yaw: roll * 0.45 });
+      setKnob({ x, y, active: true });
+    },
+    [onAxes],
+  );
+
+  const release = useCallback(() => {
+    activeRef.current = false;
+    onAxes({ pitch: 0, roll: 0, yaw: 0 });
+    setKnob({ x: 0, y: 0, active: false });
+    onRelease();
+  }, [onAxes, onRelease]);
+
+  return (
+    <div
+      ref={padRef}
+      className="mobile-flight-stick premium-glass-strong"
+      aria-label="Touch flight stick"
+      role="application"
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        activeRef.current = true;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        updateAxes(event);
+      }}
+      onPointerMove={(event) => {
+        if (!activeRef.current) return;
+        event.preventDefault();
+        event.stopPropagation();
+        updateAxes(event);
+      }}
+      onPointerUp={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        release();
+      }}
+      onPointerCancel={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        release();
+      }}
+      style={{
+        background:
+          'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.22), transparent 34%), linear-gradient(145deg, rgba(12,56,70,0.58), rgba(7,20,29,0.72))',
+        border: '1px solid rgba(255,248,220,0.26)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.26), 0 18px 48px rgba(0,0,0,0.28)',
+      }}
+    >
+      <div
+        className="absolute left-1/2 top-1/2 h-[38%] w-[38%] rounded-full"
+        style={{
+          transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))`,
+          background: knob.active
+            ? 'radial-gradient(circle, rgba(255,246,220,0.88), rgba(94,234,212,0.5))'
+            : 'radial-gradient(circle, rgba(255,246,220,0.55), rgba(94,234,212,0.22))',
+          border: '1px solid rgba(255,248,220,0.35)',
+          boxShadow: '0 0 26px rgba(94,234,212,0.26)',
+          transition: knob.active ? 'none' : 'transform 160ms ease',
+        }}
+      />
+    </div>
+  );
+}
+
 function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: number; bonusNotice: string | null }) {
   const [lastKills, setLastKills] = useState(0);
   const [lastDeaths, setLastDeaths] = useState(0);
@@ -709,6 +799,13 @@ export function FlightHud() {
   const setFire = useCallback(
     (active: boolean) => {
       game?.getInputManager().setUiFire(active);
+    },
+    [game],
+  );
+
+  const setTouchAxes = useCallback(
+    (axes: { pitch: number; roll: number; yaw?: number }) => {
+      game?.getInputManager().setTouchAxes(axes);
     },
     [game],
   );
@@ -860,6 +957,8 @@ export function FlightHud() {
           </button>
         </div>
       </div>
+
+      <TouchFlightStick onAxes={setTouchAxes} onRelease={reactivateControls} />
 
       <div
         className="premium-glass-strong flight-cockpit-shell absolute pointer-events-auto"
