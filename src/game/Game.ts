@@ -13,6 +13,7 @@ import { Renderer } from './core/Renderer.ts';
 import { getPreset } from './dev/EnvironmentPresets.ts';
 import { AIController } from './flight/AIController.ts';
 import { DEFAULT_AIRCRAFT_ID, getAircraft } from './flight/AircraftRegistry.ts';
+import { AircraftTrailSystem } from './flight/AircraftTrailSystem.ts';
 import { PlaneController } from './flight/PlaneController.ts';
 import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
@@ -163,6 +164,7 @@ export class Game {
   private neuroAdaptationSystem: NeuroAdaptationSystem;
   private flightSafetySystem: FlightSafetySystem;
   private planeController: PlaneController | null = null;
+  private aircraftTrailSystem: AircraftTrailSystem | null = null;
   private mode: GameMode = 'zen';
   private running = false;
   private rafId = 0;
@@ -389,6 +391,7 @@ export class Game {
     this.cameraManager.setConfig(aircraft.camera);
     this.planeController = new PlaneController(aircraft);
     await this.planeController.loadModel(this.assetManager, this.scene);
+    this.aircraftTrailSystem = new AircraftTrailSystem(this.scene, aircraft.trailProfile);
 
     this.planeController.flightModel.object.position.set(...map.playerSpawn);
     this.lastPosition.set(...map.playerSpawn);
@@ -521,6 +524,15 @@ export class Game {
     const speed = this.planeController.flightModel.getSpeed();
     const maxSpd = getAircraft(this.currentAircraftId)?.tuning?.maxSpeed ?? 200;
     this.planeController.update(dt, speed, maxSpd);
+    this.aircraftTrailSystem?.update(
+      dt,
+      this.planeController.getObject(),
+      speed,
+      maxSpd,
+      input.throttle,
+      input.boost,
+      Math.max(Math.abs(input.roll), Math.abs(input.yaw)),
+    );
 
     const obstacleVolumes = [
       ...(this.worldLandmarkSystem?.getCollisionVolumes() ?? []),
@@ -1219,6 +1231,7 @@ export class Game {
     this.missionObjectiveSystem?.destroy();
     this.worldManager?.destroy();
     this.weaponSystem?.destroy();
+    this.aircraftTrailSystem?.destroy();
     this.aiController?.removeFromScene(this.scene);
     if (this.aiMarker) {
       this.scene.remove(this.aiMarker);

@@ -4,6 +4,7 @@ import type { GameMode } from '@/game/types.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
+import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
@@ -19,6 +20,9 @@ const MODE_HINTS: Partial<Record<GameMode, { title: string; body: string }>> = {
     body: 'Visit one story place at a time. Fly through the floating beacon beside each landmark.',
   },
 };
+
+const ALTITUDE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 55, smoothing: 0.36, deadband: 1 };
+const SCORE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 140, smoothing: 0.42, deadband: 1 };
 
 export function shouldShowInitialHelp(): boolean {
   if (typeof window === 'undefined') return false;
@@ -53,6 +57,24 @@ function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
     const timer = window.setInterval(() => setDisplay(latest.current), intervalMs);
     return () => window.clearInterval(timer);
   }, [intervalMs]);
+
+  return display;
+}
+
+function useStableNumberDisplayValue(value: number, intervalMs: number, options: StableNumberOptions): number {
+  const latest = useRef(value);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setDisplay((current) => nextStableNumber(current, latest.current, options));
+    }, intervalMs);
+    return () => window.clearInterval(timer);
+  }, [intervalMs, options]);
 
   return display;
 }
@@ -698,14 +720,14 @@ export function FlightHud() {
   }, []);
 
   const displaySpeed = useThrottledDisplayValue(hud.speed, 280);
-  const displayAltitude = useThrottledDisplayValue(hud.altitude, 320);
+  const displayAltitude = useStableNumberDisplayValue(hud.altitude, 90, ALTITUDE_DISPLAY_OPTIONS);
   const displayThrottle = useThrottledDisplayValue(hud.throttle, 260);
   const displayHeading = useThrottledDisplayValue(hud.heading, 360);
   const displayComposure = useThrottledDisplayValue(hud.composure, 1000);
   const displayLoad = useThrottledDisplayValue(hud.neuroLoad, 1000);
   const displayFlow = useThrottledDisplayValue(hud.flow, 1000);
   const displayPrompt = useThrottledDisplayValue(hud.neuroPrompt, 1000);
-  const displayScore = useThrottledDisplayValue(hud.score, 260);
+  const displayScore = useStableNumberDisplayValue(hud.score, 80, SCORE_DISPLAY_OPTIONS);
   const displayKills = useThrottledDisplayValue(hud.kills, 260);
   const displayDeaths = useThrottledDisplayValue(hud.deaths, 260);
   const displayElapsedMs = useThrottledDisplayValue(hud.elapsedMs, 1000);
@@ -790,7 +812,7 @@ export function FlightHud() {
               {hud.scoreLabel}
             </div>
             <div className="text-2xl font-black tabular-nums" style={{ color: modeMeta.accent }}>
-              {displayScore}
+              {Math.round(displayScore)}
             </div>
           </div>
           <button

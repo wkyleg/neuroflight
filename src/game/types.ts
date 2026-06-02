@@ -46,6 +46,16 @@ export interface AircraftDefinition {
     color?: number;
     opacity?: number;
   };
+  trailProfile?: {
+    kind: 'prop-wash' | 'speed-line' | 'jet-exhaust' | 'violet-shimmer';
+    color: number;
+    secondaryColor?: number;
+    width: number;
+    lifetime: number;
+    emissionRate: number;
+    offsets: Array<[number, number, number]>;
+    boostMultiplier?: number;
+  };
   /** Target max model dimension in world units after source model normalization. */
   targetVisualSize?: number;
   /** Hint for cameras/collision/debug views around unusually wide source models. */

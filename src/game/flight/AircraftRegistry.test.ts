@@ -74,6 +74,16 @@ describe('AircraftRegistry', () => {
     expect(getAircraft('il28').propellerBlur).toBeUndefined();
   });
 
+  it('defines distinct movement trail profiles for available aircraft', () => {
+    expect(getAircraft('storybook_biplane').trailProfile?.kind).toBe('prop-wash');
+    expect(getAircraft('spitfire').trailProfile?.kind).toBe('speed-line');
+    expect(getAircraft('il28').trailProfile?.kind).toBe('jet-exhaust');
+    for (const aircraft of getAvailableAircraft()) {
+      expect(aircraft.trailProfile?.emissionRate).toBeGreaterThan(0);
+      expect(aircraft.trailProfile?.offsets.length).toBeGreaterThan(0);
+    }
+  });
+
   it('corrects side-axis propeller planes to face the flight path', () => {
     const biplane = getAircraft('storybook_biplane');
     const spitfire = getAircraft('spitfire');
