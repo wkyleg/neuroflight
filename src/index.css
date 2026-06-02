@@ -182,6 +182,34 @@ button:disabled,
   transform: translateY(1px) scale(0.985);
 }
 
+.neuroflight-menu .premium-glass,
+.neuroflight-menu .premium-glass-strong,
+.neuroflight-menu .glass-button,
+.neuroflight-hud .premium-glass,
+.neuroflight-hud .premium-glass-strong,
+.neuroflight-hud .glass-button {
+  border-radius: var(--radius-apple-lg);
+}
+
+.neuroflight-menu button,
+.neuroflight-menu [role="button"],
+.neuroflight-hud button,
+.neuroflight-hud [role="button"] {
+  border-radius: var(--radius-apple-md);
+}
+
+.neuroflight-menu .rounded-lg,
+.neuroflight-menu .rounded-xl,
+.neuroflight-hud .rounded-lg,
+.neuroflight-hud .rounded-xl {
+  border-radius: var(--radius-apple-lg);
+}
+
+.neuroflight-menu .rounded-2xl,
+.neuroflight-hud .rounded-2xl {
+  border-radius: var(--radius-apple-xl);
+}
+
 canvas {
   display: block;
 }
