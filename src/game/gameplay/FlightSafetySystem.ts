@@ -8,6 +8,12 @@ export interface FlightObstacle {
   label: string;
 }
 
+export interface FlightSafeZone {
+  center: THREE.Vector3;
+  radius: number;
+  label?: string;
+}
+
 export interface FlightSafetyEvent {
   type: 'crash' | 'hard_landing';
   label: string;
@@ -29,6 +35,7 @@ export class FlightSafetySystem {
     flightModel: FlightModel,
     map: MapDefinition,
     obstacles: FlightObstacle[] = [],
+    safeZones: FlightSafeZone[] = [],
   ): FlightSafetyEvent | null {
     this.invulnerabilityTimer = Math.max(0, this.invulnerabilityTimer - dt);
 
@@ -40,7 +47,7 @@ export class FlightSafetySystem {
 
     if (this.invulnerabilityTimer > 0) return null;
 
-    const obstacleHit = this.getObstacleHit(position, obstacles);
+    const obstacleHit = this.getObstacleHit(position, obstacles, safeZones);
     if (obstacleHit) {
       return {
         type: 'crash',
@@ -82,7 +89,12 @@ export class FlightSafetySystem {
     return this.invulnerabilityTimer;
   }
 
-  private getObstacleHit(position: THREE.Vector3, obstacles: FlightObstacle[]): FlightObstacle | null {
+  private getObstacleHit(
+    position: THREE.Vector3,
+    obstacles: FlightObstacle[],
+    safeZones: FlightSafeZone[],
+  ): FlightObstacle | null {
+    if (safeZones.some((zone) => zone.radius > 0 && position.distanceTo(zone.center) <= zone.radius)) return null;
     for (const obstacle of obstacles) {
       if (obstacle.radius <= 0) continue;
       if (position.distanceTo(obstacle.center) <= obstacle.radius) return obstacle;

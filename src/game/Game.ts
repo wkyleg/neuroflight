@@ -506,7 +506,23 @@ export class Game {
       ...(this.worldLandmarkSystem?.getCollisionVolumes() ?? []),
       ...(this.worldManager?.getCollisionVolumes() ?? []),
     ];
-    const safetyEvent = this.flightSafetySystem.update(dt, this.planeController.flightModel, map, obstacleVolumes);
+    const activeMissionWaypoint = this.missionObjectiveSystem?.getActiveWaypoint();
+    const missionSafeZones = activeMissionWaypoint
+      ? [
+          {
+            center: new THREE.Vector3(...activeMissionWaypoint.position),
+            radius: activeMissionWaypoint.radius,
+            label: activeMissionWaypoint.label,
+          },
+        ]
+      : [];
+    const safetyEvent = this.flightSafetySystem.update(
+      dt,
+      this.planeController.flightModel,
+      map,
+      obstacleVolumes,
+      missionSafeZones,
+    );
     if (safetyEvent) {
       this.flightSafetySystem.applyRespawn(this.planeController.flightModel, safetyEvent);
       this.inputManager.clearInput();

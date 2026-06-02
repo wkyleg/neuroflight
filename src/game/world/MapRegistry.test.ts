@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getMap, MAPS } from './MapRegistry.ts';
 
+function distance(a: readonly number[], b: readonly number[]): number {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+}
+
 describe('MapRegistry', () => {
   it('MAPS is non-empty', () => {
     expect(MAPS.length).toBeGreaterThan(0);
@@ -89,6 +93,38 @@ describe('MapRegistry', () => {
     expect(ocean.worldLandmarkLayers?.some((layer) => layer.label === 'shipwreck' && layer.placements?.length)).toBe(
       true,
     );
+  });
+
+  it('keeps expedition beacons clear of fixed landmark collision centers', () => {
+    for (const map of MAPS) {
+      const collidablePlacements =
+        map.worldLandmarkLayers?.flatMap((layer) =>
+          (layer.placements ?? []).map((placement) => ({
+            label: layer.label ?? layer.assetPath,
+            center: placement.position,
+            radius: placement.collisionRadius ?? layer.collisionRadius ?? 0,
+          })),
+        ) ?? [];
+
+      for (const waypoint of map.missionRoutes?.expedition ?? []) {
+        for (const landmark of collidablePlacements) {
+          if (landmark.radius <= 0) continue;
+          expect(
+            distance(waypoint.position, landmark.center),
+            `${map.id} ${waypoint.id} should not sit inside ${landmark.label}`,
+          ).toBeGreaterThan(landmark.radius + 16);
+        }
+      }
+    }
+  });
+
+  it('keeps expedition waypoints spaced as readable route targets', () => {
+    for (const map of MAPS) {
+      const route = map.missionRoutes?.expedition ?? [];
+      for (let i = 1; i < route.length; i++) {
+        expect(distance(route[i - 1].position, route[i].position)).toBeGreaterThan(640);
+      }
+    }
   });
 
   it('organizes maps into readable storybook districts', () => {

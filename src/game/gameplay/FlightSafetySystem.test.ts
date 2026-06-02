@@ -66,4 +66,20 @@ describe('FlightSafetySystem', () => {
     expect(event?.type).toBe('crash');
     expect(event?.label).toContain('pyramid');
   });
+
+  it('ignores landmark obstacles inside an active mission safe zone', () => {
+    const flight = makeFlight(140, 80);
+    flight.object.position.set(10, 140, 10);
+    const safety = new FlightSafetySystem();
+    safety.reset(map);
+    safety.update(3, flight, map);
+    const event = safety.update(
+      0.1,
+      flight,
+      map,
+      [{ center: new THREE.Vector3(15, 140, 12), radius: 28, label: 'pyramid' }],
+      [{ center: new THREE.Vector3(10, 140, 10), radius: 40, label: 'mission beacon' }],
+    );
+    expect(event).toBeNull();
+  });
 });
