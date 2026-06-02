@@ -453,7 +453,10 @@ function MissionCard({
         WebkitBackdropFilter: 'blur(20px) saturate(1.55)',
       }}
     >
-      <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-instrument)' }}>
+      <div
+        className="text-[10px] uppercase tracking-widest"
+        style={{ color: accent, fontFamily: 'var(--font-instrument)' }}
+      >
         {title}
       </div>
       <div className="waypoint-serif mt-1 text-sm font-bold" style={{ color: '#fff8e2' }}>
@@ -972,9 +975,7 @@ export function FlightHud() {
             'inset 0 1px 0 rgba(255,255,255,0.34), inset 0 -20px 48px rgba(0,0,0,0.16), 0 24px 78px rgba(0,0,0,0.3)',
         }}
       >
-        <div
-          className="flight-cockpit-grid"
-        >
+        <div className="flight-cockpit-grid">
           <div className="flight-zone-mission min-w-0">
             <MissionCard
               title={hud.missionTitle}
