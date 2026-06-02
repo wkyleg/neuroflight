@@ -60,6 +60,7 @@ describe('AircraftRegistry', () => {
       expect(aircraft.handlingLabel).toBeTruthy();
       expect(aircraft.bestFor).toBeTruthy();
       expect(aircraft.strengths?.length).toBeGreaterThanOrEqual(2);
+      expect(aircraft.audioProfile).toBeTruthy();
       expect(aircraft.statBars).toBeDefined();
       for (const value of Object.values(aircraft.statBars ?? {})) {
         expect(value).toBeGreaterThanOrEqual(1);
@@ -70,12 +71,14 @@ describe('AircraftRegistry', () => {
 
   it('keeps propeller blur only on propeller aircraft', () => {
     expect(getAircraft('storybook_biplane').propellerBlur).toBeDefined();
+    expect(getAircraft('wright_flyer').propellerBlur).toBeDefined();
     expect(getAircraft('spitfire').propellerBlur).toBeDefined();
     expect(getAircraft('il28').propellerBlur).toBeUndefined();
   });
 
   it('defines distinct movement trail profiles for available aircraft', () => {
     expect(getAircraft('storybook_biplane').trailProfile?.kind).toBe('prop-wash');
+    expect(getAircraft('wright_flyer').trailProfile?.kind).toBe('prop-wash');
     expect(getAircraft('spitfire').trailProfile?.kind).toBe('speed-line');
     expect(getAircraft('il28').trailProfile?.kind).toBe('jet-exhaust');
     for (const aircraft of getAvailableAircraft()) {
@@ -86,12 +89,17 @@ describe('AircraftRegistry', () => {
 
   it('corrects side-axis propeller planes to face the flight path', () => {
     const biplane = getAircraft('storybook_biplane');
+    const wright = getAircraft('wright_flyer');
     const spitfire = getAircraft('spitfire');
 
     expect(biplane.orientationPreset).toBe('obj-x-forward');
     expect(biplane.modelRotationY).toBeCloseTo(-Math.PI / 2);
     expect(biplane.propellerBlur?.offset[2]).toBeLessThan(0);
     expect(biplane.trailProfile?.offsets.every((offset) => offset[2] > 0)).toBe(true);
+    expect(wright.available).toBe(true);
+    expect(wright.modelFormat).toBe('gltf');
+    expect(wright.orientationPreset).toBe('gltf-z-forward');
+    expect(wright.audioProfile).toBe('vintage-prop');
     expect(spitfire.orientationPreset).toBe('gltf-x-forward');
     expect(spitfire.modelRotationY).toBeCloseTo(Math.PI / 2);
   });

@@ -1,3 +1,120 @@
+import type { AircraftDefinition } from '@/game/types.ts';
+
+type AircraftAudioProfile = NonNullable<AircraftDefinition['audioProfile']>;
+
+const ENGINE_PROFILES: Record<
+  AircraftAudioProfile,
+  {
+    oscillator: OscillatorType;
+    baseFrequency: number;
+    frequencyRange: number;
+    filterBase: number;
+    filterRange: number;
+    gainBase: number;
+    gainRange: number;
+    detune: number;
+    fireBase: number;
+    fireEnd: number;
+    fireFilter: number;
+  }
+> = {
+  'light-prop': {
+    oscillator: 'triangle',
+    baseFrequency: 68,
+    frequencyRange: 118,
+    filterBase: 230,
+    filterRange: 460,
+    gainBase: 0.012,
+    gainRange: 0.022,
+    detune: 8,
+    fireBase: 170,
+    fireEnd: 82,
+    fireFilter: 1100,
+  },
+  'vintage-prop': {
+    oscillator: 'triangle',
+    baseFrequency: 48,
+    frequencyRange: 82,
+    filterBase: 180,
+    filterRange: 330,
+    gainBase: 0.01,
+    gainRange: 0.018,
+    detune: 14,
+    fireBase: 145,
+    fireEnd: 76,
+    fireFilter: 880,
+  },
+  'sport-prop': {
+    oscillator: 'sawtooth',
+    baseFrequency: 88,
+    frequencyRange: 150,
+    filterBase: 290,
+    filterRange: 620,
+    gainBase: 0.013,
+    gainRange: 0.027,
+    detune: 6,
+    fireBase: 210,
+    fireEnd: 96,
+    fireFilter: 1320,
+  },
+  jet: {
+    oscillator: 'sawtooth',
+    baseFrequency: 44,
+    frequencyRange: 78,
+    filterBase: 440,
+    filterRange: 900,
+    gainBase: 0.016,
+    gainRange: 0.03,
+    detune: -11,
+    fireBase: 190,
+    fireEnd: 72,
+    fireFilter: 1180,
+  },
+  'heavy-jet': {
+    oscillator: 'sawtooth',
+    baseFrequency: 36,
+    frequencyRange: 66,
+    filterBase: 380,
+    filterRange: 760,
+    gainBase: 0.017,
+    gainRange: 0.031,
+    detune: -15,
+    fireBase: 176,
+    fireEnd: 68,
+    fireFilter: 980,
+  },
+  'heavy-turbine': {
+    oscillator: 'sawtooth',
+    baseFrequency: 40,
+    frequencyRange: 72,
+    filterBase: 350,
+    filterRange: 700,
+    gainBase: 0.014,
+    gainRange: 0.026,
+    detune: -9,
+    fireBase: 160,
+    fireEnd: 70,
+    fireFilter: 920,
+  },
+  'sci-fi': {
+    oscillator: 'square',
+    baseFrequency: 92,
+    frequencyRange: 120,
+    filterBase: 640,
+    filterRange: 1200,
+    gainBase: 0.01,
+    gainRange: 0.022,
+    detune: 18,
+    fireBase: 260,
+    fireEnd: 120,
+    fireFilter: 1700,
+  },
+};
+
+function getEngineProfile(profile?: AircraftAudioProfile) {
+  return ENGINE_PROFILES[profile ?? 'light-prop'];
+}
+
 export class AudioManager {
   private ctx: AudioContext | null = null;
   private engineGain: GainNode | null = null;
@@ -83,14 +200,18 @@ export class AudioManager {
     this.windNoise.start();
   }
 
-  updateEngine(speed: number, maxSpeed: number): void {
+  updateEngine(speed: number, maxSpeed: number, profile?: AircraftAudioProfile): void {
     if (!this.engineOsc1 || !this.engineOsc2 || !this.engineGain || !this.engineFilter) return;
-    const ratio = speed / maxSpeed;
-    const freq = 60 + ratio * 100;
+    const settings = getEngineProfile(profile);
+    const ratio = Math.max(0, Math.min(1, speed / maxSpeed));
+    const freq = settings.baseFrequency + ratio * settings.frequencyRange;
+    this.engineOsc1.type = settings.oscillator;
+    this.engineOsc2.type = settings.oscillator;
     this.engineOsc1.frequency.value = freq;
     this.engineOsc2.frequency.value = freq;
-    this.engineFilter.frequency.value = 200 + ratio * 250;
-    this.engineGain.gain.value = 0.015 + ratio * 0.02;
+    this.engineOsc2.detune.value = settings.detune;
+    this.engineFilter.frequency.value = settings.filterBase + ratio * settings.filterRange;
+    this.engineGain.gain.value = settings.gainBase + ratio * settings.gainRange;
   }
 
   updateWind(speed: number, maxSpeed: number): void {
@@ -138,8 +259,9 @@ export class AudioManager {
     osc2.stop(ctx.currentTime + 0.4);
   }
 
-  playFireLaunch(): void {
+  playFireLaunch(profile?: AircraftAudioProfile): void {
     const ctx = this.ensureContext();
+    const settings = getEngineProfile(profile);
     const osc = ctx.createOscillator();
     const grit = ctx.createBufferSource();
     const gain = ctx.createGain();
@@ -152,14 +274,14 @@ export class AudioManager {
       data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.24));
     }
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(180, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(82, ctx.currentTime + 0.1);
+    osc.type = settings.oscillator === 'triangle' ? 'sawtooth' : settings.oscillator;
+    osc.frequency.setValueAtTime(settings.fireBase, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(settings.fireEnd, ctx.currentTime + 0.1);
     grit.buffer = buffer;
     gritGain.gain.value = 0.18;
 
     filter.type = 'bandpass';
-    filter.frequency.value = 1050;
+    filter.frequency.value = settings.fireFilter;
     filter.Q.value = 0.9;
     gain.gain.setValueAtTime(0.052, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);

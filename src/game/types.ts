@@ -30,6 +30,7 @@ export interface AircraftDefinition {
   difficulty?: 'gentle' | 'standard' | 'ace';
   available?: boolean;
   previewImage?: string;
+  audioProfile?: 'light-prop' | 'vintage-prop' | 'sport-prop' | 'jet' | 'heavy-jet' | 'sci-fi' | 'heavy-turbine';
   modelFormat?: 'gltf' | 'obj';
   modelPath: string;
   texturePath?: string;

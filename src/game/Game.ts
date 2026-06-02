@@ -759,9 +759,11 @@ export class Game {
 
     this.scoreManager.update(dt);
 
-    this.audioManager.updateEngine(speed, 200);
-    this.audioManager.updateWind(speed, 200);
-    this.audioPolishSystem?.update(speed, 200);
+    const activeAircraft = getAircraft(this.currentAircraftId);
+    const maxAircraftSpeed = activeAircraft.tuning.maxSpeed;
+    this.audioManager.updateEngine(speed, maxAircraftSpeed, activeAircraft.audioProfile);
+    this.audioManager.updateWind(speed, maxAircraftSpeed);
+    this.audioPolishSystem?.update(speed, maxAircraftSpeed);
 
     // BPM sync
     this.hudUpdateTimer += dt;
@@ -968,7 +970,7 @@ export class Game {
     this.weaponSystem.fire(origin, dir, 'player');
     this.combatVfxSystem?.spawnShot(origin, dir, 'player');
     this.dogfightManager.recordPlayerShot();
-    this.audioManager.playFireLaunch();
+    this.audioManager.playFireLaunch(getAircraft(this.currentAircraftId).audioProfile);
     this.audioPolishSystem?.playWeapon();
     this.proceduralMusicSystem.triggerEvent('fire');
     this.sessionRecorder.recordEvent('shot_fired');
