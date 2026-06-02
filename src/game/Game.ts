@@ -204,6 +204,8 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
+    this.canvas.tabIndex = 0;
+    this.canvas.style.outline = 'none';
     this.renderer = new Renderer(this.canvas);
     this.scene = new THREE.Scene();
     this.cameraManager = new CameraManager();
@@ -417,6 +419,7 @@ export class Game {
             ? (map.missionRoutes?.expedition.length ?? 0)
             : initialDogfightGoal,
     });
+    this.activateControls();
   }
 
   private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
@@ -1102,6 +1105,14 @@ export class Game {
 
   getInputManager(): InputManager {
     return this.inputManager;
+  }
+
+  activateControls(): void {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active !== this.canvas) {
+      active.blur();
+    }
+    this.canvas.focus({ preventScroll: true });
   }
 
   destroy(): void {

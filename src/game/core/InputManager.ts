@@ -29,6 +29,8 @@ export class InputManager {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.clearInput);
+    window.addEventListener('pointercancel', this.clearInput);
+    window.addEventListener('pointerup', this.clearMomentaryUiInput);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
@@ -80,6 +82,10 @@ export class InputManager {
     this.smoothPitch = 0;
     this.smoothRoll = 0;
     this.smoothYaw = 0;
+    this.clearMomentaryUiInput();
+  };
+
+  private clearMomentaryUiInput = (): void => {
     this.uiThrottleUp = false;
     this.uiThrottleDown = false;
     this.uiBrake = false;
@@ -165,6 +171,8 @@ export class InputManager {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.clearInput);
+    window.removeEventListener('pointercancel', this.clearInput);
+    window.removeEventListener('pointerup', this.clearMomentaryUiInput);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.clearInput();
   }

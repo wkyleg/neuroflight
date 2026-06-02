@@ -105,6 +105,8 @@ export class Renderer {
   private renderPass: RenderPass | null = null;
   private gradePass: ShaderPass | null = null;
   private bloomPass: UnrealBloomPass | null = null;
+  private outputPass: OutputPass | null = null;
+  private contextLost = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -120,28 +122,65 @@ export class Renderer {
 
     this.resize();
     window.addEventListener('resize', this.resize);
+    canvas.addEventListener('webglcontextlost', this.onContextLost);
+    canvas.addEventListener('webglcontextrestored', this.onContextRestored);
   }
 
   initPostProcessing(scene: THREE.Scene, camera: THREE.Camera): void {
-    this.composer = new EffectComposer(this.renderer);
+    this.disposeComposer();
+    this.contextLost = false;
+    this.resetForSession();
 
-    this.renderPass = new RenderPass(scene, camera);
-    this.composer.addPass(this.renderPass);
+    try {
+      this.composer = new EffectComposer(this.renderer);
 
-    this.gradePass = new ShaderPass(VisualGradeShader);
-    this.composer.addPass(this.gradePass);
+      this.renderPass = new RenderPass(scene, camera);
+      this.composer.addPass(this.renderPass);
 
-    this.bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      DEFAULT_GRADE.bloomStrength,
-      0.5,
-      0.88,
-    );
-    this.composer.addPass(this.bloomPass);
+      this.gradePass = new ShaderPass(VisualGradeShader);
+      this.composer.addPass(this.gradePass);
 
-    const outputPass = new OutputPass();
-    this.composer.addPass(outputPass);
-    this.setVisualGrade(DEFAULT_GRADE);
+      this.bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        DEFAULT_GRADE.bloomStrength,
+        0.5,
+        0.88,
+      );
+      this.composer.addPass(this.bloomPass);
+
+      this.outputPass = new OutputPass();
+      this.composer.addPass(this.outputPass);
+      this.resize();
+      this.setVisualGrade(DEFAULT_GRADE);
+    } catch (err) {
+      console.warn('Post-processing failed to initialize; using direct renderer.', err);
+      this.disposeComposer();
+      this.resetForSession();
+    }
+  }
+
+  resetForSession(): void {
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = DEFAULT_GRADE.exposure;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if (this.gradePass) {
+      this.gradePass.uniforms.saturation.value = DEFAULT_GRADE.saturation;
+      this.gradePass.uniforms.contrast.value = DEFAULT_GRADE.contrast;
+      this.gradePass.uniforms.warmth.value = DEFAULT_GRADE.warmth;
+      this.gradePass.uniforms.vignette.value = DEFAULT_GRADE.vignette;
+      this.gradePass.uniforms.hueShift.value = DEFAULT_GRADE.hueShift;
+      this.gradePass.uniforms.grain.value = DEFAULT_GRADE.grain;
+    }
+    if (this.bloomPass) {
+      this.bloomPass.strength = DEFAULT_GRADE.bloomStrength;
+    }
+    this.resize();
+  }
+
+  disablePostProcessing(): void {
+    this.disposeComposer();
+    this.resetForSession();
   }
 
   setVisualGrade(config: Partial<VisualGradeConfig>): void {
@@ -168,6 +207,7 @@ export class Renderer {
   };
 
   render(scene: THREE.Scene, camera: THREE.Camera): void {
+    if (this.contextLost) return;
     if (this.composer) {
       if (this.renderPass) {
         this.renderPass.scene = scene;
@@ -185,9 +225,33 @@ export class Renderer {
     return { width: size.x, height: size.y };
   }
 
+  private disposeComposer(): void {
+    this.composer?.dispose();
+    this.composer = null;
+    this.renderPass = null;
+    this.gradePass = null;
+    this.bloomPass = null;
+    this.outputPass = null;
+  }
+
+  private onContextLost = (event: Event): void => {
+    event.preventDefault();
+    this.contextLost = true;
+    console.warn('WebGL context lost; rendering paused until the browser restores it.');
+    this.disposeComposer();
+  };
+
+  private onContextRestored = (): void => {
+    this.contextLost = false;
+    console.warn('WebGL context restored; direct rendering will resume.');
+    this.resetForSession();
+  };
+
   destroy(): void {
     window.removeEventListener('resize', this.resize);
-    this.composer?.dispose();
+    this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLost);
+    this.renderer.domElement.removeEventListener('webglcontextrestored', this.onContextRestored);
+    this.disposeComposer();
     this.renderer.dispose();
   }
 }

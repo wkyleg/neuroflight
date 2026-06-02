@@ -512,15 +512,21 @@ export function FlightHud() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const reactivateControls = useCallback(() => {
+    window.requestAnimationFrame(() => game?.activateControls());
+  }, [game]);
+
   const dismissControls = useCallback(() => {
     recordHelpDismissal(false);
     setShowControls(false);
-  }, []);
+    reactivateControls();
+  }, [reactivateControls]);
 
   const neverShowControls = useCallback(() => {
     recordHelpDismissal(true);
     setShowControls(false);
-  }, []);
+    reactivateControls();
+  }, [reactivateControls]);
 
   const handleEndFlight = useCallback(() => {
     game?.endSession();
@@ -532,7 +538,8 @@ export function FlightHud() {
 
   const handleToggleMusic = useCallback(() => {
     setMusicEnabled(game?.toggleMusic() ?? false);
-  }, [game]);
+    reactivateControls();
+  }, [game, reactivateControls]);
 
   const setThrottle = useCallback(
     (up: boolean, down: boolean) => {
@@ -791,8 +798,12 @@ export function FlightHud() {
               onPointerUp={(e) => {
                 stopHudPointer(e);
                 setThrottle(false, false);
+                reactivateControls();
               }}
-              onPointerLeave={() => setThrottle(false, false)}
+              onPointerLeave={() => {
+                setThrottle(false, false);
+                reactivateControls();
+              }}
               className="rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
@@ -814,8 +825,12 @@ export function FlightHud() {
               onPointerUp={(e) => {
                 stopHudPointer(e);
                 setThrottle(false, false);
+                reactivateControls();
               }}
-              onPointerLeave={() => setThrottle(false, false)}
+              onPointerLeave={() => {
+                setThrottle(false, false);
+                reactivateControls();
+              }}
               className="rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
@@ -837,8 +852,12 @@ export function FlightHud() {
               onPointerUp={(e) => {
                 stopHudPointer(e);
                 setBoost(false);
+                reactivateControls();
               }}
-              onPointerLeave={() => setBoost(false)}
+              onPointerLeave={() => {
+                setBoost(false);
+                reactivateControls();
+              }}
               className="rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
@@ -860,8 +879,12 @@ export function FlightHud() {
               onPointerUp={(e) => {
                 stopHudPointer(e);
                 setBrake(false);
+                reactivateControls();
               }}
-              onPointerLeave={() => setBrake(false)}
+              onPointerLeave={() => {
+                setBrake(false);
+                reactivateControls();
+              }}
               className="rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
@@ -884,8 +907,12 @@ export function FlightHud() {
                 onPointerUp={(e) => {
                   stopHudPointer(e);
                   setFire(false);
+                  reactivateControls();
                 }}
-                onPointerLeave={() => setFire(false)}
+                onPointerLeave={() => {
+                  setFire(false);
+                  reactivateControls();
+                }}
                 className="rounded-xl text-xs font-black tracking-widest"
                 style={{
                   minHeight: 46,

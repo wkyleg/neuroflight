@@ -98,6 +98,22 @@ describe('InputManager', () => {
     expect(input.isUiFiring()).toBe(false);
   });
 
+  it('clears momentary UI controls on global pointer release', () => {
+    input.setUiFire(true);
+    input.setUiBoost(true);
+    input.setUiBrake(true);
+    input.setUiThrottle(true, false);
+    expect(input.wantsFire()).toBe(true);
+    expect(input.getInput().boost).toBe(true);
+    expect(input.getInput().brake).toBe(true);
+
+    window.dispatchEvent(new PointerEvent('pointerup'));
+
+    expect(input.wantsFire()).toBe(false);
+    expect(input.getInput().boost).toBe(false);
+    expect(input.getInput().brake).toBe(false);
+  });
+
   it('destroy() removes window key listeners so keys stop updating state', () => {
     const remove = vi.spyOn(window, 'removeEventListener');
     input.destroy();

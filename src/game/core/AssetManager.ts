@@ -18,6 +18,7 @@ export class AssetManager {
       this.loader.load(
         path,
         (gltf) => {
+          this.normalizeGLTF(gltf);
           this.cache.set(path, gltf);
           this.pending.delete(path);
           resolve(gltf);
@@ -42,6 +43,37 @@ export class AssetManager {
 
   getFromCache(path: string): GLTF | undefined {
     return this.cache.get(path);
+  }
+
+  private normalizeGLTF(gltf: GLTF): void {
+    gltf.scene.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return;
+      obj.castShadow = false;
+      obj.receiveShadow = false;
+      const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+      for (const material of materials) {
+        this.normalizeMaterial(material);
+      }
+    });
+  }
+
+  private normalizeMaterial(material: THREE.Material | undefined): void {
+    if (!material) return;
+    material.toneMapped = true;
+    if ('map' in material) {
+      const map = material.map as THREE.Texture | null | undefined;
+      if (map) map.colorSpace = THREE.SRGBColorSpace;
+    }
+    if ('emissiveMap' in material) {
+      const map = material.emissiveMap as THREE.Texture | null | undefined;
+      if (map) map.colorSpace = THREE.SRGBColorSpace;
+    }
+    if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshPhysicalMaterial) {
+      material.roughness = Math.max(material.roughness ?? 0.72, 0.48);
+      material.metalness = Math.min(material.metalness ?? 0.02, 0.72);
+      material.envMapIntensity = Math.max(material.envMapIntensity ?? 1, 0.75);
+    }
+    material.needsUpdate = true;
   }
 
   dispose(): void {
