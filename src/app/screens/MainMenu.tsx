@@ -209,7 +209,10 @@ export function MainMenu() {
                 backdropFilter: 'blur(12px)',
               }}
             >
-              <p className="text-xs uppercase tracking-widest" style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}>
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}
+              >
                 How {mode.title} works
               </p>
               <p className="mt-2 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.76)' }}>
@@ -465,7 +468,10 @@ export function MainMenu() {
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-widest" style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}>
+              <p
+                className="text-xs uppercase tracking-widest"
+                style={{ color: mode.accent, fontFamily: 'var(--font-body)' }}
+              >
                 Ready to fly
               </p>
               <p className="mt-1 text-sm leading-6" style={{ color: 'rgba(255,248,226,0.82)' }}>

@@ -517,7 +517,7 @@ export class Game {
       ? [
           {
             center: new THREE.Vector3(...activeMissionWaypoint.position),
-            radius: activeMissionWaypoint.radius,
+            radius: activeMissionWaypoint.radius ?? 90,
             label: activeMissionWaypoint.label,
           },
         ]
@@ -791,7 +791,9 @@ export class Game {
         }
       }
 
-      const missionNav = this.missionObjectiveSystem?.getNavigationSnapshot(this.planeController.flightModel.getPosition());
+      const missionNav = this.missionObjectiveSystem?.getNavigationSnapshot(
+        this.planeController.flightModel.getPosition(),
+      );
       let nextObjectiveDir: { x: number; y: number } | null = null;
       const displayObjective = missionNav?.display ?? null;
       if (displayObjective) {
