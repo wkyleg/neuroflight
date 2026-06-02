@@ -21,7 +21,7 @@ export const AIRCRAFT: AircraftDefinition[] = [
     scale: 1,
     targetVisualSize: 14,
     cameraSafeRadius: 11,
-    modelRotationY: Math.PI / 2,
+    modelRotationY: -Math.PI / 2,
     modelRotationZ: 0,
     propellerBlur: { offset: [0, 0.08, -6.4], radius: 2.1, axis: 'z', color: 0xfff4bd, opacity: 0.34 },
     trailProfile: {

@@ -89,7 +89,9 @@ describe('AircraftRegistry', () => {
     const spitfire = getAircraft('spitfire');
 
     expect(biplane.orientationPreset).toBe('obj-x-forward');
-    expect(biplane.modelRotationY).toBeCloseTo(Math.PI / 2);
+    expect(biplane.modelRotationY).toBeCloseTo(-Math.PI / 2);
+    expect(biplane.propellerBlur?.offset[2]).toBeLessThan(0);
+    expect(biplane.trailProfile?.offsets.every((offset) => offset[2] > 0)).toBe(true);
     expect(spitfire.orientationPreset).toBe('gltf-x-forward');
     expect(spitfire.modelRotationY).toBeCloseTo(Math.PI / 2);
   });
