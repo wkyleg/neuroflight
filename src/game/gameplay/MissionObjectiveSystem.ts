@@ -16,15 +16,28 @@ export interface MissionObjectiveCompletion {
 
 export interface MissionObjectiveState {
   active: MissionWaypointConfig | null;
+  display: MissionWaypointConfig | null;
   completedCount: number;
   totalCount: number;
   distanceToActive: number | null;
+  completionToast: string | null;
   completion: MissionObjectiveCompletion | null;
+}
+
+export interface MissionNavigationSnapshot {
+  active: MissionWaypointConfig | null;
+  display: MissionWaypointConfig | null;
+  completedCount: number;
+  totalCount: number;
+  completionToast: string | null;
+  distanceToDisplay: number | null;
 }
 
 const BEAM_GEOMETRY = new THREE.CylinderGeometry(4, 12, 180, 16, 1, true);
 const SPHERE_GEOMETRY = new THREE.SphereGeometry(16, 16, 10);
 const RING_GEOMETRY = new THREE.TorusGeometry(72, 2.4, 10, 48);
+const DISPLAY_HANDOFF_SECONDS = 1.25;
+const COMPLETION_TOAST_SECONDS = 2.2;
 
 export class MissionObjectiveSystem {
   private readonly scene: THREE.Scene;
@@ -34,10 +47,15 @@ export class MissionObjectiveSystem {
   private activeIndex = 0;
   private pulse = 0;
   private disposed = false;
+  private displayWaypoint: MissionWaypointConfig | null = null;
+  private displayHoldTimer = 0;
+  private completionToast: string | null = null;
+  private completionToastTimer = 0;
 
   constructor(scene: THREE.Scene, waypoints: MissionWaypointConfig[]) {
     this.scene = scene;
     this.waypoints = waypoints;
+    this.displayWaypoint = waypoints[0] ?? null;
     for (const waypoint of waypoints) {
       const visual = this.createVisual(waypoint);
       this.visuals.push(visual);
@@ -48,6 +66,7 @@ export class MissionObjectiveSystem {
 
   update(dt: number, playerPos: THREE.Vector3): MissionObjectiveState {
     this.pulse += dt;
+    this.updateDisplayTimers(dt);
     let completion: MissionObjectiveCompletion | null = null;
     const active = this.getActiveWaypoint();
     let distanceToActive: number | null = null;
@@ -70,17 +89,24 @@ export class MissionObjectiveSystem {
           score: active.score ?? 300,
         };
         this.activeIndex++;
+        this.displayWaypoint = active;
+        this.displayHoldTimer = DISPLAY_HANDOFF_SECONDS;
+        this.completionToast = `${active.label} logged`;
+        this.completionToastTimer = COMPLETION_TOAST_SECONDS;
         this.updateVisualStates();
       }
     }
 
+    this.updateDisplayWaypoint();
     this.animateVisuals(dt);
 
     return {
       active: this.getActiveWaypoint(),
+      display: this.displayWaypoint,
       completedCount: this.completed.size,
       totalCount: this.waypoints.length,
       distanceToActive,
+      completionToast: this.completionToast,
       completion,
     };
   }
@@ -100,9 +126,27 @@ export class MissionObjectiveSystem {
     return this.waypoints.length;
   }
 
+  getNavigationSnapshot(playerPos?: THREE.Vector3): MissionNavigationSnapshot {
+    this.updateDisplayWaypoint();
+    const display = this.displayWaypoint;
+    return {
+      active: this.getActiveWaypoint(),
+      display,
+      completedCount: this.completed.size,
+      totalCount: this.waypoints.length,
+      completionToast: this.completionToast,
+      distanceToDisplay:
+        display && playerPos ? new THREE.Vector3(...display.position).distanceTo(playerPos) : display ? null : null,
+    };
+  }
+
   reset(): void {
     this.completed.clear();
     this.activeIndex = 0;
+    this.displayWaypoint = this.waypoints[0] ?? null;
+    this.displayHoldTimer = 0;
+    this.completionToast = null;
+    this.completionToastTimer = 0;
     this.updateVisualStates();
   }
 
@@ -198,6 +242,20 @@ export class MissionObjectiveSystem {
       const active = this.getActiveWaypoint()?.id === waypoint.id;
       visual.group.visible = active || done || i <= this.activeIndex + 2;
       visual.group.scale.setScalar(active ? 1.2 : done ? 0.74 : 0.92);
+    }
+  }
+
+  private updateDisplayTimers(dt: number): void {
+    this.displayHoldTimer = Math.max(0, this.displayHoldTimer - dt);
+    this.completionToastTimer = Math.max(0, this.completionToastTimer - dt);
+    if (this.completionToastTimer <= 0) this.completionToast = null;
+  }
+
+  private updateDisplayWaypoint(): void {
+    if (this.displayHoldTimer > 0) return;
+    const active = this.getActiveWaypoint();
+    if (this.displayWaypoint?.id !== active?.id) {
+      this.displayWaypoint = active;
     }
   }
 }

@@ -785,10 +785,11 @@ export class Game {
         }
       }
 
+      const missionNav = this.missionObjectiveSystem?.getNavigationSnapshot(this.planeController.flightModel.getPosition());
       let nextObjectiveDir: { x: number; y: number } | null = null;
-      const activeObjective = this.missionObjectiveSystem?.getActiveWaypoint();
-      if (activeObjective) {
-        const dir = new THREE.Vector3(...activeObjective.position).sub(this.planeController.flightModel.getPosition());
+      const displayObjective = missionNav?.display ?? null;
+      if (displayObjective) {
+        const dir = new THREE.Vector3(...displayObjective.position).sub(this.planeController.flightModel.getPosition());
         const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(this.cameraManager.camera.quaternion);
         const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.cameraManager.camera.quaternion);
         const camFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.cameraManager.camera.quaternion);
@@ -829,19 +830,21 @@ export class Game {
       const aiDebug = this.aiController?.getDebugInfo();
       const currentMap = map;
       const modeMeta = getModeMeta(this.mode);
-      const hudActiveObjective = this.missionObjectiveSystem?.getActiveWaypoint();
-      const expeditionGoal = this.missionObjectiveSystem?.getTotalCount() ?? 0;
-      const expeditionProgress = this.missionObjectiveSystem?.getCompletedCount() ?? 0;
+      const hudActiveObjective = missionNav?.display ?? this.missionObjectiveSystem?.getActiveWaypoint();
+      const expeditionGoal = missionNav?.totalCount ?? this.missionObjectiveSystem?.getTotalCount() ?? 0;
+      const expeditionProgress = missionNav?.completedCount ?? this.missionObjectiveSystem?.getCompletedCount() ?? 0;
       const zenGoal = currentMap.missionRoutes?.zen.length ?? 0;
       const objectiveText =
         this.mode === 'free'
-          ? (hudActiveObjective?.label ?? 'Route complete')
+          ? (missionNav?.completionToast ?? hudActiveObjective?.label ?? 'Route complete')
           : this.mode === 'zen'
             ? 'Follow the glowing route'
             : (currentMap.missionRoutes?.dogfight[0]?.label ?? 'Hold the patrol lane');
       const objectiveSubtext =
         this.mode === 'free'
-          ? (hudActiveObjective?.description ?? 'All expedition beacons are logged.')
+          ? missionNav?.completionToast
+            ? 'Logged - next route cue coming up.'
+            : (hudActiveObjective?.description ?? 'All expedition beacons are logged.')
           : this.mode === 'zen'
             ? adaptation.prompt
             : 'Stay composed, keep visual contact, and use the landmarks.';

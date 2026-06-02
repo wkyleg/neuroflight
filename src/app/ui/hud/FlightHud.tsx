@@ -45,6 +45,53 @@ function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
   return display;
 }
 
+function useSmoothedDirectionValue(
+  value: { x: number; y: number } | null,
+  smoothing = 0.18,
+): { x: number; y: number } | null {
+  const latest = useRef(value);
+  const displayRef = useRef(value);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = latest.current;
+      const current = displayRef.current;
+      if (!target) {
+        if (current) {
+          displayRef.current = null;
+          setDisplay(null);
+        }
+      } else if (!current) {
+        displayRef.current = target;
+        setDisplay(target);
+      } else {
+        const next = {
+          x: current.x + (target.x - current.x) * smoothing,
+          y: current.y + (target.y - current.y) * smoothing,
+        };
+        const mag = Math.hypot(next.x, next.y);
+        if (mag > 0.01) {
+          next.x /= mag;
+          next.y /= mag;
+        }
+        displayRef.current = next;
+        setDisplay(next);
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [smoothing]);
+
+  return display;
+}
+
 function ControlsLegend({
   mode,
   onDismiss,
@@ -582,6 +629,16 @@ export function FlightHud() {
   const displayLoad = useThrottledDisplayValue(hud.neuroLoad, 1000);
   const displayFlow = useThrottledDisplayValue(hud.flow, 1000);
   const displayPrompt = useThrottledDisplayValue(hud.neuroPrompt, 1000);
+  const displayScore = useThrottledDisplayValue(hud.score, 260);
+  const displayKills = useThrottledDisplayValue(hud.kills, 260);
+  const displayDeaths = useThrottledDisplayValue(hud.deaths, 260);
+  const displayElapsedMs = useThrottledDisplayValue(hud.elapsedMs, 1000);
+  const displayObjectiveText = useThrottledDisplayValue(hud.objectiveText, 700);
+  const displayObjectiveSubtext = useThrottledDisplayValue(hud.objectiveSubtext, 900);
+  const displayObjectiveProgress = useThrottledDisplayValue(hud.objectiveProgress, 320);
+  const displayNextRingDir = useSmoothedDirectionValue(hud.nextRingDir);
+  const displayNextObjectiveDir = useSmoothedDirectionValue(hud.nextObjectiveDir);
+  const displayEnemyDir = useSmoothedDirectionValue(hud.enemyDir);
   const speedKnots = Math.round(displaySpeed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
   const modeMeta = getModeMeta(hud.mode);
@@ -594,14 +651,17 @@ export function FlightHud() {
     >
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
 
-      {hud.nextObjectiveDir && <DirectionIndicator dir={hud.nextObjectiveDir} color={modeMeta.accent} label="ROUTE" />}
+      {displayNextRingDir && <DirectionIndicator dir={displayNextRingDir} color={modeMeta.accent} label="ROUTE" />}
+      {displayNextObjectiveDir && (
+        <DirectionIndicator dir={displayNextObjectiveDir} color={modeMeta.accent} label="ROUTE" />
+      )}
 
       {isDogfight && (
         <>
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
           <KillFeed kills={hud.kills} deaths={hud.deaths} />
-          {hud.enemyDir && <DirectionIndicator dir={hud.enemyDir} color="#ff6b6b" label="RIVAL" />}
+          {displayEnemyDir && <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />}
         </>
       )}
 
@@ -622,20 +682,20 @@ export function FlightHud() {
             }}
           >
             <div className="text-lg font-black tabular-nums" style={{ color: '#ffb86b' }}>
-              {hud.kills}{' '}
+              {displayKills}{' '}
               <span className="text-xs font-bold" style={{ color: 'rgba(255,246,220,0.58)' }}>
                 WINS
               </span>
               <span className="mx-2" style={{ color: 'rgba(255,246,220,0.42)' }}>
                 /
               </span>
-              {hud.deaths}{' '}
+              {displayDeaths}{' '}
               <span className="text-xs font-bold" style={{ color: 'rgba(255,246,220,0.58)' }}>
                 LOSSES
               </span>
             </div>
             <div className="text-xs tabular-nums" style={{ color: 'rgba(255,246,220,0.48)' }}>
-              {formatTime(hud.elapsedMs)}
+              {formatTime(displayElapsedMs)}
             </div>
           </div>
         )}
@@ -653,7 +713,7 @@ export function FlightHud() {
               {hud.scoreLabel}
             </div>
             <div className="text-2xl font-black tabular-nums" style={{ color: modeMeta.accent }}>
-              {hud.score}
+              {displayScore}
             </div>
           </div>
           <button
@@ -716,9 +776,9 @@ export function FlightHud() {
           <MissionCard
             title={hud.missionTitle}
             subtitle={hud.missionSubtitle}
-            objective={hud.objectiveText}
-            subtext={hud.objectiveSubtext}
-            progress={hud.objectiveProgress}
+            objective={displayObjectiveText}
+            subtext={displayObjectiveSubtext}
+            progress={displayObjectiveProgress}
             goal={hud.objectiveGoal}
             accent={modeMeta.accent}
           />
