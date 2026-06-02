@@ -425,7 +425,8 @@ function MissionCard({
         background: 'rgba(5,14,18,0.62)',
         borderColor: `${accent}55`,
         backdropFilter: 'blur(8px)',
-        padding: '14px 16px',
+        padding: '16px 18px',
+        minHeight: 208,
       }}
     >
       <div className="text-[10px] uppercase tracking-widest" style={{ color: accent, fontFamily: 'var(--font-body)' }}>
@@ -822,7 +823,7 @@ export function FlightHud() {
         onPointerDown={stopHudPointer}
         style={{
           borderRadius: 24,
-          padding: 14,
+          padding: 16,
           background: 'linear-gradient(135deg, rgba(13,56,68,0.68), rgba(12,28,34,0.58) 48%, rgba(92,72,32,0.42))',
           border: '1px solid rgba(255,248,220,0.18)',
           backdropFilter: 'blur(18px) saturate(1.35)',
@@ -833,8 +834,9 @@ export function FlightHud() {
         <div
           className="grid items-stretch"
           style={{
-            gridTemplateColumns: 'minmax(230px, 0.9fr) minmax(390px, 1.35fr) minmax(300px, 1fr) minmax(132px, 0.35fr)',
-            gap: 12,
+            gridTemplateColumns: 'minmax(250px, 0.85fr) minmax(430px, 1.35fr) minmax(330px, 1fr) 156px',
+            gap: 14,
+            minWidth: 1180,
           }}
         >
           <MissionCard
@@ -890,7 +892,7 @@ export function FlightHud() {
             <NeuroCockpit embedded />
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid gap-2.5">
             <button
               type="button"
               aria-label="Toggle music"
@@ -902,7 +904,7 @@ export function FlightHud() {
               className="rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 40,
-                padding: 0,
+                padding: '0 12px',
                 background: musicEnabled
                   ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
                   : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
@@ -931,7 +933,7 @@ export function FlightHud() {
               className="rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
-                padding: 0,
+                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
                 border: '1px solid rgba(94,234,212,0.42)',
                 color: 'var(--color-accent-cyan)',
@@ -958,7 +960,7 @@ export function FlightHud() {
               className="rounded-xl text-xl font-black"
               style={{
                 minHeight: 42,
-                padding: 0,
+                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
                 border: '1px solid rgba(94,234,212,0.36)',
                 color: 'var(--color-accent-cyan)',
@@ -985,7 +987,7 @@ export function FlightHud() {
               className="rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
-                padding: 0,
+                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(83,68,28,0.96), rgba(38,35,23,0.96))',
                 border: '1px solid rgba(250,204,21,0.48)',
                 color: 'var(--color-accent-gold)',
@@ -1012,7 +1014,7 @@ export function FlightHud() {
               className="rounded-xl text-xs font-black tracking-widest"
               style={{
                 minHeight: 44,
-                padding: 0,
+                padding: '0 12px',
                 background: 'linear-gradient(180deg, rgba(75,34,32,0.96), rgba(35,26,24,0.96))',
                 border: '1px solid rgba(255,107,86,0.5)',
                 color: '#ff745f',
@@ -1040,7 +1042,7 @@ export function FlightHud() {
                 className="rounded-xl text-xs font-black tracking-widest"
                 style={{
                   minHeight: 46,
-                  padding: 0,
+                  padding: '0 12px',
                   background: 'linear-gradient(180deg, rgba(255,226,145,0.62), rgba(94,234,212,0.28))',
                   border: '2px solid rgba(255,224,144,0.76)',
                   color: '#fff2b8',

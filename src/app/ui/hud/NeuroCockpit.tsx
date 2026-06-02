@@ -270,7 +270,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const displayHrv = useThrottledDisplayValue(neuro.hrvRmssd, 1000);
   const displayResp = useThrottledDisplayValue(neuro.respirationRate, 1000);
 
-  const displayState = useMemo(
+  const rawDisplayState = useMemo(
     () =>
       getBiofeedbackDisplayState({
         source: neuro.source,
@@ -291,6 +291,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
       displayBpmQuality,
     ],
   );
+  const displayState = useThrottledDisplayValue(rawDisplayState, 900);
 
   const tone = toneColor(displayState.tone, displaySignalQuality);
   const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';

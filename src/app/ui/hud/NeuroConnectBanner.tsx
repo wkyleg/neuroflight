@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
@@ -6,11 +6,26 @@ interface NeuroConnectBannerProps {
   variant?: 'floating' | 'dock';
 }
 
+function useDelayedTrue(value: boolean, delayMs: number): boolean {
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    if (!value) {
+      setDisplay(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setDisplay(true), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return display;
+}
+
 export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerProps = {}) {
   const { eegConnected, cameraActive, mockEnabled, connecting } = useNeuroConnection();
   const [dismissed, setDismissed] = useState(false);
 
-  const readyEnough = cameraActive || mockEnabled || eegConnected;
+  const readyEnough = useDelayedTrue(cameraActive || mockEnabled || eegConnected, 600);
   if (dismissed || readyEnough) return null;
   const docked = variant === 'dock';
 
