@@ -2,9 +2,9 @@ import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'rea
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
+import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
-import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
@@ -617,8 +617,7 @@ function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: numbe
         border: `1px solid ${
           message.includes('DOWN') || message.includes('UFO') ? 'rgba(124,255,154,0.38)' : 'rgba(255,184,107,0.34)'
         }`,
-        boxShadow:
-          'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 32px rgba(0,0,0,0.28), 0 0 22px rgba(94,234,212,0.16)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 32px rgba(0,0,0,0.28), 0 0 22px rgba(94,234,212,0.16)',
         backdropFilter: 'blur(24px) saturate(1.9)',
         WebkitBackdropFilter: 'blur(24px) saturate(1.9)',
       }}
@@ -869,8 +868,7 @@ export function FlightHud() {
         style={{
           borderRadius: 24,
           padding: 14,
-          background:
-            'linear-gradient(135deg, rgba(19,82,100,0.6), rgba(10,28,36,0.64) 45%, rgba(129,94,40,0.34))',
+          background: 'linear-gradient(135deg, rgba(19,82,100,0.6), rgba(10,28,36,0.64) 45%, rgba(129,94,40,0.34))',
           border: '1px solid rgba(255,248,220,0.3)',
           backdropFilter: 'blur(30px) saturate(1.95) brightness(1.05)',
           WebkitBackdropFilter: 'blur(30px) saturate(1.95) brightness(1.05)',

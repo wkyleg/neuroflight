@@ -225,7 +225,12 @@ export class ProceduralFlightMusicSystem {
         this.nodes.stinger.triggerAttackRelease([note(profile, 0, 5), note(profile, 2, 5)], '16n', time + 0.03, 0.18);
         return;
       case 'win':
-        this.nodes.stinger.triggerAttackRelease(profile.chords[0].map((n) => n.replace('3', '4')), '2n', time, 0.34);
+        this.nodes.stinger.triggerAttackRelease(
+          profile.chords[0].map((n) => n.replace('3', '4')),
+          '2n',
+          time,
+          0.34,
+        );
         return;
       case 'ufoBonus':
         this.nodes.stinger.triggerAttackRelease(['G5', 'B5', 'D6', 'A6'], '4n', time, 0.42);
@@ -236,7 +241,12 @@ export class ProceduralFlightMusicSystem {
         this.nodes.shimmer.triggerAttackRelease('16n', time, 0.18);
         return;
       case 'routeComplete':
-        this.nodes.stinger.triggerAttackRelease(profile.chords[1].map((n) => n.replace('3', '4')), '1n', time, 0.32);
+        this.nodes.stinger.triggerAttackRelease(
+          profile.chords[1].map((n) => n.replace('3', '4')),
+          '1n',
+          time,
+          0.32,
+        );
         return;
       case 'ring':
         this.nodes.bell.triggerAttackRelease(note(profile, this.step + 3, 6), '16n', time, 0.22);

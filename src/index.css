@@ -16,11 +16,18 @@
   --font-instrument: "B612", "Nunito", sans-serif;
 
   --glass-bg: linear-gradient(135deg, rgba(13, 57, 70, 0.54), rgba(8, 20, 27, 0.58) 48%, rgba(255, 236, 186, 0.12));
-  --glass-bg-strong: linear-gradient(135deg, rgba(20, 74, 89, 0.68), rgba(8, 19, 27, 0.7) 48%, rgba(255, 219, 147, 0.18));
+  --glass-bg-strong: linear-gradient(
+    135deg,
+    rgba(20, 74, 89, 0.68),
+    rgba(8, 19, 27, 0.7) 48%,
+    rgba(255, 219, 147, 0.18)
+  );
   --glass-border: rgba(255, 248, 220, 0.24);
   --glass-border-strong: rgba(255, 248, 220, 0.38);
-  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -18px 42px rgba(0, 0, 0, 0.16), 0 24px 72px rgba(0, 0, 0, 0.3);
-  --glass-shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -12px 28px rgba(0, 0, 0, 0.12), 0 14px 42px rgba(0, 0, 0, 0.22);
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -18px 42px rgba(0, 0, 0, 0.16), 0 24px 72px rgba(0, 0, 0, 0.3);
+  --glass-shadow-soft:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -12px 28px rgba(0, 0, 0, 0.12), 0 14px 42px rgba(0, 0, 0, 0.22);
   --glass-blur: blur(24px) saturate(1.85) brightness(1.05);
   --glass-noise:
     radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.16), transparent 28%),
@@ -160,7 +167,9 @@ button:disabled,
 .glass-button:not(:disabled):hover {
   transform: translateY(-1px);
   filter: brightness(1.12) saturate(1.12);
-  box-shadow: var(--glass-shadow), 0 0 22px rgba(94, 234, 212, 0.16);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 22px rgba(94, 234, 212, 0.16);
 }
 
 .glass-button:not(:disabled):active {

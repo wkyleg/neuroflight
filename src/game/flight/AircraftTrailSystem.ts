@@ -145,7 +145,9 @@ export class AircraftTrailSystem {
     _worldOffset.set(...offset);
     aircraft.localToWorld(_worldOffset);
     _forward.set(0, 0, -1).applyQuaternion(aircraft.quaternion).normalize();
-    _random.set(Math.random() - 0.5, Math.random() * 0.35, Math.random() - 0.5).multiplyScalar(this.profile.width * 0.18);
+    _random
+      .set(Math.random() - 0.5, Math.random() * 0.35, Math.random() - 0.5)
+      .multiplyScalar(this.profile.width * 0.18);
 
     particle.active = true;
     particle.age = 0;

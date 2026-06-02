@@ -22,7 +22,7 @@ import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
 import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
-import { type WeaponDifficultySettings, type WeaponTarget, WeaponSystem } from './gameplay/WeaponSystem.ts';
+import { type WeaponDifficultySettings, WeaponSystem, type WeaponTarget } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
@@ -695,9 +695,7 @@ export class Game {
 
       this.weaponSystem.update(dt);
 
-      const targets: WeaponTarget[] = [
-        { position: this.planeController.flightModel.getPosition(), owner: 'player' },
-      ];
+      const targets: WeaponTarget[] = [{ position: this.planeController.flightModel.getPosition(), owner: 'player' }];
       if (!this.dogfightManager.isAiDead()) {
         targets.push({ position: this.aiController.getPosition(), owner: 'ai' });
       }
