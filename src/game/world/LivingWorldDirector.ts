@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { GameMode, LivingWorldConfig, LivingWorldEventConfig } from '@/game/types.ts';
-import { SkyTrafficSystem } from './SkyTrafficSystem.ts';
+import { type SkyBonusTarget, SkyTrafficSystem } from './SkyTrafficSystem.ts';
 
 function seededRng(seed: number) {
   let s = seed;
@@ -14,12 +14,14 @@ export class LivingWorldDirector {
   private readonly rng: () => number;
   private readonly trafficSystem: SkyTrafficSystem;
   private readonly config: LivingWorldConfig | undefined;
+  private readonly mode: GameMode;
   private elapsed = 0;
   private nextEventAt = 0;
   private initialEventSpawned = false;
 
   constructor(scene: THREE.Scene, config: LivingWorldConfig | undefined, mode: GameMode, mapId: string) {
     this.config = config;
+    this.mode = mode;
     this.rng = seededRng((config?.seed ?? 7001) + this.hashString(`${mapId}:${mode}`));
     this.trafficSystem = new SkyTrafficSystem(scene);
     this.nextEventAt = config ? 1.4 : this.randomRange([10, 18]);
@@ -38,7 +40,7 @@ export class LivingWorldDirector {
     const event = this.pickEvent(this.config.events);
     if (event) {
       const active = this.trafficSystem.countActive(event.id);
-      if (active < (event.maxActive ?? 3) && this.rng() <= (event.chance ?? 1)) {
+      if (active < this.getMaxActive(event) && this.rng() <= this.getChance(event)) {
         this.trafficSystem.spawn(event, cameraPos, this.rng);
         this.initialEventSpawned = true;
       }
@@ -51,17 +53,46 @@ export class LivingWorldDirector {
     this.trafficSystem.destroy();
   }
 
+  getBonusTargets(): SkyBonusTarget[] {
+    return this.mode === 'dogfight' ? this.trafficSystem.getBonusTargets() : [];
+  }
+
+  consumeBonusTarget(id: string): SkyBonusTarget | null {
+    return this.mode === 'dogfight' ? this.trafficSystem.consumeBonusTarget(id) : null;
+  }
+
   private pickEvent(events: LivingWorldEventConfig[]): LivingWorldEventConfig | null {
     const available = events.filter((event) => event.weight > 0);
-    const total = available.reduce((sum, event) => sum + event.weight, 0);
+    const total = available.reduce((sum, event) => sum + this.getWeight(event), 0);
     if (total <= 0) return null;
 
     let roll = this.rng() * total;
     for (const event of available) {
-      roll -= event.weight;
+      roll -= this.getWeight(event);
       if (roll <= 0) return event;
     }
     return available[available.length - 1] ?? null;
+  }
+
+  private getWeight(event: LivingWorldEventConfig): number {
+    if (this.mode === 'dogfight' && (event.targetable || event.behavior === 'ufo-dart')) {
+      return event.weight * (event.dogfightWeightMultiplier ?? 2.8);
+    }
+    return event.weight;
+  }
+
+  private getChance(event: LivingWorldEventConfig): number {
+    if (this.mode === 'dogfight' && (event.targetable || event.behavior === 'ufo-dart')) {
+      return event.dogfightChance ?? event.chance ?? 1;
+    }
+    return event.chance ?? 1;
+  }
+
+  private getMaxActive(event: LivingWorldEventConfig): number {
+    if (this.mode === 'dogfight' && (event.targetable || event.behavior === 'ufo-dart')) {
+      return event.dogfightMaxActive ?? event.maxActive ?? 3;
+    }
+    return event.maxActive ?? 3;
   }
 
   private randomRange(range: [number, number]): number {

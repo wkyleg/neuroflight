@@ -121,7 +121,7 @@ describe('buildDebriefInsights', () => {
     expect(insights.some((insight) => insight.title === 'Lighthouse postcard')).toBe(true);
   });
 
-  it('uses tag language for dogfight sessions', () => {
+  it('uses wins and rival-down language for dogfight sessions', () => {
     const insights = buildDebriefInsights(
       summary({
         mode: 'dogfight',
@@ -137,7 +137,9 @@ describe('buildDebriefInsights', () => {
     );
     const visibleCopy = insights.map((insight) => `${insight.title} ${insight.body}`).join(' ');
 
-    expect(visibleCopy).toContain('tag');
+    expect(visibleCopy).toContain('wins');
+    expect(visibleCopy).toContain('Rival down');
+    expect(visibleCopy.toLowerCase()).not.toContain('tag');
     expect(visibleCopy.toLowerCase()).not.toContain('kill');
   });
 

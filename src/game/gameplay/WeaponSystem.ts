@@ -31,9 +31,20 @@ interface Projectile {
   owner: 'player' | 'ai';
 }
 
+export interface WeaponTarget {
+  position: THREE.Vector3;
+  owner: 'player' | 'ai' | 'neutral';
+  id?: string;
+  kind?: 'aircraft' | 'bonus';
+  radius?: number;
+}
+
 export interface HitResult {
   targetIndex: number;
   owner: 'player' | 'ai';
+  targetOwner: 'player' | 'ai' | 'neutral';
+  targetId?: string;
+  targetKind?: 'aircraft' | 'bonus';
   position: THREE.Vector3;
 }
 
@@ -140,7 +151,7 @@ export class WeaponSystem {
         proj.mesh.visible = false;
         continue;
       }
-      // Tag magnetism: player ribbons curve gently toward rival targets.
+      // Aim assist: player fire trails curve gently toward rival targets.
       if (proj.owner === 'player' && this.aiTargets.length > 0) {
         let closestDist = Infinity;
         let closestTarget: THREE.Vector3 | null = null;
@@ -164,20 +175,28 @@ export class WeaponSystem {
     }
   }
 
-  checkHits(targets: { position: THREE.Vector3; owner: 'player' | 'ai' }[]): HitResult[] {
+  checkHits(targets: WeaponTarget[]): HitResult[] {
     const hits: HitResult[] = [];
     for (const proj of this.projectiles) {
       if (!proj.active) continue;
       for (let ti = 0; ti < targets.length; ti++) {
         const target = targets[ti];
-        if (target.owner === proj.owner) continue;
+        if (target.owner !== 'neutral' && target.owner === proj.owner) continue;
         const dist = proj.mesh.position.distanceTo(target.position);
         const hitRadius =
-          proj.owner === 'player'
+          target.radius ??
+          (proj.owner === 'player'
             ? this.difficulty.playerHitRadius * this.aimAssistMultiplier
-            : this.difficulty.rivalHitRadius;
+            : this.difficulty.rivalHitRadius);
         if (dist < hitRadius) {
-          hits.push({ targetIndex: ti, owner: proj.owner, position: proj.mesh.position.clone() });
+          hits.push({
+            targetIndex: ti,
+            owner: proj.owner,
+            targetOwner: target.owner,
+            targetId: target.id,
+            targetKind: target.kind,
+            position: proj.mesh.position.clone(),
+          });
           proj.active = false;
           proj.mesh.visible = false;
           break;

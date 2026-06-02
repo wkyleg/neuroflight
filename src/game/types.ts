@@ -192,6 +192,13 @@ export interface LivingWorldEventConfig {
   maintainUpright?: boolean;
   faceVelocity?: boolean;
   rotationOffset?: [number, number, number];
+  targetable?: boolean;
+  bonusPoints?: number;
+  bonusRadius?: number;
+  bonusLabel?: string;
+  dogfightWeightMultiplier?: number;
+  dogfightChance?: number;
+  dogfightMaxActive?: number;
 }
 
 export interface LivingWorldConfig {

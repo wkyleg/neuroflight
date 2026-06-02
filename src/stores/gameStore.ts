@@ -86,6 +86,7 @@ export interface FlightHudState {
   adaptationConfidence: number;
   signalCoverage: number;
   neuroPrompt: string;
+  bonusNotice: string | null;
 }
 
 interface GameStoreState {
@@ -136,6 +137,7 @@ const DEFAULT_HUD: FlightHudState = {
   adaptationConfidence: 0,
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
+  bonusNotice: null,
 };
 
 function loadPersistedSession(): SessionSummary | null {

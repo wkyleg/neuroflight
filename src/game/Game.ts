@@ -21,7 +21,7 @@ import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
 import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
-import { type WeaponDifficultySettings, WeaponSystem } from './gameplay/WeaponSystem.ts';
+import { type WeaponDifficultySettings, type WeaponTarget, WeaponSystem } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
@@ -184,6 +184,7 @@ export class Game {
   private firing = false;
   private fireCooldown = 0;
   private dogfightSpawnCursor = 0;
+  private bonusNotice: { text: string; expiresAt: number } | null = null;
 
   // Session metrics
   private maxAltitude = 0;
@@ -250,6 +251,7 @@ export class Game {
     eventBus.on('dogfight:ai_hit', () => {
       this.audioManager.playHit();
       this.proceduralMusicSystem.triggerEvent('hit');
+      this.bonusNotice = { text: 'RIVAL HIT', expiresAt: performance.now() / 1000 + 1.15 };
       this.scoreManager.addBonus(65 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.sessionRecorder.recordEvent('shot_hit');
     });
@@ -312,6 +314,7 @@ export class Game {
     this.dogfightSpawnCursor = 0;
     this.zenRouteComplete = false;
     this.expeditionRouteComplete = false;
+    this.bonusNotice = null;
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -435,7 +438,7 @@ export class Game {
 
   private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
     if (mode === 'free') return expeditionRoute?.[0]?.label ?? 'Find the first expedition beacon';
-    if (mode === 'dogfight') return 'Find the rival tag plane';
+    if (mode === 'dogfight') return 'Find the rival plane';
     return 'Aim through the first bright gate';
   }
 
@@ -680,21 +683,43 @@ export class Game {
 
       this.weaponSystem.update(dt);
 
-      const targets: Array<{ position: THREE.Vector3; owner: 'player' | 'ai' }> = [
+      const targets: WeaponTarget[] = [
         { position: this.planeController.flightModel.getPosition(), owner: 'player' },
       ];
       if (!this.dogfightManager.isAiDead()) {
         targets.push({ position: this.aiController.getPosition(), owner: 'ai' });
       }
+      for (const target of this.livingWorldDirector?.getBonusTargets() ?? []) {
+        targets.push({
+          position: target.position,
+          owner: 'neutral',
+          id: target.id,
+          kind: 'bonus',
+          radius: target.radius,
+        });
+      }
 
       const hits = this.weaponSystem.checkHits(targets);
       for (const hit of hits) {
         const target = targets[hit.targetIndex];
+        if (target.kind === 'bonus' && hit.owner === 'player' && hit.targetId) {
+          const bonus = this.livingWorldDirector?.consumeBonusTarget(hit.targetId);
+          if (!bonus) continue;
+          this.combatVfxSystem?.spawnHit(hit.position);
+          this.combatVfxSystem?.spawnExplosion(bonus.position);
+          this.audioManager.playChime();
+          this.proceduralMusicSystem.triggerEvent('ufoBonus');
+          const points = Math.round(bonus.points * getDifficultyConfig(this.difficulty).scoreMultiplier);
+          this.scoreManager.addBonus(points);
+          this.bonusNotice = { text: `UFO BONUS +${points}`, expiresAt: performance.now() / 1000 + 2.4 };
+          this.sessionRecorder.recordEvent('ufo_bonus', { label: bonus.label, score: points });
+          continue;
+        }
         const before = this.dogfightManager.getState();
         const wasAiDead = this.dogfightManager.isAiDead();
         this.combatVfxSystem?.spawnHit(hit.position);
         this.audioPolishSystem?.playImpact();
-        this.dogfightManager.applyDamage(target.owner);
+        if (target.owner !== 'neutral') this.dogfightManager.applyDamage(target.owner);
         const aiJustDied = target.owner === 'ai' && !wasAiDead && this.dogfightManager.isAiDead();
         const playerJustDied = target.owner === 'player' && before.playerHealth <= 10;
         if (aiJustDied || playerJustDied) {
@@ -900,6 +925,8 @@ export class Game {
         aiDotForward: aiDebug?.dotForward ?? 0,
         shotsFired: dfState?.shotsFired ?? 0,
         shotsHit: dfState?.shotsHit ?? 0,
+        bonusNotice:
+          this.bonusNotice && performance.now() / 1000 < this.bonusNotice.expiresAt ? this.bonusNotice.text : null,
         missionTitle: modeMeta.title,
         missionSubtitle: currentMap.storyName ?? currentMap.name,
         objectiveLabel: modeMeta.objectiveLabel,
@@ -931,7 +958,7 @@ export class Game {
     this.weaponSystem.fire(origin, dir, 'player');
     this.combatVfxSystem?.spawnShot(origin, dir, 'player');
     this.dogfightManager.recordPlayerShot();
-    this.audioManager.playTagLaunch();
+    this.audioManager.playFireLaunch();
     this.audioPolishSystem?.playWeapon();
     this.proceduralMusicSystem.triggerEvent('fire');
     this.sessionRecorder.recordEvent('shot_fired');
@@ -1032,6 +1059,7 @@ export class Game {
     this.flowSum = 0;
     this.adaptationSamples = 0;
     this.lastRecoveryEventAt = -999;
+    this.bonusNotice = null;
     this.neuroAdaptationSystem.reset();
     this.sessionRecorder.reset();
   }

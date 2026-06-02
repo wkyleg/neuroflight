@@ -356,7 +356,7 @@ function generateInsights(session: SessionSummary): string[] {
 
   if (session.arousalTrend === 'increased') {
     insights.push(
-      'Arousal proxy increased over the session, especially useful to compare against tag or route events.',
+      'Arousal proxy increased over the session, especially useful to compare against fire, win, or route events.',
     );
   } else if (session.arousalTrend === 'decreased') {
     insights.push('Arousal proxy decreased over time, suggesting the route became easier to settle into.');
@@ -371,18 +371,18 @@ function generateInsights(session: SessionSummary): string[] {
   }
 
   if (session.mode === 'dogfight' && session.kills > 0) {
-    const tagEvents = session.events.filter((e) => e.type === 'kill' || e.type === 'death');
-    if (tagEvents.length > 0) {
-      const calmDuringTags =
-        tagEvents
+    const duelEvents = session.events.filter((e) => e.type === 'kill' || e.type === 'death');
+    if (duelEvents.length > 0) {
+      const calmDuringDuel =
+        duelEvents
           .map((ev) => {
             const closest = s.reduce((best, pt) => (Math.abs(pt.t - ev.t) < Math.abs(best.t - ev.t) ? pt : best), s[0]);
             return closest.calm;
           })
-          .reduce((a, b) => a + b, 0) / tagEvents.length;
+          .reduce((a, b) => a + b, 0) / duelEvents.length;
 
-      if (session.avgCalm !== null && calmDuringTags < session.avgCalm * 0.8) {
-        insights.push('Tag moments lined up with lower calm proxy readings than the flight average.');
+      if (session.avgCalm !== null && calmDuringDuel < session.avgCalm * 0.8) {
+        insights.push('Dogfight moments lined up with lower calm proxy readings than the flight average.');
       }
     }
   }
@@ -677,7 +677,7 @@ export function SummaryScreen() {
                 )}
                 {killEvents.length > 0 && (
                   <span>
-                    <span style={{ color: COLORS.green }}>|</span> Rival Tag
+                    <span style={{ color: COLORS.green }}>|</span> Rival Win
                   </span>
                 )}
                 {deathEvents.length > 0 && (

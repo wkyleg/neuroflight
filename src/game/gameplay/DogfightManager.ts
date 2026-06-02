@@ -66,7 +66,7 @@ export class DogfightManager {
         this.kills++;
         this.aiDead = true;
         this.aiRespawnTimer = RESPAWN_DELAY * this.difficulty.respawnDelayMultiplier;
-        console.warn(`[Dogfight] Rival tagged — wins: ${this.kills}`);
+        console.warn(`[Dogfight] Rival down — wins: ${this.kills}`);
         eventBus.emit('dogfight:ai_kill');
       }
     }

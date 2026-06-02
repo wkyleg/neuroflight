@@ -17,7 +17,7 @@ const DIFFICULTY_OPTIONS: Array<{ id: GameDifficulty; label: string; description
 const MODE_HELP: Record<GameMode, string> = {
   zen: 'Follow glowing route gates at an easy pace. Best when you want calm flight practice.',
   free: 'Visit one highlighted landmark at a time. Fly through the beacon beside each story place.',
-  dogfight: 'Play friendly aerial tag with a rival plane. Rookie keeps the chase forgiving.',
+  dogfight: 'Fly a G-rated rival duel with bright fire trails. Rookie keeps the chase forgiving.',
 };
 
 function AircraftStatBar({ label, value }: { label: string; value: number }) {

@@ -10,6 +10,7 @@ interface LoadedTrafficAsset {
 }
 
 interface SkyTrafficActor {
+  id: string;
   root: THREE.Group;
   model: THREE.Object3D;
   config: LivingWorldEventConfig;
@@ -25,11 +26,20 @@ interface SkyTrafficActor {
   rotationSpeed: number;
 }
 
+export interface SkyBonusTarget {
+  id: string;
+  label: string;
+  position: THREE.Vector3;
+  radius: number;
+  points: number;
+}
+
 export class SkyTrafficSystem {
   private readonly loader = new GLTFLoader();
   private readonly scene: THREE.Scene;
   private readonly assets = new Map<string, LoadedTrafficAsset>();
   private readonly actors: SkyTrafficActor[] = [];
+  private actorSequence = 0;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -83,6 +93,7 @@ export class SkyTrafficSystem {
 
       this.scene.add(root);
       this.actors.push({
+        id: `${config.id}-${this.actorSequence++}`,
         root,
         model,
         config,
@@ -101,6 +112,33 @@ export class SkyTrafficSystem {
       spawned++;
     }
     return spawned;
+  }
+
+  getBonusTargets(): SkyBonusTarget[] {
+    return this.actors
+      .filter((actor) => actor.config.targetable)
+      .map((actor) => ({
+        id: actor.id,
+        label: actor.config.bonusLabel ?? actor.config.label,
+        position: actor.root.position.clone(),
+        radius: actor.config.bonusRadius ?? 48,
+        points: actor.config.bonusPoints ?? 500,
+      }));
+  }
+
+  consumeBonusTarget(id: string): SkyBonusTarget | null {
+    const index = this.actors.findIndex((actor) => actor.id === id && actor.config.targetable);
+    if (index < 0) return null;
+    const actor = this.actors[index];
+    const target: SkyBonusTarget = {
+      id: actor.id,
+      label: actor.config.bonusLabel ?? actor.config.label,
+      position: actor.root.position.clone(),
+      radius: actor.config.bonusRadius ?? 48,
+      points: actor.config.bonusPoints ?? 500,
+    };
+    this.removeActor(index);
+    return target;
   }
 
   update(dt: number, cameraPos: THREE.Vector3): void {

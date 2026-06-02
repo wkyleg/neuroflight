@@ -138,65 +138,78 @@ export class AudioManager {
     osc2.stop(ctx.currentTime + 0.4);
   }
 
-  playTagLaunch(): void {
+  playFireLaunch(): void {
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
-    const sparkle = ctx.createOscillator();
+    const grit = ctx.createBufferSource();
     const gain = ctx.createGain();
-    const sparkleGain = ctx.createGain();
+    const gritGain = ctx.createGain();
     const filter = ctx.createBiquadFilter();
+    const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.24));
+    }
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(420, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(760, ctx.currentTime + 0.12);
-    sparkle.type = 'sine';
-    sparkle.frequency.setValueAtTime(980, ctx.currentTime);
-    sparkle.frequency.exponentialRampToValueAtTime(1240, ctx.currentTime + 0.1);
-    sparkleGain.gain.value = 0.18;
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(82, ctx.currentTime + 0.1);
+    grit.buffer = buffer;
+    gritGain.gain.value = 0.18;
 
-    filter.type = 'lowpass';
-    filter.frequency.value = 1800;
-    gain.gain.setValueAtTime(0.038, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+    filter.type = 'bandpass';
+    filter.frequency.value = 1050;
+    filter.Q.value = 0.9;
+    gain.gain.setValueAtTime(0.052, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
 
     osc.connect(filter);
-    sparkle.connect(sparkleGain);
-    sparkleGain.connect(filter);
+    grit.connect(gritGain);
+    gritGain.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start();
-    sparkle.start();
-    osc.stop(ctx.currentTime + 0.16);
-    sparkle.stop(ctx.currentTime + 0.12);
+    grit.start();
+    osc.stop(ctx.currentTime + 0.14);
+    grit.stop(ctx.currentTime + 0.1);
+  }
+
+  playTagLaunch(): void {
+    this.playFireLaunch();
   }
 
   playGunshot(): void {
-    this.playTagLaunch();
+    this.playFireLaunch();
   }
 
-  playTagImpact(): void {
+  playFireImpact(): void {
     const ctx = this.ensureContext();
-    const bufferSize = Math.floor(ctx.sampleRate * 0.045);
+    const bufferSize = Math.floor(ctx.sampleRate * 0.07);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.45 * Math.exp(-i / (bufferSize * 0.18));
+      data[i] = (Math.random() * 2 - 1) * 0.62 * Math.exp(-i / (bufferSize * 0.2));
     }
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.035, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
     const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 950;
-    filter.Q.value = 1.4;
+    filter.type = 'lowpass';
+    filter.frequency.value = 1250;
+    filter.Q.value = 1.2;
     source.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     source.start();
-    source.stop(ctx.currentTime + 0.08);
+    source.stop(ctx.currentTime + 0.12);
+  }
+
+  playTagImpact(): void {
+    this.playFireImpact();
   }
 
   playExplosion(): void {
@@ -224,7 +237,7 @@ export class AudioManager {
   }
 
   playHit(): void {
-    this.playTagImpact();
+    this.playFireImpact();
   }
 
   destroy(): void {

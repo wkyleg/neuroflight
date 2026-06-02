@@ -17,13 +17,16 @@ function formatCount(value: number, goal: number): string {
 function eventDisplayLabel(event: FlightEvent): string {
   if (event.label) {
     return event.label
-      .replace(/\bkilled\b/gi, 'tagged')
-      .replace(/\bkills\b/gi, 'tags')
-      .replace(/\bkill\b/gi, 'tag');
+      .replace(/\btagged\b/gi, 'down')
+      .replace(/\btags\b/gi, 'wins')
+      .replace(/\btag\b/gi, 'fire')
+      .replace(/\bkilled\b/gi, 'down')
+      .replace(/\bkills\b/gi, 'wins')
+      .replace(/\bkill\b/gi, 'win');
   }
   switch (event.type) {
     case 'kill':
-      return 'Rival tagged';
+      return 'Rival down';
     case 'death':
       return 'Flight reset';
     case 'ring_hit':
@@ -45,9 +48,11 @@ function eventDisplayLabel(event: FlightEvent): string {
     case 'respawn':
       return 'Rival rejoined';
     case 'shot_hit':
-      return 'Tag connected';
+      return 'Rival hit';
     case 'shot_fired':
-      return 'Tag attempt';
+      return 'Fire burst';
+    case 'ufo_bonus':
+      return 'UFO bonus';
     case 'near_miss':
       return 'Near miss';
     default:
@@ -63,6 +68,7 @@ function isRewardEvent(event: FlightEvent): boolean {
     'landmark_discovered',
     'postcard',
     'kill',
+    'ufo_bonus',
     'neuro_recovery',
   ].includes(event.type);
 }
@@ -76,8 +82,8 @@ function buildModeStory(session: SessionSummary): DebriefInsight {
   if (session.mode === 'dogfight') {
     return {
       id: 'flight-story',
-      title: 'Aerial tag run',
-      body: `You scored ${session.kills} tag ${session.kills === 1 ? 'win' : 'wins'} with ${session.deaths} ${session.deaths === 1 ? 'reset' : 'resets'} on this route.`,
+      title: 'Dogfight run',
+      body: `You scored ${session.kills} ${session.kills === 1 ? 'win' : 'wins'} with ${session.deaths} ${session.deaths === 1 ? 'reset' : 'resets'} on this route.`,
       tone: session.kills > 0 ? 'reward' : 'flight',
     };
   }
@@ -187,7 +193,7 @@ function buildNextSuggestion(session: SessionSummary): DebriefInsight {
       title: 'Next flight idea',
       body:
         session.kills > session.deaths
-          ? 'Try the same aerial tag route at the next difficulty.'
+          ? 'Try the same rival route at the next difficulty.'
           : 'Try Rookie difficulty with the biplane and use wider turns to keep the rival in view.',
       tone: 'next',
     };

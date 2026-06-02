@@ -80,9 +80,7 @@ describe('MapRegistry', () => {
   it('keeps maps free of file-loop music and sparkle weapon cues', () => {
     for (const map of MAPS) {
       expect(map.audioPolish?.musicLoops ?? []).toHaveLength(0);
-      expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('music-tag-sparkle')) ?? false).toBe(
-        false,
-      );
+      expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('sparkle')) ?? false).toBe(false);
     }
   });
 
@@ -178,6 +176,17 @@ describe('MapRegistry', () => {
           ['airship-pass', 'plane-pass', 'bird-pass', 'ufo-dart'].includes(event.behavior),
         ) ?? [];
       expect([...movingStatic, ...movingEvents].every((entry) => entry.faceVelocity !== false)).toBe(true);
+    }
+  });
+
+  it('makes UFOs targetable bonus actors with Dogfight-specific weighting', () => {
+    for (const map of MAPS) {
+      const ufo = map.livingWorld?.events.find((event) => event.behavior === 'ufo-dart');
+      expect(ufo?.targetable).toBe(true);
+      expect(ufo?.bonusPoints).toBeGreaterThanOrEqual(750);
+      expect(ufo?.bonusRadius).toBeGreaterThan(60);
+      expect(ufo?.dogfightWeightMultiplier).toBeGreaterThan(3);
+      expect(ufo?.dogfightMaxActive).toBeGreaterThanOrEqual(3);
     }
   });
 

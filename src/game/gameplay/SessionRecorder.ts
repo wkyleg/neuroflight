@@ -47,6 +47,7 @@ export type FlightEventType =
   | 'death'
   | 'shot_fired'
   | 'shot_hit'
+  | 'ufo_bonus'
   | 'respawn';
 
 export interface FlightEvent {

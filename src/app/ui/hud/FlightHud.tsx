@@ -202,10 +202,10 @@ function ControlsLegend({
           {mode === 'dogfight' && (
             <>
               <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
-                <span style={{ color: '#ffb86b' }}>Space / Enter</span> - Tag
+                <span style={{ color: '#ffb86b' }}>Space / Enter</span> - Fire
               </div>
               <div style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
-                <span style={{ color: 'var(--color-text-primary)' }}>Click</span> - Tag
+                <span style={{ color: 'var(--color-text-primary)' }}>Click</span> - Fire
               </div>
             </>
           )}
@@ -550,14 +550,21 @@ function ThrottleInstrument({ value }: { value: number }) {
   );
 }
 
-function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
+function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: number; bonusNotice: string | null }) {
   const [lastKills, setLastKills] = useState(0);
   const [lastDeaths, setLastDeaths] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!bonusNotice) return;
+    setMessage(bonusNotice);
+    const t = setTimeout(() => setMessage(null), 2200);
+    return () => clearTimeout(t);
+  }, [bonusNotice]);
+
+  useEffect(() => {
     if (kills > lastKills) {
-      setMessage('RIVAL TAGGED');
+      setMessage('RIVAL DOWN +1 WIN');
       setLastKills(kills);
       const t = setTimeout(() => setMessage(null), 2000);
       return () => clearTimeout(t);
@@ -577,11 +584,16 @@ function KillFeed({ kills, deaths }: { kills: number; deaths: number }) {
 
   return (
     <div
-      className="absolute top-24 left-1/2 -translate-x-1/2 text-sm font-bold tracking-widest px-6 py-3 rounded-lg"
+      className="absolute top-24 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest px-7 py-3.5 rounded-xl"
       style={{
-        color: message.includes('TAGGED') ? '#4ade80' : '#ffb86b',
-        background: 'rgba(0,0,0,0.6)',
-        border: `1px solid ${message.includes('TAGGED') ? 'rgba(74,222,128,0.3)' : 'rgba(255,184,107,0.3)'}`,
+        color: message.includes('DOWN') || message.includes('UFO') ? '#7cff9a' : '#ffb86b',
+        background: 'linear-gradient(180deg, rgba(2,18,20,0.78), rgba(4,8,18,0.62))',
+        border: `1px solid ${
+          message.includes('DOWN') || message.includes('UFO') ? 'rgba(124,255,154,0.38)' : 'rgba(255,184,107,0.34)'
+        }`,
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 32px rgba(0,0,0,0.28), 0 0 22px rgba(94,234,212,0.16)',
+        backdropFilter: 'blur(18px) saturate(1.45)',
       }}
     >
       {message}
@@ -725,7 +737,7 @@ export function FlightHud() {
         <>
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
-          <KillFeed kills={hud.kills} deaths={hud.deaths} />
+          <KillFeed kills={hud.kills} deaths={hud.deaths} bonusNotice={hud.bonusNotice} />
           {displayEnemyDir && <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />}
         </>
       )}
@@ -1025,7 +1037,7 @@ export function FlightHud() {
             {isDogfight && (
               <button
                 type="button"
-                aria-label="Tag rival"
+                aria-label="Fire"
                 onPointerDown={(e) => {
                   stopHudPointer(e);
                   setFire(true);
@@ -1048,7 +1060,7 @@ export function FlightHud() {
                   color: '#fff2b8',
                 }}
               >
-                TAG
+                FIRE
               </button>
             )}
           </div>

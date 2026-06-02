@@ -39,6 +39,7 @@ const DEFAULT_HUD = {
   adaptationConfidence: 0,
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
+  bonusNotice: null,
 };
 
 function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary {

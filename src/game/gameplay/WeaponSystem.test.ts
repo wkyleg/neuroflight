@@ -219,6 +219,27 @@ describe('WeaponSystem', () => {
     weapons.destroy();
   });
 
+  it('supports neutral bonus targets with explicit hit radii', () => {
+    const weapons = new WeaponSystem(scene);
+    weapons.fire(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0), 'player');
+    const mesh = getVisibleProjectileMesh(weapons);
+    mesh.position.set(0, 0, 0);
+
+    const hits = weapons.checkHits([
+      { position: new THREE.Vector3(70, 0, 0), owner: 'neutral', id: 'ufo-1', kind: 'bonus', radius: 80 },
+    ]);
+
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({
+      targetIndex: 0,
+      owner: 'player',
+      targetOwner: 'neutral',
+      targetId: 'ufo-1',
+      targetKind: 'bonus',
+    });
+    weapons.destroy();
+  });
+
   it('setAiTargets() accepts positions for magnetism path', () => {
     const weapons = new WeaponSystem(scene);
     const t1 = new THREE.Vector3(100, 0, 0);
