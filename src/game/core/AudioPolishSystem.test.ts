@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioPolishSystem } from './AudioPolishSystem.ts';
 
-describe('AudioPolishSystem music preferences', () => {
+describe('AudioPolishSystem', () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
@@ -11,21 +11,13 @@ describe('AudioPolishSystem music preferences', () => {
     vi.restoreAllMocks();
   });
 
-  it('defaults music on and persists toggles', () => {
+  it('keeps ambient and one-shot polish separate from procedural music', () => {
     const system = new AudioPolishSystem({
-      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.14 }],
+      ambientLoops: [{ path: '/assets/audio/engine-low-01.ogg', volume: 0.02 }],
+      uiOneShots: [{ path: '/assets/audio/radio-switch-01.ogg', volume: 0.05 }],
     });
-
-    expect(system.isMusicEnabled()).toBe(true);
-    expect(system.toggleMusic()).toBe(false);
-    expect(window.localStorage.getItem('neuroflight.audio.musicEnabled')).toBe('false');
-
-    const restored = new AudioPolishSystem({
-      musicLoops: [{ path: '/assets/audio/heavenly-loop-isaiah658.ogg', volume: 0.14 }],
-    });
-    expect(restored.isMusicEnabled()).toBe(false);
 
     system.destroy();
-    restored.destroy();
+    expect(window.localStorage.getItem('neuroflight.audio.musicEnabled')).toBeNull();
   });
 });

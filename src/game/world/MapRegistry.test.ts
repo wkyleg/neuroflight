@@ -77,10 +77,12 @@ describe('MapRegistry', () => {
     }
   });
 
-  it('adds soft music loops and playful tag sounds per map', () => {
+  it('keeps maps free of file-loop music and sparkle weapon cues', () => {
     for (const map of MAPS) {
-      expect(map.audioPolish?.musicLoops?.some((clip) => clip.path.includes('heavenly-loop-isaiah658'))).toBe(true);
-      expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('music-tag-sparkle'))).toBe(true);
+      expect(map.audioPolish?.musicLoops ?? []).toHaveLength(0);
+      expect(map.audioPolish?.weaponOneShots?.some((clip) => clip.path.includes('music-tag-sparkle')) ?? false).toBe(
+        false,
+      );
     }
   });
 

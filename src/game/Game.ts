@@ -8,6 +8,7 @@ import { AudioPolishSystem } from './core/AudioPolishSystem.ts';
 import { CameraManager } from './core/CameraManager.ts';
 import { eventBus } from './core/EventBus.ts';
 import { InputManager } from './core/InputManager.ts';
+import { ProceduralFlightMusicSystem } from './core/ProceduralFlightMusicSystem.ts';
 import { Renderer } from './core/Renderer.ts';
 import { getPreset } from './dev/EnvironmentPresets.ts';
 import { AIController } from './flight/AIController.ts';
@@ -153,6 +154,7 @@ export class Game {
   private livingWorldDirector: LivingWorldDirector | null = null;
   private combatVfxSystem: CombatVfxSystem | null = null;
   private audioPolishSystem: AudioPolishSystem | null = null;
+  private proceduralMusicSystem: ProceduralFlightMusicSystem;
   private ringManager: RingManager | null = null;
   private missionObjectiveSystem: MissionObjectiveSystem | null = null;
   private worldManager: WorldManager | null = null;
@@ -212,6 +214,7 @@ export class Game {
     this.inputManager = new InputManager();
     this.assetManager = new AssetManager();
     this.audioManager = new AudioManager();
+    this.proceduralMusicSystem = new ProceduralFlightMusicSystem(this.mode);
     this.scoreManager = new ScoreManager();
     this.sessionRecorder = new SessionRecorder();
     this.neuroAdaptationSystem = new NeuroAdaptationSystem();
@@ -226,6 +229,7 @@ export class Game {
       if (!this.audioStarted) {
         this.audioManager.start();
         this.audioPolishSystem?.start();
+        void this.proceduralMusicSystem.start();
         this.audioStarted = true;
       }
     };
@@ -239,28 +243,33 @@ export class Game {
 
     eventBus.on('ring:passed', () => {
       this.audioManager.playChime();
+      this.proceduralMusicSystem.triggerEvent('ring');
       this.sessionRecorder.recordEvent('ring_hit');
     });
 
     eventBus.on('dogfight:ai_hit', () => {
       this.audioManager.playHit();
+      this.proceduralMusicSystem.triggerEvent('hit');
       this.scoreManager.addBonus(65 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.sessionRecorder.recordEvent('shot_hit');
     });
 
     eventBus.on('dogfight:player_hit', () => {
       this.audioManager.playHit();
+      this.proceduralMusicSystem.triggerEvent('hit');
     });
 
     eventBus.on('dogfight:ai_kill', () => {
       this.audioManager.playChime();
+      this.proceduralMusicSystem.triggerEvent('win');
       const points = Math.round(550 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.scoreManager.addBonus(points);
-      this.sessionRecorder.recordEvent('kill', { label: 'Rival tagged', score: points });
+      this.sessionRecorder.recordEvent('kill', { label: 'Rival down', score: points });
     });
 
     eventBus.on('dogfight:player_death', () => {
       this.audioManager.playHit();
+      this.proceduralMusicSystem.triggerEvent('crash');
       this.sessionRecorder.recordEvent('death', { label: 'Reset and rally' });
     });
   }
@@ -282,11 +291,11 @@ export class Game {
   }
 
   toggleMusic(): boolean {
-    return this.audioPolishSystem?.toggleMusic() ?? false;
+    return this.proceduralMusicSystem.toggleMusic();
   }
 
   isMusicEnabled(): boolean {
-    return this.audioPolishSystem?.isMusicEnabled() ?? true;
+    return this.proceduralMusicSystem.isMusicEnabled();
   }
 
   async init(
@@ -299,6 +308,7 @@ export class Game {
     this.currentMapId = mapId;
     this.currentAircraftId = getAircraft(aircraftId).id;
     this.difficulty = difficulty;
+    this.proceduralMusicSystem.setMode(mode);
     this.dogfightSpawnCursor = 0;
     this.zenRouteComplete = false;
     this.expeditionRouteComplete = false;
@@ -321,6 +331,7 @@ export class Game {
     await this.livingWorldDirector.load();
     this.audioPolishSystem = new AudioPolishSystem(map.audioPolish);
     if (this.audioStarted) this.audioPolishSystem.start();
+    if (this.audioStarted) void this.proceduralMusicSystem.start();
 
     this.worldManager = new WorldManager(this.scene);
     this.worldManager.loadMap(map);
@@ -540,6 +551,7 @@ export class Game {
       });
       this.audioManager.playExplosion();
       this.audioPolishSystem?.playImpact();
+      this.proceduralMusicSystem.triggerEvent('crash');
       this.cameraManager.snapTo(this.planeController.getObject());
       this.lastPosition.copy(this.planeController.flightModel.getPosition());
     }
@@ -556,6 +568,14 @@ export class Game {
     this.ringManager?.setAdaptiveGlow(1 + adaptation.composure * adaptation.confidence * 0.55);
     this.weatherIdentitySystem?.setAdaptiveClarity(adaptation.weatherClarity);
     this.audioPolishSystem?.setIntensity(adaptation.audioIntensity);
+    this.proceduralMusicSystem.setAdaptation(adaptation);
+    this.proceduralMusicSystem.setRppg({
+      bpm: neuroState.bpm,
+      confidence: Math.max(neuroState.bpmQuality, neuroState.signalQuality),
+      hrv: neuroState.hrvRmssd,
+      respiration: neuroState.respirationRate,
+      timestamp: performance.now() / 1000,
+    });
     this.weaponSystem?.setAimAssist(adaptation.aimAssist);
 
     const plane = this.planeController.getObject();
@@ -627,6 +647,7 @@ export class Game {
           this.weaponSystem.fire(aiPos, aiDir, 'ai');
           this.combatVfxSystem?.spawnShot(aiPos, aiDir, 'ai');
           this.audioPolishSystem?.playWeapon();
+          this.proceduralMusicSystem.triggerEvent('fire');
         }
       }
 
@@ -912,6 +933,7 @@ export class Game {
     this.dogfightManager.recordPlayerShot();
     this.audioManager.playTagLaunch();
     this.audioPolishSystem?.playWeapon();
+    this.proceduralMusicSystem.triggerEvent('fire');
     this.sessionRecorder.recordEvent('shot_fired');
   }
 
@@ -919,6 +941,7 @@ export class Game {
     const points = Math.round(basePoints * adaptationMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier);
     this.scoreManager.addBonus(points);
     this.audioPolishSystem?.playUi();
+    this.proceduralMusicSystem.triggerEvent('routeComplete');
     this.sessionRecorder.recordEvent('route_complete', { label, score: points });
   }
 
@@ -1153,6 +1176,7 @@ export class Game {
     this.renderer.destroy();
     this.cameraManager.destroy();
     this.audioManager.destroy();
+    this.proceduralMusicSystem.destroy();
     this.skySystem?.destroy();
     this.cloudSystem?.destroy();
     this.skyObjectSystem?.destroy();

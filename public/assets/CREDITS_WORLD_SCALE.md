@@ -226,16 +226,9 @@ These runtime assets were copied from `asset-inbox` after preview for the world-
 - Author: Kenney
 - Attribution: UI Audio by Kenney, CC0 1.0.
 
-## Music Jingles
-- Runtime files: /assets/audio/music-jingles-preview-01.ogg, /assets/audio/music-tag-sparkle-01.ogg
-- Source: Kenney (https://kenney.nl/assets/music-jingles)
-- License: CC0 1.0
-- Author: Kenney
-- Attribution: Music Jingles by Kenney, CC0 1.0.
-
-## Heavenly Loop
-- Runtime files: /assets/audio/heavenly-loop-isaiah658.ogg
-- Source: OpenGameArt (https://opengameart.org/content/heavenly-loop)
-- License: CC0
-- Author: isaiah658
-- Attribution: Heavenly Loop by isaiah658, CC0.
+## Procedural Flight Music
+- Runtime files: generated in-browser by `ProceduralFlightMusicSystem`; no external loop files are used at runtime.
+- Source: local code
+- License: project source license
+- Author: NeuroFlight
+- Attribution: Generated from local Tone.js synth voices; no third-party music sample attribution required.
