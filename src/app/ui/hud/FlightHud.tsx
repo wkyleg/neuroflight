@@ -624,6 +624,7 @@ export function FlightHud() {
   const [showControls, setShowControls] = useState(() => shouldShowInitialHelp());
   const [soundEnabled, setSoundEnabled] = useState(() => game?.isSoundEnabled() ?? true);
   const [showModeHint, setShowModeHint] = useState(false);
+  const endingRef = useRef(false);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -649,6 +650,8 @@ export function FlightHud() {
   }, [reactivateControls]);
 
   const handleEndFlight = useCallback(() => {
+    if (endingRef.current) return;
+    endingRef.current = true;
     game?.endSession();
   }, [game]);
 
@@ -674,6 +677,7 @@ export function FlightHud() {
 
   useEffect(() => {
     setSoundEnabled(game?.isSoundEnabled() ?? true);
+    endingRef.current = false;
   }, [game]);
 
   const handleToggleSound = useCallback(() => {
@@ -710,6 +714,10 @@ export function FlightHud() {
   );
 
   const stopHudPointer = useCallback((e: PointerEvent<HTMLElement>) => {
+    e.stopPropagation();
+  }, []);
+
+  const stopMomentaryPointer = useCallback((e: PointerEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
@@ -954,11 +962,11 @@ export function FlightHud() {
               type="button"
               aria-label="Throttle up"
               onPointerDown={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setThrottle(true, false);
               }}
               onPointerUp={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setThrottle(false, false);
                 reactivateControls();
               }}
@@ -979,11 +987,11 @@ export function FlightHud() {
               type="button"
               aria-label="Throttle down"
               onPointerDown={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setThrottle(false, true);
               }}
               onPointerUp={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setThrottle(false, false);
                 reactivateControls();
               }}
@@ -1004,11 +1012,11 @@ export function FlightHud() {
               type="button"
               aria-label="Boost"
               onPointerDown={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setBoost(true);
               }}
               onPointerUp={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setBoost(false);
                 reactivateControls();
               }}
@@ -1029,11 +1037,11 @@ export function FlightHud() {
               type="button"
               aria-label="Brake"
               onPointerDown={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setBrake(true);
               }}
               onPointerUp={(e) => {
-                stopHudPointer(e);
+                stopMomentaryPointer(e);
                 setBrake(false);
                 reactivateControls();
               }}
@@ -1055,11 +1063,11 @@ export function FlightHud() {
                 type="button"
                 aria-label="Fire"
                 onPointerDown={(e) => {
-                  stopHudPointer(e);
+                  stopMomentaryPointer(e);
                   setFire(true);
                 }}
                 onPointerUp={(e) => {
-                  stopHudPointer(e);
+                  stopMomentaryPointer(e);
                   setFire(false);
                   reactivateControls();
                 }}
