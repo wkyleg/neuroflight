@@ -311,6 +311,7 @@ function poissonScatter(count: number, radius: number, minDistance: number, rng:
 
 export interface ScatterResult {
   meshes: THREE.Object3D[];
+  collisionVolumes: Array<{ center: THREE.Vector3; radius: number; label: string }>;
   dispose: () => void;
 }
 
@@ -319,6 +320,17 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
   const allMeshes: THREE.Object3D[] = [];
   const allGeometries: THREE.BufferGeometry[] = [];
   const allMaterials: THREE.Material[] = [];
+  const collisionVolumes: Array<{ center: THREE.Vector3; radius: number; label: string }> = [];
+
+  const maybeAddCollision = (layer: ScatterLayerConfig, x: number, z: number, y: number, scale: number) => {
+    if (!layer.collision || scale < layer.collision.minScale) return;
+    const radius = Math.max(8, scale * layer.collision.radiusMultiplier);
+    collisionVolumes.push({
+      center: new THREE.Vector3(x, y + radius * 0.42, z),
+      radius,
+      label: layer.collision.label ?? layer.type.replace(/_/g, ' '),
+    });
+  };
 
   for (const layer of layers) {
     try {
@@ -335,11 +347,13 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
           for (let i = 0; i < points.length; i++) {
             const [x, z] = points[i];
             const s = layer.scaleRange[0] + rng() * (layer.scaleRange[1] - layer.scaleRange[0]);
-            dummy.position.set(x, (layer.yOffset ?? 0) + s * 0.3, z);
+            const y = (layer.yOffset ?? 0) + s * 0.3;
+            dummy.position.set(x, y, z);
             dummy.rotation.set(rng() * 0.3, rng() * Math.PI * 2, rng() * 0.3);
             dummy.scale.set(s, s * (0.5 + rng() * 0.5), s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, y, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -406,6 +420,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -431,6 +446,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -455,6 +471,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -478,6 +495,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.set(s, s * (0.6 + rng() * 0.6), s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -525,6 +543,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -544,11 +563,13 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
           for (let i = 0; i < points.length; i++) {
             const [x, z] = points[i];
             const s = layer.scaleRange[0] + rng() * (layer.scaleRange[1] - layer.scaleRange[0]);
-            dummy.position.set(x, (layer.yOffset ?? 0) + s * 0.1, z);
+            const y = (layer.yOffset ?? 0) + s * 0.1;
+            dummy.position.set(x, y, z);
             dummy.rotation.set(0, rng() * Math.PI * 2, (rng() - 0.5) * 0.15);
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, y, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -567,11 +588,13 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
           for (let i = 0; i < points.length; i++) {
             const [x, z] = points[i];
             const s = layer.scaleRange[0] + rng() * (layer.scaleRange[1] - layer.scaleRange[0]);
-            dummy.position.set(x, (layer.yOffset ?? 0) + 0.5, z);
+            const y = (layer.yOffset ?? 0) + 0.5;
+            dummy.position.set(x, y, z);
             dummy.rotation.set(0, rng() * Math.PI * 2, (rng() - 0.5) * 0.05);
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, y, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -590,11 +613,13 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
           for (let i = 0; i < points.length; i++) {
             const [x, z] = points[i];
             const s = layer.scaleRange[0] + rng() * (layer.scaleRange[1] - layer.scaleRange[0]);
-            dummy.position.set(x, (layer.yOffset ?? 0) + 1.0, z);
+            const y = (layer.yOffset ?? 0) + 1.0;
+            dummy.position.set(x, y, z);
             dummy.rotation.set(0, rng() * Math.PI * 2, 0);
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, y, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -662,6 +687,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
             dummy.scale.setScalar(s);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
+            maybeAddCollision(layer, x, z, layer.yOffset ?? 0, s);
           }
           im.instanceMatrix.needsUpdate = true;
           im.castShadow = true;
@@ -680,6 +706,7 @@ export function buildScatterLayers(scene: THREE.Scene, layers: ScatterLayerConfi
 
   return {
     meshes: allMeshes,
+    collisionVolumes,
     dispose: () => {
       for (const m of allMeshes) {
         scene.remove(m);

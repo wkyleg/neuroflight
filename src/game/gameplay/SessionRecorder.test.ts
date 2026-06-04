@@ -22,6 +22,14 @@ function samplePayload(overrides: Partial<Omit<FlightSample, 't'>> = {}): Omit<F
     score: 100,
     combo: 2,
     ringsPassed: 3,
+    objectivesCompleted: 1,
+    objectiveProgress: 0.25,
+    composure: 0.6,
+    neuroLoad: 0.4,
+    recovery: 0.55,
+    flow: 0.7,
+    adaptationConfidence: 0.8,
+    signalCoverage: 0.9,
     playerHealth: 80,
     aiHealth: 60,
     kills: 1,
@@ -80,11 +88,13 @@ describe('SessionRecorder', () => {
     recorder.start();
     vi.advanceTimersByTime(2000);
     recorder.recordEvent('ring_hit');
+    recorder.recordEvent('route_complete', { label: 'Glowing route complete', score: 650 });
     recorder.recordEvent('kill');
     const { events } = recorder.stop();
-    expect(events).toHaveLength(2);
+    expect(events).toHaveLength(3);
     expect(events[0]).toEqual({ t: 2, type: 'ring_hit' });
-    expect(events[1]).toEqual({ t: 2, type: 'kill' });
+    expect(events[1]).toEqual({ t: 2, type: 'route_complete', label: 'Glowing route complete', score: 650 });
+    expect(events[2]).toEqual({ t: 2, type: 'kill' });
   });
 
   it('stop() returns collected samples and events', () => {

@@ -21,5 +21,14 @@ Thumbs.db
 # Test
 coverage
 
+# Local asset intake. Keep bulky raw/extracted/candidate art out of git;
+# track only manifests, attribution, and small documentation files.
+asset-inbox/raw/
+asset-inbox/extracted/
+asset-inbox/candidates/
+asset-inbox/screenshots/**/*.png
+asset-inbox/screenshots/**/*.webp
+asset-inbox/screenshots/**/*.json
+
 # Lock files (pnpm only)
 package-lock.json

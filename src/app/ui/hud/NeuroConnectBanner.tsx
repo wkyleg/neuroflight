@@ -1,13 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
-export function NeuroConnectBanner() {
+interface NeuroConnectBannerProps {
+  variant?: 'floating' | 'dock';
+}
+
+function useDelayedTrue(value: boolean, delayMs: number): boolean {
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    if (!value) {
+      setDisplay(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setDisplay(true), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return display;
+}
+
+export function NeuroConnectBanner({ variant = 'floating' }: NeuroConnectBannerProps = {}) {
   const { eegConnected, cameraActive, mockEnabled, connecting } = useNeuroConnection();
   const [dismissed, setDismissed] = useState(false);
 
-  const allConnected = (eegConnected && cameraActive) || mockEnabled;
-  if (dismissed || allConnected) return null;
+  const readyEnough = useDelayedTrue(cameraActive || mockEnabled || eegConnected, 600);
+  if (dismissed || readyEnough) return null;
+  const docked = variant === 'dock';
 
   const connectHeadband = async () => {
     await useNeuroStore.getState().connectHeadband();
@@ -21,79 +41,93 @@ export function NeuroConnectBanner() {
     useNeuroStore.getState().enableMock();
   };
 
-  const hasAny = eegConnected || cameraActive;
-
   return (
     <div
-      className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center rounded-xl pointer-events-auto z-50"
+      className={`neuro-connect-banner ${
+        docked
+          ? 'neuro-connect-banner-docked flex flex-wrap'
+          : 'premium-glass absolute top-24 left-1/2 -translate-x-1/2 flex'
+      } items-center rounded-lg pointer-events-auto z-50`}
       style={{
-        background: 'rgba(0, 10, 20, 0.85)',
-        border: '1px solid rgba(0, 204, 204, 0.3)',
-        backdropFilter: 'blur(8px)',
-        padding: '20px 40px',
-        gap: 20,
+        background: docked ? undefined : 'linear-gradient(135deg, rgba(8, 34, 46, 0.72), rgba(255,255,255,0.08))',
+        border: docked ? undefined : '1px solid rgba(94, 234, 212, 0.26)',
+        backdropFilter: docked ? undefined : 'blur(22px) saturate(1.7)',
+        WebkitBackdropFilter: docked ? undefined : 'blur(22px) saturate(1.7)',
+        padding: docked ? '5px 8px' : '8px 10px',
+        gap: docked ? 7 : 10,
+        width: docked ? '100%' : undefined,
       }}
     >
       <span
-        className="text-sm tracking-wide"
-        style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-heading)' }}
+        className="text-[10px] tracking-wide"
+        style={{ color: 'var(--color-accent-cyan)', fontFamily: 'var(--font-instrument)' }}
       >
-        {hasAny ? 'Add another device:' : 'Connect a neuro device:'}
+        Signals optional
       </span>
-
-      <button
-        type="button"
-        onClick={connectHeadband}
-        disabled={connecting.eeg || eegConnected}
-        className="px-6 py-3 text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
-        style={{
-          fontFamily: 'var(--font-heading)',
-          borderColor: 'var(--color-accent-cyan)',
-          color: 'var(--color-accent-cyan)',
-          background: eegConnected ? 'rgba(0,204,204,0.1)' : 'transparent',
-        }}
-      >
-        {connecting.eeg ? 'Connecting...' : eegConnected ? 'EEG ✓' : 'EEG Headband'}
-      </button>
 
       <button
         type="button"
         onClick={enableCamera}
         disabled={connecting.camera || cameraActive}
-        className="px-6 py-3 text-xs border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105"
+        className={`${
+          docked ? 'neuro-connect-choice' : 'glass-button'
+        } text-[10px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105`}
         style={{
-          fontFamily: 'var(--font-heading)',
-          borderColor: '#ffaa44',
-          color: '#ffaa44',
-          background: cameraActive ? 'rgba(255,170,68,0.1)' : 'transparent',
+          fontFamily: 'var(--font-instrument)',
+          borderColor: '#facc15',
+          color: '#facc15',
+          background: cameraActive ? 'rgba(250,204,21,0.13)' : 'rgba(250,204,21,0.06)',
+          minHeight: docked ? 26 : undefined,
+          padding: docked ? '4px 9px' : '7px 12px',
         }}
       >
-        {connecting.camera ? 'Enabling...' : cameraActive ? 'Camera ✓' : 'Camera (rPPG)'}
+        {connecting.camera ? 'Starting' : cameraActive ? 'Camera Ready' : 'Camera'}
       </button>
 
-      {!hasAny && (
-        <button
-          type="button"
-          onClick={enableMock}
-          className="px-6 py-3 text-xs border rounded-lg cursor-pointer transition-all hover:scale-105"
-          style={{
-            fontFamily: 'var(--font-heading)',
-            borderColor: 'var(--color-text-secondary)',
-            color: 'var(--color-text-secondary)',
-            background: 'transparent',
-          }}
-        >
-          Simulate
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={connectHeadband}
+        disabled={connecting.eeg || eegConnected}
+        className={`${
+          docked ? 'neuro-connect-choice' : 'glass-button'
+        } text-[10px] border rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-105`}
+        style={{
+          fontFamily: 'var(--font-instrument)',
+          borderColor: 'rgba(94,234,212,0.45)',
+          color: '#5eead4',
+          background: eegConnected ? 'rgba(94,234,212,0.12)' : 'transparent',
+          minHeight: docked ? 26 : undefined,
+          padding: docked ? '4px 9px' : '7px 12px',
+        }}
+      >
+        {connecting.eeg ? 'Connecting' : eegConnected ? 'EEG Ready' : 'EEG'}
+      </button>
+
+      <button
+        type="button"
+        onClick={enableMock}
+        className={`${
+          docked ? 'neuro-connect-choice' : 'glass-button'
+        } text-[10px] border rounded-lg cursor-pointer transition-all hover:scale-105`}
+        style={{
+          fontFamily: 'var(--font-instrument)',
+          borderColor: 'var(--color-text-secondary)',
+          color: 'var(--color-text-secondary)',
+          background: 'transparent',
+          minHeight: docked ? 26 : undefined,
+          padding: docked ? '4px 9px' : '7px 12px',
+        }}
+      >
+        Sim
+      </button>
 
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="ml-3 text-sm cursor-pointer transition-all hover:scale-110"
+        className="text-sm cursor-pointer transition-all hover:scale-110"
         style={{ color: 'var(--color-text-secondary)' }}
       >
-        ✕
+        x
       </button>
     </div>
   );

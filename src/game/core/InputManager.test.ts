@@ -72,6 +72,23 @@ describe('InputManager', () => {
     expect(input.wantsFire()).toBe(true);
   });
 
+  it('clears held controls when the window loses focus', () => {
+    keyDown('KeyW');
+    input.update(0.2);
+    expect(input.isKeyDown('KeyW')).toBe(true);
+    window.dispatchEvent(new Event('blur'));
+    expect(input.isKeyDown('KeyW')).toBe(false);
+    expect(input.getInput().pitch).toBe(0);
+  });
+
+  it('ignores gameplay key presses from focused buttons', () => {
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    button.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+    expect(input.wantsFire()).toBe(false);
+    button.remove();
+  });
+
   it('isUiFiring() reflects setUiFire()', () => {
     expect(input.isUiFiring()).toBe(false);
     input.setUiFire(true);
@@ -81,11 +98,42 @@ describe('InputManager', () => {
     expect(input.isUiFiring()).toBe(false);
   });
 
+  it('uses touch axes for mobile pitch, roll, and yaw', () => {
+    input.setTouchAxes({ pitch: 0.8, roll: -0.6 });
+    input.update(0.5);
+    const flight = input.getInput();
+    expect(flight.pitch).toBeGreaterThan(0);
+    expect(flight.roll).toBeLessThan(0);
+    expect(flight.yaw).toBeLessThan(0);
+
+    window.dispatchEvent(new PointerEvent('pointerup'));
+    for (let i = 0; i < 20; i++) input.update(0.05);
+    expect(input.getInput().pitch).toBeLessThan(0.05);
+    expect(Math.abs(input.getInput().roll)).toBeLessThan(0.05);
+  });
+
+  it('clears momentary UI controls on global pointer release', () => {
+    input.setUiFire(true);
+    input.setUiBoost(true);
+    input.setUiBrake(true);
+    input.setUiThrottle(true, false);
+    expect(input.wantsFire()).toBe(true);
+    expect(input.getInput().boost).toBe(true);
+    expect(input.getInput().brake).toBe(true);
+
+    window.dispatchEvent(new PointerEvent('pointerup'));
+
+    expect(input.wantsFire()).toBe(false);
+    expect(input.getInput().boost).toBe(false);
+    expect(input.getInput().brake).toBe(false);
+  });
+
   it('destroy() removes window key listeners so keys stop updating state', () => {
     const remove = vi.spyOn(window, 'removeEventListener');
     input.destroy();
     expect(remove).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(remove).toHaveBeenCalledWith('keyup', expect.any(Function));
+    expect(remove).toHaveBeenCalledWith('blur', expect.any(Function));
     remove.mockRestore();
 
     keyDown('KeyX');

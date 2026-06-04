@@ -10,6 +10,7 @@ const SPAWN_DISTANCE = 140;
 const SPAWN_SPREAD_XZ = 25;
 const SPAWN_SPREAD_Y = 15;
 const MAX_RINGS = 6;
+const ROUTE_RING_LIMIT = 8;
 
 export class RingManager {
   private rings: THREE.Mesh[] = [];
@@ -18,6 +19,11 @@ export class RingManager {
   private glowMaterial: THREE.MeshBasicMaterial;
   private passed = new Set<THREE.Mesh>();
   private scene: THREE.Scene;
+  private routeMode = false;
+  private routePoints: THREE.Vector3[] = [];
+  private routeCursor = 0;
+  private lastPlayerPos = new THREE.Vector3();
+  private adaptiveGlow = 1;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -38,8 +44,21 @@ export class RingManager {
   }
 
   spawnInitial(playerPos: THREE.Vector3, playerDir: THREE.Vector3): void {
+    this.routeMode = false;
     for (let i = 0; i < MAX_RINGS; i++) {
       this.spawnRingAhead(playerPos, playerDir, SPAWN_DISTANCE * (i + 1));
+    }
+  }
+
+  spawnRoute(points: THREE.Vector3[]): void {
+    this.clear();
+    this.routeMode = true;
+    this.routePoints = points;
+    this.routeCursor = 0;
+    const visibleCount = Math.min(ROUTE_RING_LIMIT, points.length);
+    for (let i = 0; i < visibleCount; i++) {
+      this.spawnRingAtRoutePoint(this.routeCursor);
+      this.routeCursor++;
     }
   }
 
@@ -67,14 +86,43 @@ export class RingManager {
     this.rings.push(ring);
   }
 
+  private spawnRingAtRoutePoint(index: number): void {
+    if (this.routePoints.length === 0) return;
+    const pointIndex = index % this.routePoints.length;
+    const pos = this.routePoints[pointIndex];
+    const next =
+      this.routePoints[(pointIndex + 1) % this.routePoints.length] ?? pos.clone().add(new THREE.Vector3(0, 0, -1));
+    const ring = new THREE.Mesh(this.geometry, this.material.clone());
+    ring.position.copy(pos);
+    ring.lookAt(next);
+    const visualScale = index === 0 ? 1.55 : pointIndex === 0 ? 1.18 : 1;
+    ring.scale.setScalar(visualScale);
+    ring.userData.hitScale = visualScale;
+
+    const glow = new THREE.Mesh(
+      new THREE.TorusGeometry(RING_RADIUS + 4, RING_TUBE * 3.4, 8, RING_SEGMENTS),
+      this.glowMaterial.clone(),
+    );
+    ring.add(glow);
+
+    this.scene.add(ring);
+    this.rings.push(ring);
+  }
+
+  setAdaptiveGlow(intensity: number): void {
+    this.adaptiveGlow = THREE.MathUtils.clamp(intensity, 0.7, 1.6);
+  }
+
   update(playerPos: THREE.Vector3, playerDir: THREE.Vector3): number {
     let ringsHit = 0;
+    this.lastPlayerPos.copy(playerPos);
 
     for (let i = this.rings.length - 1; i >= 0; i--) {
       const ring = this.rings[i];
       const dist = ring.position.distanceTo(playerPos);
+      const hitScale = typeof ring.userData.hitScale === 'number' ? ring.userData.hitScale : 1;
 
-      if (dist < PASS_THRESHOLD && !this.passed.has(ring)) {
+      if (dist < PASS_THRESHOLD * hitScale && !this.passed.has(ring)) {
         this.passed.add(ring);
         ringsHit++;
         eventBus.emit('ring:passed');
@@ -90,12 +138,21 @@ export class RingManager {
           this.passed.delete(ring);
         }, 300);
 
-        this.spawnRingAhead(playerPos, playerDir, SPAWN_DISTANCE * (MAX_RINGS - 1));
+        if (this.routeMode && this.routePoints.length > 0) {
+          this.spawnRingAtRoutePoint(this.routeCursor);
+          this.routeCursor++;
+        } else {
+          this.spawnRingAhead(playerPos, playerDir, SPAWN_DISTANCE * (MAX_RINGS - 1));
+        }
       }
 
+      const material = ring.material as THREE.MeshStandardMaterial;
+      material.emissiveIntensity = this.passed.has(ring) ? 2.4 : 0.7 * this.adaptiveGlow;
       ring.children.forEach((child) => {
         if (child instanceof THREE.Mesh) {
           child.rotation.z += 0.015;
+          const glowMat = child.material as THREE.MeshBasicMaterial;
+          glowMat.opacity = 0.24 + (this.adaptiveGlow - 0.7) * 0.22;
         }
       });
     }
@@ -109,7 +166,7 @@ export class RingManager {
     let closestDist = Infinity;
     for (const ring of this.rings) {
       if (this.passed.has(ring)) continue;
-      const d = ring.position.lengthSq();
+      const d = ring.position.distanceToSquared(this.lastPlayerPos);
       if (!closest || d < closestDist) {
         closest = ring;
         closestDist = d;

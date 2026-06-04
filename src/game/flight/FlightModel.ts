@@ -27,6 +27,10 @@ export class FlightModel {
     this.tuning = { ...tuning };
   }
 
+  resetSpeedForRecovery(): void {
+    this.speed = THREE.MathUtils.lerp(this.tuning.minSpeed, this.tuning.maxSpeed, 0.42);
+  }
+
   update(dt: number, input: FlightInput): void {
     const t = this.tuning;
 
@@ -59,7 +63,8 @@ export class FlightModel {
     // --- Rotation from player input ---
     const pitchDelta = input.pitch * t.pitchRate * dt;
     const rollDelta = effectiveRoll * t.rollRate * dt;
-    const yawDelta = input.yaw * t.yawRate * dt;
+    const assistedYaw = input.yaw + effectiveRoll * 0.42;
+    const yawDelta = assistedYaw * t.yawRate * dt;
 
     if (Math.abs(pitchDelta) > 1e-6) {
       _tmpQ.setFromAxisAngle(_right.set(1, 0, 0), pitchDelta);
@@ -70,16 +75,16 @@ export class FlightModel {
       this.object.quaternion.multiply(_tmpQ);
     }
     if (Math.abs(yawDelta) > 1e-6) {
-      _tmpQ.setFromAxisAngle(_up.set(0, 1, 0), -yawDelta);
-      this.object.quaternion.multiply(_tmpQ);
+      _tmpQ.setFromAxisAngle(_worldUp, -yawDelta);
+      this.object.quaternion.premultiply(_tmpQ);
     }
 
     // --- Banking turn: roll causes automatic yaw (coordinated turn) ---
     _right.set(1, 0, 0).applyQuaternion(this.object.quaternion);
     const bankAngle = Math.asin(THREE.MathUtils.clamp(-_right.y, -1, 1));
-    const bankYaw = bankAngle * 0.35 * dt;
+    const bankYaw = bankAngle * 0.46 * dt;
     if (Math.abs(bankYaw) > 1e-6) {
-      _tmpQ.setFromAxisAngle(_up.set(0, 1, 0).applyQuaternion(this.object.quaternion), -bankYaw);
+      _tmpQ.setFromAxisAngle(_worldUp, -bankYaw);
       this.object.quaternion.premultiply(_tmpQ);
     }
 

@@ -1,4 +1,5 @@
 import { HashRouter, Route, Routes } from 'react-router';
+import { AssetSandbox } from './app/screens/AssetSandbox.tsx';
 import { GameScreen } from './app/screens/GameScreen.tsx';
 import { MainMenu } from './app/screens/MainMenu.tsx';
 import { SettingsScreen } from './app/screens/SettingsScreen.tsx';
@@ -11,6 +12,7 @@ export function App() {
       <HashRouter>
         <Routes>
           <Route path="/" element={<MainMenu />} />
+          <Route path="/assets" element={<AssetSandbox />} />
           <Route path="/fly" element={<GameScreen />} />
           <Route path="/summary" element={<SummaryScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />

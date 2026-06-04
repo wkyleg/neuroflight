@@ -11,6 +11,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "assets:harvest": "node scripts/harvest-assets.mjs",
+    "assets:audit": "node scripts/harvest-assets.mjs --audit",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
@@ -25,6 +27,7 @@
     "recharts": "^3.8.1",
     "tailwindcss": "^4.2.2",
     "three": "^0.183.2",
+    "tone": "^15.1.22",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.6.0",
     "zustand": "^5.0.12"

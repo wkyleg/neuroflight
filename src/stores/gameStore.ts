@@ -1,12 +1,14 @@
 import { create } from 'zustand';
+import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
-import type { GameMode } from '@/game/types.ts';
+import type { GameDifficulty, GameMode } from '@/game/types.ts';
 
 export interface SessionSummary {
   mode: string;
   mapId: string;
   aircraftId: string;
+  difficulty: GameDifficulty;
   durationMs: number;
   ringsPassed: number;
   score: number;
@@ -20,6 +22,10 @@ export interface SessionSummary {
   deaths: number;
   shotsFired: number;
   shotsHit: number;
+  objectivesCompleted: number;
+  objectiveGoal: number;
+  scoreLabel: string;
+  missionTitle: string;
 
   samples: FlightSample[];
   events: FlightEvent[];
@@ -36,6 +42,19 @@ export interface SessionSummary {
   dominantBrainState: string | null;
   calmTrend: 'improved' | 'declined' | 'stable' | null;
   arousalTrend: 'increased' | 'decreased' | 'stable' | null;
+  avgComposure: number | null;
+  avgLoad: number | null;
+  avgFlow: number | null;
+  signalCoveragePct: number;
+}
+
+export type FlightHudNoticeTone = 'hit' | 'win' | 'bonus' | 'reset';
+
+export interface FlightHudNotice {
+  id: number;
+  text: string;
+  tone: FlightHudNoticeTone;
+  durationMs: number;
 }
 
 export interface FlightHudState {
@@ -60,6 +79,23 @@ export interface FlightHudState {
   aiDotForward: number;
   shotsFired: number;
   shotsHit: number;
+  missionTitle: string;
+  missionSubtitle: string;
+  objectiveLabel: string;
+  objectiveText: string;
+  objectiveSubtext: string;
+  objectiveProgress: number;
+  objectiveGoal: number;
+  scoreLabel: string;
+  nextObjectiveDir: { x: number; y: number } | null;
+  composure: number;
+  neuroLoad: number;
+  recovery: number;
+  flow: number;
+  adaptationConfidence: number;
+  signalCoverage: number;
+  neuroPrompt: string;
+  bonusNotice: FlightHudNotice | null;
 }
 
 interface GameStoreState {
@@ -82,7 +118,7 @@ const DEFAULT_HUD: FlightHudState = {
   elapsedMs: 0,
   mode: 'zen',
   paused: false,
-  aircraftId: 'spitfire',
+  aircraftId: DEFAULT_AIRCRAFT_ID,
   nextRingDir: null,
   playerHealth: 100,
   aiHealth: 100,
@@ -94,6 +130,23 @@ const DEFAULT_HUD: FlightHudState = {
   aiDotForward: 0,
   shotsFired: 0,
   shotsHit: 0,
+  missionTitle: 'Zen Flight',
+  missionSubtitle: 'Route warming up',
+  objectiveLabel: 'Rings',
+  objectiveText: 'Find the next glowing gate',
+  objectiveSubtext: 'Sensors optional',
+  objectiveProgress: 0,
+  objectiveGoal: 0,
+  scoreLabel: 'Flow Score',
+  nextObjectiveDir: null,
+  composure: 0.5,
+  neuroLoad: 0.35,
+  recovery: 0.5,
+  flow: 0.5,
+  adaptationConfidence: 0,
+  signalCoverage: 0,
+  neuroPrompt: 'Signals optional',
+  bonusNotice: null,
 };
 
 function loadPersistedSession(): SessionSummary | null {

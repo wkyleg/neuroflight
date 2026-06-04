@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { BCI_PRESETS } from './bciMock';
 import type { NeuroState } from './neuroManager';
 import { NeuroManager } from './neuroManager';
 
@@ -16,6 +17,7 @@ interface NeuroStoreActions {
   enableCamera: () => Promise<boolean>;
   disableCamera: () => void;
   enableMock: () => void;
+  setMockPreset: (preset: keyof typeof BCI_PRESETS) => void;
   disableMock: () => void;
   tick: (dt: number) => void;
   destroy: () => void;
@@ -64,6 +66,9 @@ function neuroStateChanged(prev: NeuroStoreState, next: NeuroState): boolean {
     prev.gammaPower !== next.gammaPower ||
     prev.alphaBump !== next.alphaBump ||
     prev.hrvRmssd !== next.hrvRmssd ||
+    prev.respirationRate !== next.respirationRate ||
+    prev.baselineBpm !== next.baselineBpm ||
+    prev.baselineDelta !== next.baselineDelta ||
     prev.calmnessState !== next.calmnessState ||
     prev.alphaPeakFreq !== next.alphaPeakFreq ||
     prev.alphaBumpState !== next.alphaBumpState
@@ -122,6 +127,11 @@ export const useNeuroStore = create<NeuroStore>((set, get) => ({
 
   enableMock: () => {
     get().manager?.enableMock();
+    set({ mockEnabled: true });
+  },
+
+  setMockPreset: (preset) => {
+    get().manager?.setMockPreset(preset);
     set({ mockEnabled: true });
   },
 

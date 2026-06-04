@@ -19,17 +19,42 @@ export interface FlightSample {
   score: number;
   combo: number;
   ringsPassed: number;
+  objectivesCompleted: number;
+  objectiveProgress: number;
+  composure: number;
+  neuroLoad: number;
+  recovery: number;
+  flow: number;
+  adaptationConfidence: number;
+  signalCoverage: number;
   playerHealth: number;
   aiHealth: number;
   kills: number;
   deaths: number;
 }
 
-export type FlightEventType = 'ring_hit' | 'kill' | 'death' | 'shot_fired' | 'shot_hit' | 'respawn';
+export type FlightEventType =
+  | 'ring_hit'
+  | 'route_complete'
+  | 'objective_complete'
+  | 'landmark_discovered'
+  | 'postcard'
+  | 'near_miss'
+  | 'hard_landing'
+  | 'crash'
+  | 'neuro_recovery'
+  | 'kill'
+  | 'death'
+  | 'shot_fired'
+  | 'shot_hit'
+  | 'ufo_bonus'
+  | 'respawn';
 
 export interface FlightEvent {
   t: number;
   type: FlightEventType;
+  label?: string;
+  score?: number;
 }
 
 const SAMPLE_INTERVAL = 1;
@@ -61,11 +86,12 @@ export class SessionRecorder {
     });
   }
 
-  recordEvent(type: FlightEventType): void {
+  recordEvent(type: FlightEventType, detail?: { label?: string; score?: number }): void {
     if (!this.active) return;
     this.events.push({
       t: (Date.now() - this.startTime) / 1000,
       type,
+      ...detail,
     });
   }
 

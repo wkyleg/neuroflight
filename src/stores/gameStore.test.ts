@@ -11,7 +11,7 @@ const DEFAULT_HUD = {
   elapsedMs: 0,
   mode: 'zen' as const,
   paused: false,
-  aircraftId: 'spitfire',
+  aircraftId: 'storybook_biplane',
   nextRingDir: null,
   playerHealth: 100,
   aiHealth: 100,
@@ -23,13 +23,31 @@ const DEFAULT_HUD = {
   aiDotForward: 0,
   shotsFired: 0,
   shotsHit: 0,
+  missionTitle: 'Zen Flight',
+  missionSubtitle: 'Route warming up',
+  objectiveLabel: 'Rings',
+  objectiveText: 'Find the next glowing gate',
+  objectiveSubtext: 'Sensors optional',
+  objectiveProgress: 0,
+  objectiveGoal: 0,
+  scoreLabel: 'Flow Score',
+  nextObjectiveDir: null,
+  composure: 0.5,
+  neuroLoad: 0.35,
+  recovery: 0.5,
+  flow: 0.5,
+  adaptationConfidence: 0,
+  signalCoverage: 0,
+  neuroPrompt: 'Signals optional',
+  bonusNotice: null,
 };
 
 function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary {
   return {
     mode: 'zen',
     mapId: 'test-map',
-    aircraftId: 'spitfire',
+    aircraftId: 'storybook_biplane',
+    difficulty: 'rookie',
     durationMs: 1000,
     ringsPassed: 0,
     score: 0,
@@ -43,6 +61,10 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     deaths: 0,
     shotsFired: 0,
     shotsHit: 0,
+    objectivesCompleted: 0,
+    objectiveGoal: 0,
+    scoreLabel: 'Flow Score',
+    missionTitle: 'Test Mission',
     samples: [],
     events: [],
     avgCalm: null,
@@ -57,6 +79,10 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     dominantBrainState: null,
     calmTrend: null,
     arousalTrend: null,
+    avgComposure: null,
+    avgLoad: null,
+    avgFlow: null,
+    signalCoveragePct: 0,
     ...overrides,
   };
 }
@@ -84,7 +110,20 @@ describe('gameStore', () => {
     expect(hud.score).toBe(50);
     expect(hud.paused).toBe(true);
     expect(hud.altitude).toBe(0);
-    expect(hud.aircraftId).toBe('spitfire');
+    expect(hud.aircraftId).toBe('storybook_biplane');
+  });
+
+  it('updateHud() accepts structured flight notices', () => {
+    useGameStore.getState().updateHud({
+      bonusNotice: { id: 7, text: 'RIVAL HIT', tone: 'hit', durationMs: 1200 },
+    });
+
+    expect(useGameStore.getState().hud.bonusNotice).toEqual({
+      id: 7,
+      text: 'RIVAL HIT',
+      tone: 'hit',
+      durationMs: 1200,
+    });
   });
 
   it('setLastSession() persists to sessionStorage', () => {

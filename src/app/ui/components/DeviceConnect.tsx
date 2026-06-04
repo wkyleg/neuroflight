@@ -34,7 +34,7 @@ export function DeviceConnect() {
     >
       <h3
         className="text-xs tracking-widest uppercase font-semibold"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
       >
         Neuro Devices
       </h3>

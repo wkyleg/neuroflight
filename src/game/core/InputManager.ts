@@ -24,19 +24,77 @@ export class InputManager {
   private uiBrake = false;
   private uiBoost = false;
   private uiFire = false;
+  private touchPitch = 0;
+  private touchRoll = 0;
+  private touchYaw = 0;
 
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.clearInput);
+    window.addEventListener('pointercancel', this.clearInput);
+    window.addEventListener('pointerup', this.clearMomentaryUiInput);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
+    if (this.shouldIgnoreKeyboardEvent(e)) return;
+    if (this.isFlightKey(e.code)) e.preventDefault();
     this.keys.add(e.code);
-    this.devCallbacks.forEach((cb) => cb(e.code));
+    if (!e.repeat) {
+      this.devCallbacks.forEach((cb) => cb(e.code));
+    }
   };
 
   private onKeyUp = (e: KeyboardEvent): void => {
     this.keys.delete(e.code);
+  };
+
+  private onVisibilityChange = (): void => {
+    if (document.hidden) this.clearInput();
+  };
+
+  private shouldIgnoreKeyboardEvent(e: KeyboardEvent): boolean {
+    const target = e.target as HTMLElement | null;
+    if (!(target instanceof HTMLElement)) return false;
+    return !!target.closest('input, textarea, select, button, a, [contenteditable="true"]');
+  }
+
+  private isFlightKey(code: string): boolean {
+    return (
+      code.startsWith('Arrow') ||
+      code === 'Space' ||
+      code === 'Enter' ||
+      code === 'KeyW' ||
+      code === 'KeyA' ||
+      code === 'KeyS' ||
+      code === 'KeyD' ||
+      code === 'KeyQ' ||
+      code === 'KeyE' ||
+      code === 'KeyB' ||
+      code === 'KeyF' ||
+      code === 'ShiftLeft' ||
+      code === 'ShiftRight' ||
+      code === 'ControlLeft' ||
+      code === 'ControlRight'
+    );
+  }
+
+  clearInput = (): void => {
+    this.keys.clear();
+    this.smoothPitch = 0;
+    this.smoothRoll = 0;
+    this.smoothYaw = 0;
+    this.clearMomentaryUiInput();
+  };
+
+  private clearMomentaryUiInput = (): void => {
+    this.uiThrottleUp = false;
+    this.uiThrottleDown = false;
+    this.uiBrake = false;
+    this.uiBoost = false;
+    this.uiFire = false;
+    this.setTouchAxes({ pitch: 0, roll: 0, yaw: 0 });
   };
 
   onDevKey(cb: (key: string) => void): void {
@@ -60,6 +118,12 @@ export class InputManager {
     this.uiFire = active;
   }
 
+  setTouchAxes(axes: { pitch: number; roll: number; yaw?: number }): void {
+    this.touchPitch = Math.max(-1, Math.min(1, axes.pitch));
+    this.touchRoll = Math.max(-1, Math.min(1, axes.roll));
+    this.touchYaw = Math.max(-1, Math.min(1, axes.yaw ?? axes.roll * 0.35));
+  }
+
   isUiFiring(): boolean {
     return this.uiFire;
   }
@@ -79,6 +143,10 @@ export class InputManager {
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) targetRoll += 1;
     if (this.keys.has('KeyQ')) targetYaw -= 1;
     if (this.keys.has('KeyE')) targetYaw += 1;
+
+    targetPitch = Math.max(-1, Math.min(1, targetPitch + this.touchPitch));
+    targetRoll = Math.max(-1, Math.min(1, targetRoll + this.touchRoll));
+    targetYaw = Math.max(-1, Math.min(1, targetYaw + this.touchYaw));
 
     const rampUp = 1 - Math.exp(-INPUT_SMOOTHING * dt);
     const rampDown = 1 - Math.exp(-INPUT_DECAY * dt);
@@ -116,5 +184,10 @@ export class InputManager {
   destroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.clearInput);
+    window.removeEventListener('pointercancel', this.clearInput);
+    window.removeEventListener('pointerup', this.clearMomentaryUiInput);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.clearInput();
   }
 }
