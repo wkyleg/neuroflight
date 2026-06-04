@@ -17,7 +17,7 @@ describe('getBiofeedbackDisplayState', () => {
 
     expect(state.state).toBe('none');
     expect(state.primaryLabel).toBe('OPTIONAL');
-    expect(state.guidance).toBe('Signals optional');
+    expect(state.guidance).toBe('Behavior-only ready');
     expect(state.showCameraMetrics).toBe(false);
     expect(state.showEegAdvanced).toBe(false);
   });
@@ -60,7 +60,7 @@ describe('getBiofeedbackDisplayState', () => {
     expect(state.tone).toBe('ready');
   });
 
-  it('prioritizes simulated signals when mock mode is enabled', () => {
+  it('keeps simulated signals out of the production display state', () => {
     const state = getBiofeedbackDisplayState({
       ...baseInput,
       source: 'mock',
@@ -68,12 +68,12 @@ describe('getBiofeedbackDisplayState', () => {
       signalQuality: 1,
     });
 
-    expect(state.state).toBe('simulated');
-    expect(state.primaryLabel).toBe('SIM');
+    expect(state.state).toBe('none');
+    expect(state.primaryLabel).toBe('OPTIONAL');
     expect(state.showEegAdvanced).toBe(false);
   });
 
-  it('keeps EEG in the advanced path when it is active', () => {
+  it('keeps EEG out of the production display state', () => {
     const state = getBiofeedbackDisplayState({
       ...baseInput,
       source: 'eeg',
@@ -81,9 +81,9 @@ describe('getBiofeedbackDisplayState', () => {
       signalQuality: 0.9,
     });
 
-    expect(state.state).toBe('eeg-active');
-    expect(state.primaryLabel).toBe('EEG');
-    expect(state.showEegAdvanced).toBe(true);
+    expect(state.state).toBe('none');
+    expect(state.primaryLabel).toBe('OPTIONAL');
+    expect(state.showEegAdvanced).toBe(false);
     expect(state.showCameraMetrics).toBe(false);
   });
 });

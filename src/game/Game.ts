@@ -618,7 +618,7 @@ export class Game {
       respiration: neuroState.respirationRate,
       timestamp: performance.now() / 1000,
     });
-    this.weaponSystem?.setAimAssist(adaptation.aimAssist);
+    this.weaponSystem?.setAimAssist(1);
 
     const plane = this.planeController.getObject();
     this.cameraManager.update(dt, plane, speed);
@@ -647,19 +647,16 @@ export class Game {
       for (let i = 0; i < hits; i++) {
         this.scoreManager.addRing(
           this.planeController.flightModel.getSpeed(),
-          adaptation.scoreMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier,
+          getDifficultyConfig(this.difficulty).scoreMultiplier,
         );
       }
-      this.maybeCompleteZenRoute(map, adaptation.scoreMultiplier);
+      this.maybeCompleteZenRoute(map);
     }
 
     const objectiveState = this.missionObjectiveSystem?.update(dt, this.planeController.flightModel.getPosition());
     if (objectiveState?.completion) {
       const completion = objectiveState.completion;
-      this.scoreManager.addObjective(
-        completion.score,
-        adaptation.scoreMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier,
-      );
+      this.scoreManager.addObjective(completion.score, getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.audioManager.playChime();
       this.audioPolishSystem?.playUi();
       this.sessionRecorder.recordEvent(completion.waypoint.kind === 'postcard' ? 'postcard' : 'objective_complete', {
@@ -669,7 +666,7 @@ export class Game {
       if (completion.waypoint.kind === 'landmark' || completion.waypoint.kind === 'low_pass') {
         this.sessionRecorder.recordEvent('landmark_discovered', { label: completion.waypoint.label });
       }
-      this.maybeCompleteExpeditionRoute(adaptation.scoreMultiplier);
+      this.maybeCompleteExpeditionRoute();
     }
 
     if (adaptation.recovery > 0.76 && this.scoreManager.getElapsedMs() / 1000 - this.lastRecoveryEventAt > 12) {
@@ -1010,28 +1007,28 @@ export class Game {
     this.sessionRecorder.recordEvent('shot_fired');
   }
 
-  private awardRouteCompletion(label: string, basePoints: number, adaptationMultiplier: number): void {
-    const points = Math.round(basePoints * adaptationMultiplier * getDifficultyConfig(this.difficulty).scoreMultiplier);
+  private awardRouteCompletion(label: string, basePoints: number): void {
+    const points = Math.round(basePoints * getDifficultyConfig(this.difficulty).scoreMultiplier);
     this.scoreManager.addBonus(points);
     this.audioPolishSystem?.playUi();
     this.proceduralMusicSystem.triggerEvent('routeComplete');
     this.sessionRecorder.recordEvent('route_complete', { label, score: points });
   }
 
-  private maybeCompleteZenRoute(map: MapDefinition, adaptationMultiplier: number): void {
+  private maybeCompleteZenRoute(map: MapDefinition): void {
     if (this.mode !== 'zen' || this.zenRouteComplete) return;
     const goal = map.missionRoutes?.zen.length ?? 0;
     if (goal <= 0 || this.scoreManager.getRingsPassed() < goal) return;
     this.zenRouteComplete = true;
-    this.awardRouteCompletion('Glowing route complete', ZEN_ROUTE_COMPLETE_BONUS, adaptationMultiplier);
+    this.awardRouteCompletion('Glowing route complete', ZEN_ROUTE_COMPLETE_BONUS);
   }
 
-  private maybeCompleteExpeditionRoute(adaptationMultiplier: number): void {
+  private maybeCompleteExpeditionRoute(): void {
     if (this.mode !== 'free' || this.expeditionRouteComplete || !this.missionObjectiveSystem) return;
     const goal = this.missionObjectiveSystem.getTotalCount();
     if (goal <= 0 || this.missionObjectiveSystem.getCompletedCount() < goal) return;
     this.expeditionRouteComplete = true;
-    this.awardRouteCompletion('Expedition route complete', EXPEDITION_ROUTE_COMPLETE_BONUS, adaptationMultiplier);
+    this.awardRouteCompletion('Expedition route complete', EXPEDITION_ROUTE_COMPLETE_BONUS);
   }
 
   private applyVisualGrade(mapId: string): void {

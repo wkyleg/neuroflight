@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNeuroConnection, useNeuroSignals } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
-import { BandPowerBars } from './BandPowerBars.tsx';
 
-export type BiofeedbackDisplayStateKind =
-  | 'none'
-  | 'permission-denied'
-  | 'warming'
-  | 'low-confidence'
-  | 'ready'
-  | 'simulated'
-  | 'eeg-active';
+export type BiofeedbackDisplayStateKind = 'none' | 'permission-denied' | 'warming' | 'low-confidence' | 'ready';
 
-export type BiofeedbackDisplayTone = 'neutral' | 'warming' | 'ready' | 'warning' | 'simulated' | 'advanced';
+export type BiofeedbackDisplayTone = 'neutral' | 'warming' | 'ready' | 'warning';
 
 export interface BiofeedbackDisplayInput {
   source: string;
@@ -48,30 +40,6 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
   const signalQuality = Math.max(0, Math.min(1, input.signalQuality));
   const bpmQuality = Math.max(0, Math.min(1, input.bpmQuality));
 
-  if (input.source === 'mock' || input.mockEnabled) {
-    return {
-      state: 'simulated',
-      primaryLabel: 'SIM',
-      guidance: 'Simulated flight signals',
-      detail: 'Mock signals are driving ambience and debrief notes.',
-      tone: 'simulated',
-      showCameraMetrics: false,
-      showEegAdvanced: false,
-    };
-  }
-
-  if (input.source === 'eeg' || input.eegConnected) {
-    return {
-      state: 'eeg-active',
-      primaryLabel: 'EEG',
-      guidance: 'Advanced headset connected',
-      detail: 'Camera remains optional; EEG details are available in advanced view.',
-      tone: 'advanced',
-      showCameraMetrics: false,
-      showEegAdvanced: true,
-    };
-  }
-
   if (!input.cameraActive && isPermissionError(input.cameraError)) {
     return {
       state: 'permission-denied',
@@ -90,7 +58,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
         state: 'ready',
         primaryLabel: 'CAMERA',
         guidance: 'Signal ready',
-        detail: 'Signal proxies are tracking with useful confidence.',
+        detail: 'Camera signal quality is ready for debrief insights.',
         tone: 'ready',
         showCameraMetrics: true,
         showEegAdvanced: false,
@@ -111,7 +79,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
       state: 'low-confidence',
       primaryLabel: 'CAMERA',
       guidance: 'More light',
-      detail: 'Low-confidence moments stay out of signal insights.',
+      detail: 'Weak-signal moments stay out of camera insights.',
       tone: 'warning',
       showCameraMetrics: true,
       showEegAdvanced: false,
@@ -121,7 +89,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
   return {
     state: 'none',
     primaryLabel: 'OPTIONAL',
-    guidance: 'Signals optional',
+    guidance: 'Behavior-only ready',
     detail: 'Fly normally; camera can add debrief notes later.',
     tone: 'neutral',
     showCameraMetrics: false,
@@ -137,10 +105,6 @@ function toneColor(tone: BiofeedbackDisplayTone, value: number): string {
       return '#facc15';
     case 'warning':
       return '#fb7185';
-    case 'simulated':
-      return '#c4b5fd';
-    case 'advanced':
-      return '#5eead4';
     default:
       if (value >= 0.72) return '#42e9a8';
       if (value >= 0.38) return '#facc15';
@@ -259,9 +223,7 @@ function signalHintForState(state: BiofeedbackDisplayState, signalQuality: numbe
   if (state.state === 'low-confidence') return 'More light or a steadier face';
   if (state.state === 'warming')
     return signalQuality < 0.45 ? 'Center face in the camera' : 'Hold steady while signal settles';
-  if (state.state === 'ready') return 'Signal proxies are tracking';
-  if (state.state === 'simulated') return 'Simulation is driving practice signals';
-  if (state.state === 'eeg-active') return 'Headset active; camera optional';
+  if (state.state === 'ready') return 'Camera signal is tracking';
   return 'Fly normally; camera optional';
 }
 
@@ -312,7 +274,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
     neuro.baselineDelta !== null ? `${neuro.baselineDelta > 0 ? '+' : ''}${Math.round(neuro.baselineDelta)}` : '--';
-  const showAdvanced = expanded || displayState.showEegAdvanced;
+  const showAdvanced = expanded;
 
   return (
     <div
@@ -424,20 +386,10 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
                 Baseline delta {delta}
               </span>
             </div>
-            {neuro.source === 'eeg' ? (
-              <BandPowerBars
-                alpha={neuro.alphaPower}
-                beta={neuro.betaPower}
-                theta={neuro.thetaPower}
-                delta={neuro.deltaPower}
-                gamma={neuro.gammaPower}
-              />
-            ) : (
-              <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
-                EEG details stay tucked away unless a headband is active. Webcam play uses signal quality, heart-rate
-                trend, respiration proxy, and coverage for gentle flight notes.
-              </div>
-            )}
+            <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+              Camera play uses signal quality, heart-rate trend, respiration proxy, and coverage for gentle flight
+              notes. Weak-signal moments stay out of default insights.
+            </div>
           </div>
         )}
       </div>

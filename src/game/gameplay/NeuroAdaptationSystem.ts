@@ -67,8 +67,8 @@ export class NeuroAdaptationSystem {
       flow: lerp(this.snapshot.flow, flow, 0.08),
       confidence: lerp(this.snapshot.confidence, confidence, 0.12),
       coverage,
-      scoreMultiplier: 1 + gate * composure * (mode === 'dogfight' ? 0.18 : 0.32),
-      aimAssist: 1 + gate * composure * 0.35,
+      scoreMultiplier: 1,
+      aimAssist: 1,
       weatherClarity: 1 - gate * composure * 0.24,
       audioIntensity: clamp01(0.55 + load * 0.28 - composure * 0.1),
       prompt,
@@ -110,9 +110,9 @@ export class NeuroAdaptationSystem {
     if (!hasSignal) return 'Fly normally; sensors are optional';
     if (confidence < 0.28) return 'Signal is faint; keep the camera/headband steady';
     if (recovery > 0.68)
-      return mode === 'dogfight' ? 'Recovery window: steady aim assist' : 'Recovery window: route glow is brighter';
+      return mode === 'dogfight' ? 'Recovery window: steady the line' : 'Recovery window: smoother air';
     if (composure > 0.66)
-      return mode === 'free' ? 'Composed flight reveals the route' : 'Composed flight is boosting score';
+      return mode === 'free' ? 'Composed flight softens the ambience' : 'Composed flight is shaping ambience';
     if (load > 0.72) return 'High load: widen turns and breathe into the next marker';
     return 'Adaptive ambience is tracking your flight';
   }

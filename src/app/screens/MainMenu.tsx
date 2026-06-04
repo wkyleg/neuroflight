@@ -16,7 +16,7 @@ const WIZARD_STEPS: Array<{ id: WizardStepId; label: string }> = [
   { id: 'aircraft', label: 'Aircraft' },
   { id: 'challenge', label: 'Challenge' },
   { id: 'route', label: 'Route' },
-  { id: 'biofeedback', label: 'Biofeedback' },
+  { id: 'biofeedback', label: 'Readiness' },
 ];
 
 const DIFFICULTY_OPTIONS: Array<{ id: GameDifficulty; label: string; description: string }> = [
@@ -31,21 +31,21 @@ const MODE_HELP: Record<GameMode, { short: string; detail: string; progress: str
     detail:
       'Zen Flight is a calm route through clouds and landmarks. Aim through the next bright gate and keep the flight smooth.',
     progress: 'Progress comes from route gates, smooth streaks, and composed flying.',
-    sensors: 'Camera signals are optional and gently shape ambience and debrief notes.',
+    sensors: 'Camera biofeedback is optional and only shapes ambience and debrief notes.',
   },
   free: {
     short: 'Visit story landmarks and fly through nearby beacons.',
     detail:
       'Expedition highlights one story place at a time. Fly near the landmark, then through the floating beacon beside it.',
     progress: 'Progress comes from logged landmarks, low-pass routes, climb cues, and postcard moments.',
-    sensors: 'Camera signals are optional; the route remains fully playable without them.',
+    sensors: 'Camera biofeedback is optional; the route remains fully playable without it.',
   },
   dogfight: {
     short: 'Fly a clear G-rated rival duel with bright fire trails.',
     detail:
       'Dogfight is playful aerial competition. Keep visual contact with the rival, use landmarks, and fire bright trails when lined up.',
     progress: 'Progress comes from wins, UFO bonuses, steady aim, and quick recoveries.',
-    sensors: 'Camera signals can add adaptive ambience, but they never block play.',
+    sensors: 'Camera biofeedback can add adaptive ambience, but it never changes challenge or scoring.',
   },
 };
 
@@ -187,7 +187,7 @@ export function MainMenu() {
   const [selectedAircraft, setSelectedAircraft] = useState(DEFAULT_AIRCRAFT_ID);
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('rookie');
   const [activeStep, setActiveStep] = useState<WizardStepId>('mode');
-  const { eegConnected, cameraActive, connecting, mockEnabled } = useNeuroConnection();
+  const { cameraActive, connecting } = useNeuroConnection();
 
   const map = useMemo(() => MAPS.find((m) => m.id === selectedMap) ?? MAPS[0], [selectedMap]);
   const mode = getModeMeta(selectedMode);
@@ -196,30 +196,16 @@ export function MainMenu() {
     aircraftOptions.find((option) => option.id === selectedAircraft) ??
     aircraftOptions[0] ??
     getAircraft(DEFAULT_AIRCRAFT_ID);
-  const sensorReady = eegConnected || cameraActive || mockEnabled;
-  const sensorSummary = cameraActive
-    ? 'Camera ready'
-    : eegConnected
-      ? 'EEG ready'
-      : mockEnabled
-        ? 'Simulation ready'
-        : 'No sensor setup required';
+  const sensorReady = cameraActive;
+  const sensorSummary = cameraActive ? 'Camera ready' : 'Behavior-only ready';
   const activeStepNumber = stepIndex(activeStep);
 
   const launchGame = () => {
     navigate(`/fly?mode=${selectedMode}&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=${selectedDifficulty}`);
   };
 
-  const connectHeadband = async () => {
-    await useNeuroStore.getState().connectHeadband();
-  };
-
   const enableCamera = async () => {
     await useNeuroStore.getState().enableCamera();
-  };
-
-  const enableMock = () => {
-    useNeuroStore.getState().enableMock();
   };
 
   const goNext = () => {
@@ -425,29 +411,23 @@ export function MainMenu() {
           {activeStep === 'biofeedback' && (
             <div className="menu-step-content">
               <div className="menu-step-heading">
-                <p>Optional biofeedback</p>
-                <h1>Fly now, add signals later</h1>
+                <p>Readiness check</p>
+                <h1>Camera optional, flight ready</h1>
               </div>
               <p className="menu-step-intro">
-                Camera is the main signal path. EEG stays available as an advanced option, and simulation is useful for
-                testing. None of these are required to launch.
+                NeuroFlight can use your webcam to estimate pulse trends during play. Processing stays local, and you
+                can continue behavior-only whenever the signal is unavailable.
               </p>
               <div className="menu-biofeedback-grid">
                 <SelectionButton active={cameraActive} onClick={enableCamera}>
                   <span className="menu-option-title">
                     {connecting.camera ? 'Starting camera' : cameraActive ? 'Camera ready' : 'Camera'}
                   </span>
-                  <span className="menu-option-copy">Use webcam signal quality, heart-rate proxy, and coverage.</span>
+                  <span className="menu-option-copy">Use webcam signal quality and coverage for debrief insight.</span>
                 </SelectionButton>
-                <SelectionButton active={eegConnected} onClick={connectHeadband}>
-                  <span className="menu-option-title">
-                    {connecting.eeg ? 'Connecting EEG' : eegConnected ? 'EEG ready' : 'EEG'}
-                  </span>
-                  <span className="menu-option-copy">Advanced headset path. Optional for most flights.</span>
-                </SelectionButton>
-                <SelectionButton active={mockEnabled} onClick={enableMock}>
-                  <span className="menu-option-title">{mockEnabled ? 'Simulation ready' : 'Simulate'}</span>
-                  <span className="menu-option-copy">Practice adaptive states without a device.</span>
+                <SelectionButton active={!cameraActive} onClick={launchGame}>
+                  <span className="menu-option-title">Continue behavior-only</span>
+                  <span className="menu-option-copy">Play the same scored session without camera insights.</span>
                 </SelectionButton>
               </div>
             </div>
@@ -483,7 +463,7 @@ export function MainMenu() {
           <span>
             {sensorReady
               ? `${sensorSummary} for adaptive ambience and debrief notes.`
-              : 'No sensor setup required; camera and simulation are optional.'}
+              : 'No camera setup required; behavior-only play is always available.'}
           </span>
         </div>
         <button

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router';
 import { DeviceConnect } from '@/app/ui/components/DeviceConnect.tsx';
-import { useNeuroStore } from '@/neuro/store.ts';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
@@ -39,46 +38,6 @@ export function SettingsScreen() {
 
       <div style={{ width: 420, marginBottom: 60 }}>
         <DeviceConnect />
-      </div>
-
-      <div
-        className="rounded-xl"
-        style={{
-          width: 420,
-          border: '1px solid rgba(255,255,255,0.1)',
-          background: 'rgba(255,255,255,0.02)',
-          padding: '28px 32px',
-          marginBottom: 28,
-        }}
-      >
-        <h3
-          className="text-xs tracking-widest uppercase font-semibold"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 18 }}
-        >
-          Simulated Signal Presets
-        </h3>
-        <div className="grid grid-cols-3" style={{ gap: 10 }}>
-          {[
-            { label: 'Calm', preset: 'MEDITATION' as const, color: '#5eead4' },
-            { label: 'Focused', preset: 'FOCUSED' as const, color: '#facc15' },
-            { label: 'High Load', preset: 'EXCITED' as const, color: '#fb7185' },
-          ].map((item) => (
-            <button
-              type="button"
-              key={item.preset}
-              onClick={() => useNeuroStore.getState().setMockPreset(item.preset)}
-              className="cursor-pointer border text-xs font-bold transition-transform hover:scale-105"
-              style={{
-                borderColor: `${item.color}88`,
-                color: item.color,
-                background: `${item.color}12`,
-                fontFamily: 'var(--font-heading)',
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div
