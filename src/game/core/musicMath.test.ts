@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { euclideanRhythm, lockTempoToHeartRate, makeLcg, selectScale } from './musicMath.ts';
+import { euclideanRhythm, lockTempoToHeartRate, makeLcg, selectMotif, selectScale } from './musicMath.ts';
 
 describe('musicMath', () => {
   it('locks low and high heart rates into a musical transport range', () => {
@@ -22,5 +22,14 @@ describe('musicMath', () => {
     const selected = selectScale('ocean:spitfire', 'dogfight');
     expect(selected.name).not.toMatch(/whole|chromatic|maqam|raga|serial/i);
     expect(selected.intervals.every((interval) => interval >= 0 && interval <= 11)).toBe(true);
+  });
+
+  it('selects deterministic public-domain-inspired motif interval data', () => {
+    const a = selectMotif('desert:biplane', 'zen');
+    const b = selectMotif('desert:biplane', 'zen');
+
+    expect(a).toEqual(b);
+    expect(a.intervals.every((interval) => Number.isInteger(interval) && interval >= 0 && interval <= 11)).toBe(true);
+    expect(a.rhythm.length).toBe(a.intervals.length);
   });
 });

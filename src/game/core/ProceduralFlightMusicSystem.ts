@@ -2,7 +2,7 @@ import type * as ToneNamespace from 'tone';
 import type { NeuroAdaptationSnapshot } from '@/game/gameplay/NeuroAdaptationSystem.ts';
 import type { GameMode } from '@/game/types.ts';
 import { HeartTempoTracker, MODE_TEMPO_DEFAULTS } from './HeartTempoTracker.ts';
-import { euclideanRhythm, makeLcg, selectScale } from './musicMath.ts';
+import { euclideanRhythm, type MotifCatalogueEntry, makeLcg, selectMotif, selectScale } from './musicMath.ts';
 
 export type ProceduralMusicEvent = 'ring' | 'fire' | 'hit' | 'win' | 'ufoBonus' | 'crash' | 'routeComplete';
 
@@ -23,6 +23,7 @@ interface ToneNodes {
   pad: ToneNamespace.PolySynth;
   bass: ToneNamespace.Synth;
   arp: ToneNamespace.Synth;
+  motif: ToneNamespace.FMSynth;
   bell: ToneNamespace.FMSynth;
   shimmer: ToneNamespace.NoiseSynth;
   pulse: ToneNamespace.MembraneSynth;
@@ -46,6 +47,7 @@ interface MusicProfile {
   brightness: number;
   pulsePattern: number[];
   drumPattern: { kick: number[]; snare: number[]; hat: number[] };
+  motif: MotifCatalogueEntry;
 }
 
 const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
@@ -70,6 +72,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     brightness: 0.72,
     pulsePattern: [0, 0, 1, 0, 0, 1, 0, 0],
     drumPattern: { kick: euclideanRhythm(2, 8), snare: euclideanRhythm(1, 8), hat: euclideanRhythm(5, 8) },
+    motif: selectMotif('zen', 'zen'),
   },
   free: {
     root: 'A',
@@ -85,6 +88,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     brightness: 0.82,
     pulsePattern: [1, 0, 0, 1, 0, 0, 1, 0],
     drumPattern: { kick: euclideanRhythm(3, 8), snare: euclideanRhythm(2, 8), hat: euclideanRhythm(5, 8) },
+    motif: selectMotif('free', 'free'),
   },
   dogfight: {
     root: 'G',
@@ -100,6 +104,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     brightness: 0.95,
     pulsePattern: [1, 0, 1, 0, 1, 1, 0, 1],
     drumPattern: { kick: euclideanRhythm(4, 8), snare: euclideanRhythm(2, 8), hat: euclideanRhythm(6, 8) },
+    motif: selectMotif('dogfight', 'dogfight'),
   },
 };
 
@@ -131,8 +136,8 @@ function note(profile: MusicProfile, index: number, octave: number): string {
 }
 
 function volumeDb(volume: number, enabled: boolean): number {
-  if (!enabled || volume <= 0.001) return -48;
-  return -28 + volume * 22;
+  if (!enabled || volume <= 0.001) return -72;
+  return -24 + volume * 24;
 }
 
 export function getModeMusicProfile(mode: GameMode): MusicProfile {
@@ -158,6 +163,7 @@ export function createSeededMusicProfile(mode: GameMode, seed: string): MusicPro
     scale,
     chords,
     brightness: Math.max(0.55, Math.min(1.05, base.brightness + (rng() - 0.5) * 0.12)),
+    motif: selectMotif(seed, mode),
   };
 }
 
@@ -193,7 +199,8 @@ export class ProceduralFlightMusicSystem {
   stop(): void {
     if (!this.tone || !this.started) return;
     this.tone.Transport.pause();
-    this.nodes?.volume.volume.rampTo(-48, 0.45);
+    this.nodes?.volume.volume.rampTo(-72, 0.25);
+    this.nodes?.binauralVolume.volume.rampTo(-72, 0.25);
   }
 
   destroy(): void {
@@ -224,6 +231,10 @@ export class ProceduralFlightMusicSystem {
     this.nodes?.volume.volume.rampTo(volumeDb(this.volume, enabled), 0.4);
     if (enabled && this.started) {
       this.tone?.Transport.start();
+      this.updateBinauralState(0.3);
+    } else if (!enabled) {
+      this.tone?.Transport.pause();
+      this.nodes?.binauralVolume.volume.rampTo(-72, 0.25);
     }
   }
 
@@ -351,10 +362,10 @@ export class ProceduralFlightMusicSystem {
   private async createNodes(tone: typeof ToneNamespace): Promise<ToneNodes> {
     const limiter = new tone.Limiter(-6).toDestination();
     const volume = new tone.Volume(volumeDb(this.volume, this.enabled)).connect(limiter);
-    const reverb = new tone.Reverb({ decay: 5.2, wet: 0.34 }).connect(volume);
+    const reverb = new tone.Reverb({ decay: 9.5, wet: 0.48 }).connect(volume);
     await reverb.generate();
-    const delay = new tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.22, wet: 0.18 }).connect(reverb);
-    const filter = new tone.Filter({ frequency: 1850, type: 'lowpass', rolloff: -12, Q: 0.7 }).connect(delay);
+    const delay = new tone.FeedbackDelay({ delayTime: '4n.', feedback: 0.34, wet: 0.24 }).connect(reverb);
+    const filter = new tone.Filter({ frequency: 1550, type: 'lowpass', rolloff: -12, Q: 0.6 }).connect(delay);
     const binauralVolume = new tone.Volume(-72).connect(limiter);
     const binauralLeftPan = new tone.Panner(-1).connect(binauralVolume);
     const binauralRightPan = new tone.Panner(1).connect(binauralVolume);
@@ -370,53 +381,60 @@ export class ProceduralFlightMusicSystem {
       delay,
       filter,
       pad: new tone.PolySynth(tone.Synth, {
-        oscillator: { type: 'triangle8' },
-        envelope: { attack: 1.4, decay: 0.25, sustain: 0.74, release: 3.2 },
-        volume: -17,
+        oscillator: { type: 'sine8' },
+        envelope: { attack: 4.5, decay: 0.7, sustain: 0.86, release: 8.5 },
+        volume: -12,
       }).connect(filter),
       bass: new tone.Synth({
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.02, decay: 0.18, sustain: 0.42, release: 0.6 },
-        volume: -18,
+        envelope: { attack: 0.5, decay: 0.8, sustain: 0.36, release: 2.4 },
+        volume: -25,
       }).connect(filter),
       arp: new tone.Synth({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.01, decay: 0.12, sustain: 0.16, release: 0.25 },
-        volume: -20,
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.08, decay: 0.5, sustain: 0.18, release: 1.2 },
+        volume: -26,
       }).connect(delay),
+      motif: new tone.FMSynth({
+        harmonicity: 1.01,
+        modulationIndex: 1.8,
+        envelope: { attack: 0.08, decay: 0.9, sustain: 0.2, release: 2.8 },
+        modulationEnvelope: { attack: 0.2, decay: 1.0, sustain: 0.08, release: 1.6 },
+        volume: -21,
+      }).connect(reverb),
       bell: new tone.FMSynth({
         harmonicity: 1.52,
         modulationIndex: 4.2,
         envelope: { attack: 0.01, decay: 0.36, sustain: 0.08, release: 0.9 },
         modulationEnvelope: { attack: 0.02, decay: 0.3, sustain: 0.04, release: 0.45 },
-        volume: -20,
+        volume: -23,
       }).connect(reverb),
       shimmer: new tone.NoiseSynth({
         noise: { type: 'pink' },
         envelope: { attack: 0.18, decay: 0.6, sustain: 0.05, release: 1.6 },
-        volume: -30,
+        volume: -36,
       }).connect(reverb),
       pulse: new tone.MembraneSynth({
         pitchDecay: 0.02,
         octaves: 3.2,
         envelope: { attack: 0.002, decay: 0.18, sustain: 0.01, release: 0.2 },
-        volume: -23,
+        volume: -31,
       }).connect(filter),
       kick: new tone.MembraneSynth({
         pitchDecay: 0.018,
         octaves: 3.8,
         envelope: { attack: 0.002, decay: 0.16, sustain: 0.01, release: 0.18 },
-        volume: -28,
+        volume: -38,
       }).connect(filter),
       snare: new tone.NoiseSynth({
         noise: { type: 'pink' },
         envelope: { attack: 0.002, decay: 0.08, sustain: 0, release: 0.08 },
-        volume: -34,
+        volume: -42,
       }).connect(filter),
       hat: new tone.NoiseSynth({
         noise: { type: 'white' },
         envelope: { attack: 0.001, decay: 0.035, sustain: 0, release: 0.03 },
-        volume: -39,
+        volume: -48,
       }).connect(filter),
       stinger: new tone.PolySynth(tone.Synth, {
         oscillator: { type: 'sine8' },
@@ -436,6 +454,7 @@ export class ProceduralFlightMusicSystem {
       tone.Transport.scheduleRepeat((time) => this.playChord(time), '1m'),
       tone.Transport.scheduleRepeat((time) => this.playBass(time), '4n'),
       tone.Transport.scheduleRepeat((time) => this.playArp(time), '8n'),
+      tone.Transport.scheduleRepeat((time) => this.playMotif(time), '2m'),
       tone.Transport.scheduleRepeat((time) => this.playBell(time), '2m'),
       tone.Transport.scheduleRepeat((time) => this.playShimmer(time), '1m'),
       tone.Transport.scheduleRepeat((time) => this.playPulse(time), '8n'),
@@ -449,7 +468,7 @@ export class ProceduralFlightMusicSystem {
     const chord = profile.chords[this.phrase % profile.chords.length];
     const openness = clamp01(((this.rppg?.hrv ?? 42) - 20) / 80);
     const voicedChord = openness > 0.55 ? [...chord, note(profile, this.phrase + 4, 5)] : chord;
-    this.nodes.pad.triggerAttackRelease(voicedChord, '1m', time, 0.18 + openness * 0.1);
+    this.nodes.pad.triggerAttackRelease(voicedChord, '1m', time, 0.22 + openness * 0.12);
     this.phrase++;
   }
 
@@ -458,7 +477,7 @@ export class ProceduralFlightMusicSystem {
     const profile = this.activeProfile;
     const rootIndex = Math.floor(this.step / 4) % profile.chords.length;
     const bassNote = profile.chords[rootIndex][0].replace(/\d$/, String(profile.bassOctave));
-    this.nodes.bass.triggerAttackRelease(bassNote, '8n', time, 0.18 + clamp01(this.adaptation?.load ?? 0.35) * 0.12);
+    this.nodes.bass.triggerAttackRelease(bassNote, '2n', time, 0.08 + clamp01(this.adaptation?.load ?? 0.35) * 0.06);
   }
 
   private playArp(time: number): void {
@@ -468,8 +487,28 @@ export class ProceduralFlightMusicSystem {
     const confidence = clamp01(this.rppg?.confidence ?? this.adaptation?.confidence ?? 0.35);
     const interval = flow > 0.62 ? 1 : 2;
     const index = this.step * interval + (confidence > 0.55 ? this.phrase : 0);
-    this.nodes.arp.triggerAttackRelease(note(profile, index, profile.arpOctave), '16n', time, 0.08 + flow * 0.14);
+    if (this.step % (this.mode === 'dogfight' ? 2 : 4) === 0) {
+      this.nodes.arp.triggerAttackRelease(note(profile, index, profile.arpOctave), '8n', time, 0.04 + flow * 0.09);
+    }
     this.step++;
+  }
+
+  private playMotif(time: number): void {
+    if (!this.nodes) return;
+    const profile = this.activeProfile;
+    const motif = profile.motif;
+    const flow = clamp01(this.adaptation?.flow ?? 0.45);
+    const start = this.phrase % motif.intervals.length;
+    motif.intervals.forEach((interval, offset) => {
+      const rhythm = motif.rhythm[(start + offset) % motif.rhythm.length] ?? 1;
+      const noteTime = time + offset * 0.34 * rhythm;
+      this.nodes?.motif.triggerAttackRelease(
+        note(profile, interval + this.phrase, profile.arpOctave),
+        '2n',
+        noteTime,
+        0.05 + flow * 0.07,
+      );
+    });
   }
 
   private playBell(time: number): void {
@@ -491,8 +530,8 @@ export class ProceduralFlightMusicSystem {
     const profile = this.activeProfile;
     const load = clamp01(this.adaptation?.load ?? 0.35);
     const pattern = profile.pulsePattern[this.step % profile.pulsePattern.length];
-    if (pattern || (this.mode === 'dogfight' && load > 0.62 && this.step % 4 === 3)) {
-      this.nodes.pulse.triggerAttackRelease(note(profile, 0, 2), '32n', time, 0.08 + load * 0.16);
+    if (pattern || (this.mode === 'dogfight' && load > 0.7 && this.step % 4 === 3)) {
+      this.nodes.pulse.triggerAttackRelease(note(profile, 0, 2), '16n', time, 0.035 + load * 0.08);
     }
   }
 
@@ -502,9 +541,11 @@ export class ProceduralFlightMusicSystem {
     const index = this.step % pattern.kick.length;
     const load = clamp01(this.adaptation?.load ?? 0.35);
     const flow = clamp01(this.adaptation?.flow ?? 0.45);
-    if (pattern.kick[index]) this.nodes.kick.triggerAttackRelease('C1', '32n', time, 0.08 + load * 0.08);
-    if (pattern.snare[index]) this.nodes.snare.triggerAttackRelease('32n', time, 0.04 + load * 0.06);
-    if (pattern.hat[index] && flow > 0.35) this.nodes.hat.triggerAttackRelease('64n', time, 0.02 + flow * 0.05);
+    if (this.mode === 'zen' && load < 0.55) return;
+    if (pattern.kick[index]) this.nodes.kick.triggerAttackRelease('C1', '32n', time, 0.025 + load * 0.035);
+    if (pattern.snare[index] && this.mode === 'dogfight')
+      this.nodes.snare.triggerAttackRelease('32n', time, 0.02 + load * 0.03);
+    if (pattern.hat[index] && flow > 0.48) this.nodes.hat.triggerAttackRelease('64n', time, 0.01 + flow * 0.025);
   }
 
   private updateToneState(rampSeconds: number): void {
@@ -519,10 +560,16 @@ export class ProceduralFlightMusicSystem {
     const confidence = clamp01(this.rppg?.confidence ?? this.adaptation?.confidence ?? 0.35);
     const profile = this.activeProfile;
 
-    const brightness = 900 + profile.brightness * 1000 + flow * 1200 + confidence * 450 - composure * 240 + load * 360;
+    const recovery = (this.adaptation?.recovery ?? 0.5) > 0.66;
+    const brightness = recovery
+      ? 720 + profile.brightness * 520 + composure * 280
+      : 980 + profile.brightness * 900 + flow * 780 + confidence * 220 + load * 260;
     this.nodes.filter.frequency.rampTo(brightness, rampSeconds);
-    this.nodes.reverb.wet.rampTo(0.2 + composure * 0.2 + clamp01((this.rppg?.hrv ?? 36) / 120) * 0.12, rampSeconds);
-    this.nodes.delay.wet.rampTo(0.08 + flow * 0.2, rampSeconds);
+    this.nodes.reverb.wet.rampTo(
+      recovery ? 0.58 : 0.34 + composure * 0.18 + clamp01((this.rppg?.hrv ?? 36) / 120) * 0.1,
+      rampSeconds,
+    );
+    this.nodes.delay.wet.rampTo(recovery ? 0.28 : 0.12 + flow * 0.16, rampSeconds);
     this.nodes.volume.volume.rampTo(volumeDb(this.volume, this.enabled), rampSeconds);
     this.updateBinauralState(rampSeconds);
   }
@@ -531,7 +578,8 @@ export class ProceduralFlightMusicSystem {
     if (!this.nodes) return;
     const recovery = (this.adaptation?.recovery ?? 0.5) > 0.66;
     const beatHz = recovery ? 8 : this.mode === 'dogfight' ? 16 : 14;
-    const carrier = this.mode === 'zen' ? 180 : this.mode === 'free' ? 210 : 230;
+    const rootIndex = CHROMATIC.indexOf(this.activeProfile.scale[0].replace(/\d/g, ''));
+    const carrier = 174 + Math.max(0, rootIndex) * 5 + (this.mode === 'dogfight' ? 24 : this.mode === 'free' ? 12 : 0);
     this.nodes.binauralLeft.frequency.rampTo(carrier, rampSeconds);
     this.nodes.binauralRight.frequency.rampTo(carrier + beatHz, rampSeconds);
     this.nodes.binauralVolume.volume.rampTo(this.enabled && this.binauralEnabled ? -42 : -72, rampSeconds);

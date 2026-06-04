@@ -78,3 +78,50 @@ export function selectScale(seed: string, mode: GameMode): ScaleCatalogueEntry {
   }
   return PLEASANT_SCALE_CATALOGUE[0];
 }
+
+export interface MotifCatalogueEntry {
+  name: string;
+  intervals: number[];
+  rhythm: number[];
+  modeBias: Partial<Record<GameMode, number>>;
+}
+
+export const PUBLIC_DOMAIN_MOTIFS: MotifCatalogueEntry[] = [
+  { name: 'satie-ascending-third', intervals: [0, 2, 4, 2, 5, 4], rhythm: [1, 2, 1, 2, 3, 3], modeBias: { zen: 0.2 } },
+  {
+    name: 'debussy-soft-arc',
+    intervals: [4, 5, 7, 9, 7, 5, 2],
+    rhythm: [2, 1, 2, 3, 1, 2, 4],
+    modeBias: { free: 0.16 },
+  },
+  {
+    name: 'tallis-long-line',
+    intervals: [0, 4, 5, 7, 9, 7, 5, 4],
+    rhythm: [3, 2, 2, 4, 3, 2, 2, 5],
+    modeBias: { zen: 0.12 },
+  },
+  {
+    name: 'ravel-suspended-step',
+    intervals: [2, 4, 7, 6, 4, 2, 0],
+    rhythm: [1, 2, 2, 3, 2, 1, 4],
+    modeBias: { free: 0.12 },
+  },
+  {
+    name: 'bach-ground-fragment',
+    intervals: [0, 4, 7, 4, 2, 5, 4, 0],
+    rhythm: [1, 1, 2, 1, 1, 2, 2, 4],
+    modeBias: { dogfight: 0.14 },
+  },
+];
+
+export function selectMotif(seed: string, mode: GameMode): MotifCatalogueEntry {
+  const rng = makeLcg(`${seed}:motif:${mode}`);
+  const weights = PUBLIC_DOMAIN_MOTIFS.map((entry) => 1 + (entry.modeBias[mode] ?? 0));
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  let cursor = rng() * total;
+  for (let i = 0; i < PUBLIC_DOMAIN_MOTIFS.length; i++) {
+    cursor -= weights[i];
+    if (cursor <= 0) return PUBLIC_DOMAIN_MOTIFS[i];
+  }
+  return PUBLIC_DOMAIN_MOTIFS[0];
+}
