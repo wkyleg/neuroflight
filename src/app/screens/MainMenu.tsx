@@ -227,6 +227,9 @@ export function MainMenu() {
           NeuroFlight
         </button>
         <div className="menu-topbar-actions">
+          <button type="button" onClick={() => navigate('/how-it-works')} className="glass-button menu-utility-button">
+            How It Works
+          </button>
           <button type="button" onClick={() => navigate('/assets')} className="glass-button menu-utility-button">
             Asset Lab
           </button>

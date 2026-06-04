@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router';
 import { ErrorBoundary } from './app/ErrorBoundary.tsx';
 import { AssetSandbox } from './app/screens/AssetSandbox.tsx';
 import { GameScreen } from './app/screens/GameScreen.tsx';
+import { HowItWorksScreen } from './app/screens/HowItWorksScreen.tsx';
 import { MainMenu } from './app/screens/MainMenu.tsx';
 import { SettingsScreen } from './app/screens/SettingsScreen.tsx';
 import { SummaryScreen } from './app/screens/SummaryScreen.tsx';
@@ -16,6 +17,7 @@ export function App() {
             <Route path="/" element={<MainMenu />} />
             <Route path="/assets" element={<AssetSandbox />} />
             <Route path="/fly" element={<GameScreen />} />
+            <Route path="/how-it-works" element={<HowItWorksScreen />} />
             <Route path="/summary" element={<SummaryScreen />} />
             <Route path="/settings" element={<SettingsScreen />} />
           </Routes>
