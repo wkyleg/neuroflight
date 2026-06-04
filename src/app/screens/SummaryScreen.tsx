@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { ReportCharts } from '@/app/report/ReportCharts.tsx';
 import { type ReportCardTone, SessionReportBuilder } from '@/app/report/SessionReportBuilder.ts';
 import { getModeMeta, getModeTitle } from '@/game/modes.ts';
 import { getMap } from '@/game/world/MapRegistry.ts';
@@ -44,6 +45,8 @@ export function SummaryScreen() {
 
   const map = getMap(lastSession.mapId);
   const modeMeta = getModeMeta(lastSession.mode as 'zen' | 'free' | 'dogfight');
+  const flyAgainUrl = `/fly?mode=${lastSession.mode}&map=${lastSession.mapId}&aircraft=${lastSession.aircraftId}&difficulty=${lastSession.difficulty}`;
+  const hasBpm = lastSession.avgBpm !== null && lastSession.signalCoveragePct > 0;
 
   return (
     <div
@@ -70,7 +73,7 @@ export function SummaryScreen() {
           </p>
         </header>
 
-        <section className="mb-8 grid gap-4 md:grid-cols-4">
+        <section className="mb-8 grid gap-4 md:grid-cols-5">
           <div className="rounded-lg border p-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
             <div className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
               Flight Score
@@ -101,6 +104,19 @@ export function SummaryScreen() {
             </div>
             <div className="mt-2 text-3xl font-black capitalize" style={{ color: '#93c5fd' }}>
               {report.insightConfidence}
+            </div>
+          </div>
+          <div className="rounded-lg border p-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+            <div className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
+              Camera BPM
+            </div>
+            <div className="mt-2 text-3xl font-black" style={{ color: '#fb7185' }}>
+              {hasBpm ? Math.round(lastSession.avgBpm ?? 0) : '--'}
+            </div>
+            <div className="mt-1 text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+              {hasBpm
+                ? `${Math.round(lastSession.minBpm ?? 0)}-${Math.round(lastSession.peakBpm ?? 0)} range`
+                : 'Unavailable'}
             </div>
           </div>
         </section>
@@ -153,10 +169,57 @@ export function SummaryScreen() {
                     {phase.recoveryTrend}
                   </div>
                 )}
+                <div
+                  className="mt-3 h-1.5 overflow-hidden rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                >
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.round(Math.max(phase.objectiveProgress, phase.avgScore / Math.max(1, lastSession.score)) * 100)}%`,
+                      background: modeMeta.accent,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
+                  Avg speed {phase.avgSpeed || '--'}
+                </div>
               </div>
             ))}
           </div>
         </section>
+
+        {lastSession.recoveryWindows.length > 0 && (
+          <section className="mb-10">
+            <h2 className="mb-4 text-xs uppercase tracking-[0.22em]" style={{ color: '#a7f3d0' }}>
+              Recovery Detail
+            </h2>
+            <div className="grid gap-3 md:grid-cols-3">
+              {lastSession.recoveryWindows.map((window) => (
+                <article
+                  key={window.phase}
+                  className="rounded-lg border p-4"
+                  style={{ borderColor: 'rgba(167,243,208,0.22)' }}
+                >
+                  <div className="text-sm font-bold" style={{ color: 'rgba(255,248,226,0.9)' }}>
+                    {window.label}
+                  </div>
+                  <div className="mt-2 text-2xl font-black capitalize" style={{ color: '#a7f3d0' }}>
+                    {window.trendLabel}
+                  </div>
+                  <p className="mt-2 text-xs leading-5" style={{ color: 'rgba(240,236,224,0.66)' }}>
+                    {window.bpmDelta !== null
+                      ? `Camera-estimated BPM moved ${window.bpmDelta > 0 ? '+' : ''}${window.bpmDelta} during this recovery.`
+                      : 'Camera signal was not strong enough for a BPM trend here.'}
+                  </p>
+                  <div className="mt-2 text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
+                    Signal coverage {Math.round(window.signalCoverage * 100)}%
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mb-10 rounded-lg border p-6" style={{ borderColor: 'rgba(167,243,208,0.28)' }}>
           <div className="text-xs uppercase tracking-[0.22em]" style={{ color: '#a7f3d0' }}>
@@ -176,27 +239,8 @@ export function SummaryScreen() {
             {advancedOpen ? 'Hide Advanced Telemetry' : 'Show Advanced Telemetry'}
           </button>
           {advancedOpen && (
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border p-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                <div className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  Speed
-                </div>
-                <div className="mt-2 text-2xl font-black">{Math.round(lastSession.averageSpeed)}</div>
-              </div>
-              <div className="rounded-lg border p-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                <div className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  Altitude Range
-                </div>
-                <div className="mt-2 text-2xl font-black">
-                  {Math.round(lastSession.minAltitude)}-{Math.round(lastSession.maxAltitude)}
-                </div>
-              </div>
-              <div className="rounded-lg border p-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                <div className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  Camera Coverage
-                </div>
-                <div className="mt-2 text-2xl font-black">{Math.round(lastSession.signalCoveragePct)}%</div>
-              </div>
+            <div className="mt-4">
+              <ReportCharts session={lastSession} />
             </div>
           )}
         </section>
@@ -205,7 +249,7 @@ export function SummaryScreen() {
           <button type="button" onClick={() => navigate('/')} className="glass-button rounded-lg px-8 py-4">
             Menu
           </button>
-          <button type="button" onClick={() => navigate('/fly')} className="glass-button rounded-lg px-8 py-4">
+          <button type="button" onClick={() => navigate(flyAgainUrl)} className="glass-button rounded-lg px-8 py-4">
             Fly Again
           </button>
         </div>

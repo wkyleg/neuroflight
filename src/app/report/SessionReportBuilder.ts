@@ -17,6 +17,10 @@ export interface ReportPhaseSummary {
   eventCount: number;
   signalLabel: string;
   recoveryTrend: string | null;
+  sampleCount: number;
+  avgScore: number;
+  avgSpeed: number;
+  objectiveProgress: number;
 }
 
 export interface NeuroFlightReport {
@@ -40,6 +44,11 @@ function scoreBody(score: number, strong: string, soft: string): string {
   return score >= 75 ? strong : soft;
 }
 
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
 function signalCopy(session: SessionSummary): { value: string; body: string; confidence: string } {
   const coverage = Math.round(session.signalCoveragePct);
   const confidence = session.insightConfidenceLabel.replace(/_/g, '-');
@@ -61,10 +70,15 @@ export class SessionReportBuilder {
   static build(session: SessionSummary): NeuroFlightReport {
     const signal = signalCopy(session);
     const recoveryTrend = session.recoveryWindows.at(-1)?.trendLabel ?? 'unclear';
+    const timeline = SessionReportBuilder.timeline(session);
+    const bestPhase = timeline
+      .filter((phase) => phase.sampleCount > 0)
+      .sort((a, b) => b.objectiveProgress - a.objectiveProgress || b.avgScore - a.avgScore)[0];
+    const finalWave = timeline.find((phase) => phase.phase === 'final_wave');
     const heroSummary =
       signal.value === 'Behavior-only'
-        ? `Session Score ${session.sessionScore}. You completed the run with a behavior-only report.`
-        : `Session Score ${session.sessionScore}. Camera signal was ${signal.confidence} for recovery insight.`;
+        ? `Session Score ${session.sessionScore}. Your strongest phase was ${bestPhase?.label ?? 'the main route'}, and the report stays behavior-only.`
+        : `Session Score ${session.sessionScore}. Camera signal was ${signal.confidence}, with ${bestPhase?.label ?? 'the route'} carrying the clearest progress.`;
 
     return {
       sessionId: `${session.mode}-${session.durationMs}-${session.score}`,
@@ -82,8 +96,8 @@ export class SessionReportBuilder {
           value: pct(session.focusScore),
           body: scoreBody(
             session.focusScore,
-            'You stayed on task through the main route objectives.',
-            'Replay the route and aim for cleaner objective chains.',
+            `You stayed on task through ${session.objectivesCompleted}/${Math.max(1, session.objectiveGoal)} objectives.`,
+            `You completed ${session.objectivesCompleted}/${Math.max(1, session.objectiveGoal)} objectives; replay for cleaner chains.`,
           ),
           tone: 'focus',
         },
@@ -93,7 +107,7 @@ export class SessionReportBuilder {
           value: pct(session.controlScore),
           body: scoreBody(
             session.controlScore,
-            'Your speed, altitude, and throttle stayed relatively steady.',
+            `Average speed was ${Math.round(session.averageSpeed)} with a ${Math.round(session.maxAltitude - session.minAltitude)} ft altitude band.`,
             'Use wider turns and smaller throttle changes next run.',
           ),
           tone: 'control',
@@ -104,7 +118,9 @@ export class SessionReportBuilder {
           value: pct(session.pressureScore),
           body: scoreBody(
             session.pressureScore,
-            'You held performance into the final wave.',
+            finalWave
+              ? `Final wave reached ${Math.round(finalWave.objectiveProgress * 100)}% route progress.`
+              : 'You held performance into the final wave.',
             'Treat the final wave as a smooth accuracy check.',
           ),
           tone: 'pressure',
@@ -127,7 +143,7 @@ export class SessionReportBuilder {
           tone: 'signal',
         },
       ],
-      timeline: SessionReportBuilder.timeline(session),
+      timeline,
     };
   }
 
@@ -145,6 +161,10 @@ export class SessionReportBuilder {
         eventCount: events.length,
         signalLabel,
         recoveryTrend: recovery?.trendLabel ?? null,
+        sampleCount: samples.length,
+        avgScore: Math.round(average(samples.map((sample) => sample.score))),
+        avgSpeed: Math.round(average(samples.map((sample) => sample.speed))),
+        objectiveProgress: Math.max(0, ...samples.map((sample) => sample.objectiveProgress)),
       };
     });
   }
