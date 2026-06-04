@@ -90,6 +90,14 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     avgFlow: null,
     signalCoveragePct: 0,
     tutorial: false,
+    sessionScore: 0,
+    focusScore: 0,
+    controlScore: 0,
+    pressureScore: 0,
+    recoveryBehaviorScore: 0,
+    insightConfidence: 0,
+    insightConfidenceLabel: 'behavior_only',
+    recoveryWindows: [],
     ...overrides,
   };
 }

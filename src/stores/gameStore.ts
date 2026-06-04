@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
+import type { RecoveryWindowResult } from '@/game/session/RecoveryWindowTracker.ts';
+import type { InsightConfidenceLabel } from '@/game/session/SessionScoreBuilder.ts';
 import type { SessionPhase } from '@/game/session/sessionTypes.ts';
 import type { GameDifficulty, GameMode } from '@/game/types.ts';
 
@@ -48,6 +50,14 @@ export interface SessionSummary {
   avgFlow: number | null;
   signalCoveragePct: number;
   tutorial: boolean;
+  sessionScore: number;
+  focusScore: number;
+  controlScore: number;
+  pressureScore: number;
+  recoveryBehaviorScore: number;
+  insightConfidence: number;
+  insightConfidenceLabel: InsightConfidenceLabel;
+  recoveryWindows: RecoveryWindowResult[];
 }
 
 export type FlightHudNoticeTone = 'hit' | 'win' | 'bonus' | 'reset';

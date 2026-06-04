@@ -24,7 +24,9 @@ import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { type WeaponDifficultySettings, WeaponSystem, type WeaponTarget } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
+import { RecoveryWindowTracker } from './session/RecoveryWindowTracker.ts';
 import { SessionPhaseManager } from './session/SessionPhaseManager.ts';
+import { SessionScoreBuilder } from './session/SessionScoreBuilder.ts';
 import { MODE_PHASE_CONFIG } from './session/sessionConfig.ts';
 import { type SessionPhaseSnapshot, sessionPhaseLabel } from './session/sessionTypes.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
@@ -1225,6 +1227,31 @@ export class Game {
     const s = recorded.samples;
     const currentMap = getMap(this.currentMapId);
     const modeMeta = getModeMeta(this.mode);
+    const objectivesCompleted =
+      this.mode === 'dogfight'
+        ? (dfState?.kills ?? 0)
+        : (this.missionObjectiveSystem?.getCompletedCount() ?? this.scoreManager.getRingsPassed());
+    const objectiveGoal =
+      this.mode === 'free'
+        ? (this.missionObjectiveSystem?.getTotalCount() ?? 0)
+        : this.mode === 'zen'
+          ? (currentMap.missionRoutes?.zen.length ?? 0)
+          : 3;
+    const recoveryWindows = new RecoveryWindowTracker().build(s);
+    const sessionScores = SessionScoreBuilder.build({
+      mode: this.mode,
+      difficulty: this.difficulty,
+      samples: s,
+      events: recorded.events,
+      ringsPassed: this.scoreManager.getRingsPassed(),
+      objectivesCompleted,
+      objectiveGoal,
+      kills: dfState?.kills ?? 0,
+      deaths: dfState?.deaths ?? 0,
+      shotsFired: dfState?.shotsFired ?? 0,
+      shotsHit: dfState?.shotsHit ?? 0,
+      recoveryWindows,
+    });
 
     let peakBpm: number | null = null;
     let minBpm: number | null = null;
@@ -1292,16 +1319,8 @@ export class Game {
       deaths: dfState?.deaths ?? 0,
       shotsFired: dfState?.shotsFired ?? 0,
       shotsHit: dfState?.shotsHit ?? 0,
-      objectivesCompleted:
-        this.mode === 'dogfight'
-          ? (dfState?.kills ?? 0)
-          : (this.missionObjectiveSystem?.getCompletedCount() ?? this.scoreManager.getRingsPassed()),
-      objectiveGoal:
-        this.mode === 'free'
-          ? (this.missionObjectiveSystem?.getTotalCount() ?? 0)
-          : this.mode === 'zen'
-            ? (currentMap.missionRoutes?.zen.length ?? 0)
-            : 3,
+      objectivesCompleted,
+      objectiveGoal,
       scoreLabel: modeMeta.scoreLabel,
       missionTitle: `${modeMeta.title} over ${currentMap.storyName ?? currentMap.name}`,
 
@@ -1325,6 +1344,14 @@ export class Game {
       avgFlow: this.adaptationSamples > 0 ? this.flowSum / this.adaptationSamples : null,
       signalCoveragePct: this.neuroAdaptationSystem.getSnapshot().coverage * 100,
       tutorial: this.tutorialMode,
+      sessionScore: sessionScores.sessionScore,
+      focusScore: sessionScores.focus,
+      controlScore: sessionScores.control,
+      pressureScore: sessionScores.pressure,
+      recoveryBehaviorScore: sessionScores.recoveryBehavior,
+      insightConfidence: sessionScores.insightConfidence,
+      insightConfidenceLabel: sessionScores.insightConfidenceLabel,
+      recoveryWindows,
     };
 
     useGameStore.getState().setLastSession(summary);
