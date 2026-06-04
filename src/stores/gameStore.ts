@@ -48,6 +48,15 @@ export interface SessionSummary {
   signalCoveragePct: number;
 }
 
+export type FlightHudNoticeTone = 'hit' | 'win' | 'bonus' | 'reset';
+
+export interface FlightHudNotice {
+  id: number;
+  text: string;
+  tone: FlightHudNoticeTone;
+  durationMs: number;
+}
+
 export interface FlightHudState {
   speed: number;
   altitude: number;
@@ -86,7 +95,7 @@ export interface FlightHudState {
   adaptationConfidence: number;
   signalCoverage: number;
   neuroPrompt: string;
-  bonusNotice: string | null;
+  bonusNotice: FlightHudNotice | null;
 }
 
 interface GameStoreState {

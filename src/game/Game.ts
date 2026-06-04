@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { useNeuroStore } from '@/neuro/store.ts';
-import type { SessionSummary } from '@/stores/gameStore.ts';
+import type { FlightHudNotice, FlightHudNoticeTone, SessionSummary } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { AssetManager } from './core/AssetManager.ts';
 import { AudioManager } from './core/AudioManager.ts';
@@ -186,7 +186,8 @@ export class Game {
   private firing = false;
   private fireCooldown = 0;
   private dogfightSpawnCursor = 0;
-  private bonusNotice: { text: string; expiresAt: number } | null = null;
+  private bonusNotice: (FlightHudNotice & { expiresAt: number }) | null = null;
+  private bonusNoticeId = 0;
 
   // Session metrics
   private maxAltitude = 0;
@@ -254,7 +255,7 @@ export class Game {
     eventBus.on('dogfight:ai_hit', () => {
       this.audioManager.playHit();
       this.proceduralMusicSystem.triggerEvent('hit');
-      this.bonusNotice = { text: 'RIVAL HIT', expiresAt: performance.now() / 1000 + 1.15 };
+      this.emitHudNotice('RIVAL HIT', 'hit', 1200);
       this.scoreManager.addBonus(65 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.sessionRecorder.recordEvent('shot_hit');
     });
@@ -269,14 +270,27 @@ export class Game {
       this.proceduralMusicSystem.triggerEvent('win');
       const points = Math.round(550 * getDifficultyConfig(this.difficulty).scoreMultiplier);
       this.scoreManager.addBonus(points);
+      this.emitHudNotice('RIVAL DOWN +1 WIN', 'win', 1800);
       this.sessionRecorder.recordEvent('kill', { label: 'Rival down', score: points });
     });
 
     eventBus.on('dogfight:player_death', () => {
       this.audioManager.playHit();
       this.proceduralMusicSystem.triggerEvent('crash');
+      this.emitHudNotice('RESET AND RALLY', 'reset', 1800);
       this.sessionRecorder.recordEvent('death', { label: 'Reset and rally' });
     });
+  }
+
+  private emitHudNotice(text: string, tone: FlightHudNoticeTone, durationMs: number): void {
+    this.bonusNoticeId++;
+    this.bonusNotice = {
+      id: this.bonusNoticeId,
+      text,
+      tone,
+      durationMs,
+      expiresAt: performance.now() / 1000 + durationMs / 1000,
+    };
   }
 
   private handleMouseDown(e: MouseEvent): void {
@@ -734,7 +748,7 @@ export class Game {
           this.proceduralMusicSystem.triggerEvent('ufoBonus');
           const points = Math.round(bonus.points * getDifficultyConfig(this.difficulty).scoreMultiplier);
           this.scoreManager.addBonus(points);
-          this.bonusNotice = { text: `UFO BONUS +${points}`, expiresAt: performance.now() / 1000 + 2.4 };
+          this.emitHudNotice(`UFO BONUS +${points}`, 'bonus', 2200);
           this.sessionRecorder.recordEvent('ufo_bonus', { label: bonus.label, score: points });
           continue;
         }
@@ -951,7 +965,14 @@ export class Game {
         shotsFired: dfState?.shotsFired ?? 0,
         shotsHit: dfState?.shotsHit ?? 0,
         bonusNotice:
-          this.bonusNotice && performance.now() / 1000 < this.bonusNotice.expiresAt ? this.bonusNotice.text : null,
+          this.bonusNotice && performance.now() / 1000 < this.bonusNotice.expiresAt
+            ? {
+                id: this.bonusNotice.id,
+                text: this.bonusNotice.text,
+                tone: this.bonusNotice.tone,
+                durationMs: this.bonusNotice.durationMs,
+              }
+            : null,
         missionTitle: modeMeta.title,
         missionSubtitle: currentMap.storyName ?? currentMap.name,
         objectiveLabel: modeMeta.objectiveLabel,

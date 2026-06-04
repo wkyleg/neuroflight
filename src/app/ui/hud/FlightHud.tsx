@@ -1,6 +1,7 @@
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameMode } from '@/game/types.ts';
+import type { FlightHudNotice } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
@@ -21,7 +22,9 @@ const MODE_HINTS: Partial<Record<GameMode, { title: string; body: string }>> = {
   },
 };
 
-const ALTITUDE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 55, smoothing: 0.36, deadband: 1 };
+const SPEED_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 7, smoothing: 0.28, deadband: 0.8 };
+const ALTITUDE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 38, smoothing: 0.24, deadband: 2 };
+const THROTTLE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 0.035, smoothing: 0.28, deadband: 0.006 };
 const SCORE_DISPLAY_OPTIONS: StableNumberOptions = { maxStep: 140, smoothing: 0.42, deadband: 1 };
 
 export function shouldShowInitialHelp(): boolean {
@@ -57,6 +60,32 @@ function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
     const timer = window.setInterval(() => setDisplay(latest.current), intervalMs);
     return () => window.clearInterval(timer);
   }, [intervalMs]);
+
+  return display;
+}
+
+function useDwelledDisplayValue<T>(value: T, dwellMs: number, isEqual: (a: T, b: T) => boolean = Object.is): T {
+  const [display, setDisplay] = useState(value);
+  const displayRef = useRef(value);
+  const pendingRef = useRef<{ value: T; timer: number | null } | null>(null);
+
+  useEffect(() => {
+    if (isEqual(displayRef.current, value)) {
+      if (pendingRef.current?.timer != null) window.clearTimeout(pendingRef.current.timer);
+      pendingRef.current = null;
+      return;
+    }
+
+    if (pendingRef.current?.timer != null) window.clearTimeout(pendingRef.current.timer);
+    const timer = window.setTimeout(() => {
+      displayRef.current = value;
+      pendingRef.current = null;
+      setDisplay(value);
+    }, dwellMs);
+    pendingRef.current = { value, timer };
+
+    return () => window.clearTimeout(timer);
+  }, [dwellMs, isEqual, value]);
 
   return display;
 }
@@ -312,16 +341,16 @@ function HealthBar({
   large?: boolean;
 }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  const barW = large ? 170 : 140;
-  const barH = large ? 12 : 10;
-  const fontSize = large ? 12 : 11;
+  const barW = large ? 170 : 118;
+  const barH = large ? 12 : 8;
+  const fontSize = large ? 12 : 10;
   return (
-    <div className="flex items-center" style={{ gap: 12 }}>
+    <div className="flex items-center" style={{ gap: large ? 12 : 8 }}>
       <span
         className="tracking-widest text-right font-bold"
         style={{
           color: 'var(--color-text-secondary)',
-          width: large ? 54 : 64,
+          width: large ? 54 : 52,
           fontFamily: 'var(--font-instrument)',
           fontSize,
         }}
@@ -342,7 +371,7 @@ function HealthBar({
           style={{ width: `${pct}%`, background: pct > 40 ? color : '#ff4444' }}
         />
       </div>
-      <span className="font-bold tabular-nums" style={{ color, width: 40, fontSize }}>
+      <span className="font-bold tabular-nums" style={{ color, width: large ? 40 : 32, fontSize }}>
         {Math.round(value)}
       </span>
     </div>
@@ -443,33 +472,24 @@ function MissionCard({
 }) {
   const pct = goal > 0 ? Math.max(0, Math.min(100, (progress / goal) * 100)) : 0;
   return (
-    <div
-      className="premium-glass flight-mission-card border"
-      style={{
-        width: '100%',
-        background: 'linear-gradient(135deg, rgba(5,22,28,0.72), rgba(255,255,255,0.065))',
-        borderColor: `${accent}55`,
-        backdropFilter: 'blur(20px) saturate(1.55)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.55)',
-      }}
-    >
+    <div className="flight-mission-card" style={{ width: '100%', borderColor: `${accent}55` }}>
       <div
         className="text-[10px] uppercase tracking-widest"
         style={{ color: accent, fontFamily: 'var(--font-instrument)' }}
       >
         {title}
       </div>
-      <div className="waypoint-serif mt-1 text-sm font-bold" style={{ color: '#fff8e2' }}>
+      <div className="waypoint-serif mt-0.5 text-xs font-bold leading-4" style={{ color: '#fff8e2' }}>
         {subtitle}
       </div>
-      <div className="waypoint-serif mt-2 text-sm font-bold leading-5" style={{ color: '#ffffff' }}>
+      <div className="waypoint-serif mt-1 text-xs font-bold leading-4" style={{ color: '#ffffff' }}>
         {objective}
       </div>
-      <div className="waypoint-serif mt-1 min-h-5 text-[11px] leading-4" style={{ color: 'rgba(240,236,224,0.68)' }}>
+      <div className="waypoint-serif mt-0.5 text-[10px] leading-3" style={{ color: 'rgba(240,236,224,0.68)' }}>
         {subtext}
       </div>
       {goal > 0 && (
-        <div className="mt-3">
+        <div className="mt-2">
           <div className="flex justify-between text-[9px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
             <span>Progress</span>
             <span>
@@ -489,13 +509,13 @@ function AdaptiveGauge({ label, value, color }: { label: string; value: number; 
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
     <div style={{ minWidth: 0 }}>
-      <div className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
+      <div className="text-[8px] uppercase tracking-widest" style={{ color: 'rgba(240,236,224,0.52)' }}>
         {label}
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+      <div className="mt-0.5 h-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <div className="mt-1 text-xs font-bold tabular-nums" style={{ color }}>
+      <div className="mt-0.5 text-[10px] font-bold tabular-nums leading-none" style={{ color }}>
         {pct}%
       </div>
     </div>
@@ -514,21 +534,14 @@ function InstrumentTile({
   accent?: string;
 }) {
   return (
-    <div
-      className="premium-glass flight-instrument-tile border"
-      style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
-        borderColor: 'rgba(255,248,220,0.16)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
-      }}
-    >
-      <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+    <div className="flight-instrument-tile">
+      <div className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
         {label}
       </div>
-      <div className="mt-1 text-xl font-black tabular-nums" style={{ color: accent }}>
+      <div className="mt-0.5 text-base font-black tabular-nums leading-none" style={{ color: accent }}>
         {value}
         {unit && (
-          <span className="ml-1 text-xs font-bold" style={{ color: 'rgba(255,246,220,0.62)' }}>
+          <span className="ml-1 text-[10px] font-bold" style={{ color: 'rgba(255,246,220,0.62)' }}>
             {unit}
           </span>
         )}
@@ -540,23 +553,19 @@ function InstrumentTile({
 function ThrottleInstrument({ value }: { value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
-    <div
-      className="premium-glass flight-instrument-tile border"
-      style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
-        borderColor: 'rgba(255,248,220,0.16)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0,0,0,0.16)',
-      }}
-    >
+    <div className="flight-instrument-tile">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+        <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
           Throttle
         </span>
-        <span className="text-lg font-black tabular-nums" style={{ color: pct > 82 ? '#facc15' : '#5eead4' }}>
+        <span
+          className="text-sm font-black tabular-nums leading-none"
+          style={{ color: pct > 82 ? '#facc15' : '#5eead4' }}
+        >
           {pct}%
         </span>
       </div>
-      <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: 'rgba(0,0,0,0.24)' }}>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(0,0,0,0.22)' }}>
         <div
           className="h-full rounded-full transition-all duration-200"
           style={{
@@ -660,53 +669,55 @@ function TouchFlightStick({
   );
 }
 
-function KillFeed({ kills, deaths, bonusNotice }: { kills: number; deaths: number; bonusNotice: string | null }) {
-  const [lastKills, setLastKills] = useState(0);
-  const [lastDeaths, setLastDeaths] = useState(0);
-  const [message, setMessage] = useState<string | null>(null);
+const NOTICE_TONE_STYLES: Record<FlightHudNotice['tone'], { color: string; border: string; glow: string }> = {
+  hit: { color: '#ffbc73', border: 'rgba(255,184,107,0.42)', glow: 'rgba(255,184,107,0.22)' },
+  win: { color: '#7cff9a', border: 'rgba(124,255,154,0.42)', glow: 'rgba(94,234,212,0.22)' },
+  bonus: { color: '#c4b5fd', border: 'rgba(196,181,253,0.46)', glow: 'rgba(168,85,247,0.26)' },
+  reset: { color: '#ffd36a', border: 'rgba(255,211,106,0.44)', glow: 'rgba(251,113,133,0.18)' },
+};
+
+function FlightEventNotice({ notice }: { notice: FlightHudNotice | null }) {
+  const [displayNotice, setDisplayNotice] = useState<FlightHudNotice | null>(null);
+  const noticeRef = useRef<FlightHudNotice | null>(null);
+  const noticeId = notice?.id ?? null;
 
   useEffect(() => {
-    if (!bonusNotice) return;
-    setMessage(bonusNotice);
-    const t = setTimeout(() => setMessage(null), 2200);
-    return () => clearTimeout(t);
-  }, [bonusNotice]);
+    noticeRef.current = notice;
+  }, [notice]);
 
   useEffect(() => {
-    if (kills > lastKills) {
-      setMessage('RIVAL DOWN +1 WIN');
-      setLastKills(kills);
-      const t = setTimeout(() => setMessage(null), 2000);
-      return () => clearTimeout(t);
+    if (noticeId === null) {
+      setDisplayNotice(null);
+      return;
     }
-  }, [kills, lastKills]);
-
-  useEffect(() => {
-    if (deaths > lastDeaths) {
-      setMessage('RESET AND RALLY');
-      setLastDeaths(deaths);
-      const t = setTimeout(() => setMessage(null), 2000);
-      return () => clearTimeout(t);
+    const activeNotice = noticeRef.current;
+    if (!activeNotice) {
+      setDisplayNotice(null);
+      return;
     }
-  }, [deaths, lastDeaths]);
+    setDisplayNotice(activeNotice);
+    const timer = window.setTimeout(() => setDisplayNotice(null), activeNotice.durationMs);
+    return () => window.clearTimeout(timer);
+  }, [noticeId]);
 
-  if (!message) return null;
+  if (!displayNotice) return null;
+
+  const style = NOTICE_TONE_STYLES[displayNotice.tone];
 
   return (
     <div
-      className="premium-glass-strong absolute top-24 left-1/2 -translate-x-1/2 text-sm font-black tracking-widest px-8 py-4 rounded-xl"
+      className={`premium-glass-strong flight-event-toast flight-event-toast-${displayNotice.tone} text-xs font-black tracking-widest`}
       style={{
-        color: message.includes('DOWN') || message.includes('UFO') ? '#7cff9a' : '#ffb86b',
-        background: 'linear-gradient(180deg, rgba(2,18,20,0.78), rgba(4,8,18,0.62))',
-        border: `1px solid ${
-          message.includes('DOWN') || message.includes('UFO') ? 'rgba(124,255,154,0.38)' : 'rgba(255,184,107,0.34)'
-        }`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 32px rgba(0,0,0,0.28), 0 0 22px rgba(94,234,212,0.16)',
+        color: style.color,
+        background:
+          'radial-gradient(circle at 30% 0%, rgba(255,255,255,0.2), transparent 44%), linear-gradient(180deg, rgba(30,24,13,0.82), rgba(6,18,20,0.7))',
+        border: `1px solid ${style.border}`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 14px 34px rgba(0,0,0,0.28), 0 0 26px ${style.glow}`,
         backdropFilter: 'blur(24px) saturate(1.9)',
         WebkitBackdropFilter: 'blur(24px) saturate(1.9)',
       }}
     >
-      {message}
+      {displayNotice.text}
     </div>
   );
 }
@@ -822,9 +833,9 @@ export function FlightHud() {
     e.stopPropagation();
   }, []);
 
-  const displaySpeed = useThrottledDisplayValue(hud.speed, 280);
-  const displayAltitude = useStableNumberDisplayValue(hud.altitude, 90, ALTITUDE_DISPLAY_OPTIONS);
-  const displayThrottle = useThrottledDisplayValue(hud.throttle, 260);
+  const displaySpeed = useStableNumberDisplayValue(hud.speed, 150, SPEED_DISPLAY_OPTIONS);
+  const displayAltitude = useStableNumberDisplayValue(hud.altitude, 140, ALTITUDE_DISPLAY_OPTIONS);
+  const displayThrottle = useStableNumberDisplayValue(hud.throttle, 150, THROTTLE_DISPLAY_OPTIONS);
   const displayHeading = useThrottledDisplayValue(hud.heading, 360);
   const displayComposure = useThrottledDisplayValue(hud.composure, 1000);
   const displayLoad = useThrottledDisplayValue(hud.neuroLoad, 1000);
@@ -834,9 +845,11 @@ export function FlightHud() {
   const displayKills = useThrottledDisplayValue(hud.kills, 260);
   const displayDeaths = useThrottledDisplayValue(hud.deaths, 260);
   const displayElapsedMs = useThrottledDisplayValue(hud.elapsedMs, 1000);
-  const displayObjectiveText = useThrottledDisplayValue(hud.objectiveText, 700);
-  const displayObjectiveSubtext = useThrottledDisplayValue(hud.objectiveSubtext, 900);
-  const displayObjectiveProgress = useThrottledDisplayValue(hud.objectiveProgress, 320);
+  const displayMissionSubtitle = useDwelledDisplayValue(hud.missionSubtitle, 800);
+  const displayObjectiveText = useDwelledDisplayValue(hud.objectiveText, 850);
+  const displayObjectiveSubtext = useDwelledDisplayValue(hud.objectiveSubtext, 1050);
+  const displayObjectiveProgress = useDwelledDisplayValue(Math.max(0, Math.round(hud.objectiveProgress)), 520);
+  const displayObjectiveGoal = useDwelledDisplayValue(Math.max(0, Math.round(hud.objectiveGoal)), 520);
   const displayNextRingDir = useSmoothedDirectionValue(hud.nextRingDir);
   const displayNextObjectiveDir = useSmoothedDirectionValue(hud.nextObjectiveDir);
   const displayEnemyDir = useSmoothedDirectionValue(hud.enemyDir);
@@ -862,21 +875,20 @@ export function FlightHud() {
         <>
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
-          <KillFeed kills={hud.kills} deaths={hud.deaths} bonusNotice={hud.bonusNotice} />
+          <FlightEventNotice notice={hud.bonusNotice} />
           {displayEnemyDir && <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />}
         </>
       )}
 
       <div
-        className="absolute left-0 right-0 top-0 flex items-start justify-between px-5 pt-4"
+        className="flight-top-strip absolute left-0 right-0 top-0"
         style={{
           background: 'linear-gradient(to bottom, rgba(0,9,18,0.38), transparent)',
         }}
       >
-        <div />
         {isDogfight && (
           <div
-            className="premium-glass text-center rounded-xl border px-5 py-2"
+            className="premium-glass flight-dogfight-counter text-center rounded-xl border"
             style={{
               background: 'linear-gradient(135deg, rgba(16,48,58,0.58), rgba(7,20,28,0.46))',
               borderColor: 'rgba(255,255,255,0.16)',
@@ -902,21 +914,20 @@ export function FlightHud() {
             </div>
           </div>
         )}
-        <div className="pointer-events-auto flex items-start gap-3">
+        <div className="flight-top-actions pointer-events-auto flex items-start gap-2">
           <div
-            className="premium-glass rounded-xl border px-5 py-3 text-right"
+            className="premium-glass flight-score-panel rounded-xl border text-center"
             style={{
               background: 'linear-gradient(135deg, rgba(20,58,68,0.58), rgba(7,20,28,0.56))',
               borderColor: 'rgba(255,255,255,0.18)',
               backdropFilter: 'blur(24px) saturate(1.75)',
               WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
-              minWidth: 130,
             }}
           >
-            <div className="text-[10px] tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+            <div className="text-[9px] tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
               {hud.scoreLabel}
             </div>
-            <div className="text-2xl font-black tabular-nums" style={{ color: modeMeta.accent }}>
+            <div className="text-xl font-black tabular-nums leading-none" style={{ color: modeMeta.accent }}>
               {Math.round(displayScore)}
             </div>
           </div>
@@ -963,8 +974,156 @@ export function FlightHud() {
 
       <TouchFlightStick onAxes={setTouchAxes} onRelease={reactivateControls} />
 
+      <div className="flight-control-rail flight-controls-stack pointer-events-auto" onPointerDown={stopHudPointer}>
+        <button
+          type="button"
+          aria-label="Toggle sound"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleSound();
+          }}
+          className="glass-button flight-control-button text-xs font-black tracking-widest"
+          style={{
+            background: soundEnabled
+              ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
+              : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
+            border: soundEnabled ? '1px solid rgba(102,183,255,0.5)' : '1px solid rgba(255,255,255,0.16)',
+            color: soundEnabled ? '#9bd8ff' : 'rgba(255,246,220,0.5)',
+          }}
+        >
+          {soundEnabled ? 'SOUND ON' : 'SOUND OFF'}
+        </button>
+        <button
+          type="button"
+          aria-label="Throttle up"
+          onPointerDown={(e) => {
+            stopMomentaryPointer(e);
+            setThrottle(true, false);
+          }}
+          onPointerUp={(e) => {
+            stopMomentaryPointer(e);
+            setThrottle(false, false);
+            reactivateControls();
+          }}
+          onPointerLeave={() => {
+            setThrottle(false, false);
+            reactivateControls();
+          }}
+          className="glass-button flight-control-button text-xl font-black"
+          style={{
+            background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
+            border: '1px solid rgba(94,234,212,0.42)',
+            color: 'var(--color-accent-cyan)',
+          }}
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          aria-label="Throttle down"
+          onPointerDown={(e) => {
+            stopMomentaryPointer(e);
+            setThrottle(false, true);
+          }}
+          onPointerUp={(e) => {
+            stopMomentaryPointer(e);
+            setThrottle(false, false);
+            reactivateControls();
+          }}
+          onPointerLeave={() => {
+            setThrottle(false, false);
+            reactivateControls();
+          }}
+          className="glass-button flight-control-button text-xl font-black"
+          style={{
+            background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
+            border: '1px solid rgba(94,234,212,0.36)',
+            color: 'var(--color-accent-cyan)',
+          }}
+        >
+          ▼
+        </button>
+        <button
+          type="button"
+          aria-label="Boost"
+          onPointerDown={(e) => {
+            stopMomentaryPointer(e);
+            setBoost(true);
+          }}
+          onPointerUp={(e) => {
+            stopMomentaryPointer(e);
+            setBoost(false);
+            reactivateControls();
+          }}
+          onPointerLeave={() => {
+            setBoost(false);
+            reactivateControls();
+          }}
+          className="glass-button flight-control-button text-xs font-black tracking-widest"
+          style={{
+            background: 'linear-gradient(180deg, rgba(83,68,28,0.96), rgba(38,35,23,0.96))',
+            border: '1px solid rgba(250,204,21,0.48)',
+            color: 'var(--color-accent-gold)',
+          }}
+        >
+          BOOST
+        </button>
+        <button
+          type="button"
+          aria-label="Brake"
+          onPointerDown={(e) => {
+            stopMomentaryPointer(e);
+            setBrake(true);
+          }}
+          onPointerUp={(e) => {
+            stopMomentaryPointer(e);
+            setBrake(false);
+            reactivateControls();
+          }}
+          onPointerLeave={() => {
+            setBrake(false);
+            reactivateControls();
+          }}
+          className="glass-button flight-control-button text-xs font-black tracking-widest"
+          style={{
+            background: 'linear-gradient(180deg, rgba(75,34,32,0.96), rgba(35,26,24,0.96))',
+            border: '1px solid rgba(255,107,86,0.5)',
+            color: '#ff745f',
+          }}
+        >
+          BRAKE
+        </button>
+        {isDogfight && (
+          <button
+            type="button"
+            aria-label="Fire"
+            onPointerDown={(e) => {
+              stopMomentaryPointer(e);
+              setFire(true);
+            }}
+            onPointerUp={(e) => {
+              stopMomentaryPointer(e);
+              setFire(false);
+              reactivateControls();
+            }}
+            onPointerLeave={() => {
+              setFire(false);
+              reactivateControls();
+            }}
+            className="glass-button flight-control-button text-xs font-black tracking-widest"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,226,145,0.62), rgba(94,234,212,0.28))',
+              border: '2px solid rgba(255,224,144,0.76)',
+              color: '#fff2b8',
+            }}
+          >
+            FIRE
+          </button>
+        )}
+      </div>
+
       <div
-        className="premium-glass-strong flight-cockpit-shell absolute pointer-events-auto"
+        className="premium-glass-strong flight-cockpit-shell pointer-events-auto"
         onPointerDown={stopHudPointer}
         style={{
           background: 'linear-gradient(135deg, rgba(19,82,100,0.6), rgba(10,28,36,0.64) 45%, rgba(129,94,40,0.34))',
@@ -979,11 +1138,11 @@ export function FlightHud() {
           <div className="flight-zone-mission min-w-0">
             <MissionCard
               title={hud.missionTitle}
-              subtitle={hud.missionSubtitle}
+              subtitle={displayMissionSubtitle}
               objective={displayObjectiveText}
               subtext={displayObjectiveSubtext}
               progress={displayObjectiveProgress}
-              goal={hud.objectiveGoal}
+              goal={displayObjectiveGoal}
               accent={modeMeta.accent}
             />
           </div>
@@ -995,40 +1154,26 @@ export function FlightHud() {
               <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
               <ThrottleInstrument value={displayThrottle} />
             </div>
-            <div
-              className="premium-glass flight-adaptive-panel border"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(94,234,212,0.06))',
-                borderColor: 'rgba(255,248,220,0.13)',
-                backdropFilter: 'blur(18px) saturate(1.5)',
-                WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
-              }}
-            >
-              <div className="mb-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.58)' }}>
+            <div className="flight-cockpit-section flight-adaptive-panel">
+              <div
+                className="mb-1.5 text-[9px] uppercase tracking-[0.16em]"
+                style={{ color: 'rgba(255,246,220,0.58)' }}
+              >
                 Adaptive signals
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <AdaptiveGauge label="Composure" value={displayComposure} color="#5eead4" />
                 <AdaptiveGauge label="Load" value={displayLoad} color="#fb7185" />
                 <AdaptiveGauge label="Flow" value={displayFlow} color="#facc15" />
               </div>
-              <div className="mt-2 text-xs leading-4" style={{ color: 'rgba(255,246,220,0.68)' }}>
+              <div className="mt-1 text-[11px] leading-3" style={{ color: 'rgba(255,246,220,0.68)' }}>
                 {displayPrompt}
               </div>
             </div>
             {isDogfight && (
-              <div
-                className="premium-glass flight-adaptive-panel border"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(0,16,30,0.42), rgba(255,184,107,0.06))',
-                  borderColor: 'rgba(255,184,107,0.22)',
-                  backdropFilter: 'blur(18px) saturate(1.5)',
-                  WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
-                }}
-              >
-                <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" large />
-                <div style={{ height: 8 }} />
-                <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff6b6b" large />
+              <div className="flight-cockpit-section flight-health-strip">
+                <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" />
+                <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff6b6b" />
               </div>
             )}
           </div>
@@ -1036,155 +1181,6 @@ export function FlightHud() {
           <div className="flight-zone-bio flex min-w-0 flex-col gap-2">
             <NeuroConnectBanner variant="dock" />
             <NeuroCockpit embedded />
-          </div>
-
-          <div className="flight-zone-controls flight-controls-stack">
-            <button
-              type="button"
-              aria-label="Toggle sound"
-              onPointerDown={stopHudPointer}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleSound();
-              }}
-              className="glass-button flight-control-button text-xs font-black tracking-widest"
-              style={{
-                background: soundEnabled
-                  ? 'linear-gradient(180deg, rgba(57,73,94,0.94), rgba(22,38,54,0.94))'
-                  : 'linear-gradient(180deg, rgba(45,50,55,0.8), rgba(22,24,27,0.8))',
-                border: soundEnabled ? '1px solid rgba(102,183,255,0.5)' : '1px solid rgba(255,255,255,0.16)',
-                color: soundEnabled ? '#9bd8ff' : 'rgba(255,246,220,0.5)',
-              }}
-            >
-              {soundEnabled ? 'SOUND ON' : 'SOUND OFF'}
-            </button>
-            <button
-              type="button"
-              aria-label="Throttle up"
-              onPointerDown={(e) => {
-                stopMomentaryPointer(e);
-                setThrottle(true, false);
-              }}
-              onPointerUp={(e) => {
-                stopMomentaryPointer(e);
-                setThrottle(false, false);
-                reactivateControls();
-              }}
-              onPointerLeave={() => {
-                setThrottle(false, false);
-                reactivateControls();
-              }}
-              className="glass-button flight-control-button text-xl font-black"
-              style={{
-                background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
-                border: '1px solid rgba(94,234,212,0.42)',
-                color: 'var(--color-accent-cyan)',
-              }}
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              aria-label="Throttle down"
-              onPointerDown={(e) => {
-                stopMomentaryPointer(e);
-                setThrottle(false, true);
-              }}
-              onPointerUp={(e) => {
-                stopMomentaryPointer(e);
-                setThrottle(false, false);
-                reactivateControls();
-              }}
-              onPointerLeave={() => {
-                setThrottle(false, false);
-                reactivateControls();
-              }}
-              className="glass-button flight-control-button text-xl font-black"
-              style={{
-                background: 'linear-gradient(180deg, rgba(30,67,68,0.94), rgba(17,39,45,0.94))',
-                border: '1px solid rgba(94,234,212,0.36)',
-                color: 'var(--color-accent-cyan)',
-              }}
-            >
-              ▼
-            </button>
-            <button
-              type="button"
-              aria-label="Boost"
-              onPointerDown={(e) => {
-                stopMomentaryPointer(e);
-                setBoost(true);
-              }}
-              onPointerUp={(e) => {
-                stopMomentaryPointer(e);
-                setBoost(false);
-                reactivateControls();
-              }}
-              onPointerLeave={() => {
-                setBoost(false);
-                reactivateControls();
-              }}
-              className="glass-button flight-control-button text-xs font-black tracking-widest"
-              style={{
-                background: 'linear-gradient(180deg, rgba(83,68,28,0.96), rgba(38,35,23,0.96))',
-                border: '1px solid rgba(250,204,21,0.48)',
-                color: 'var(--color-accent-gold)',
-              }}
-            >
-              BOOST
-            </button>
-            <button
-              type="button"
-              aria-label="Brake"
-              onPointerDown={(e) => {
-                stopMomentaryPointer(e);
-                setBrake(true);
-              }}
-              onPointerUp={(e) => {
-                stopMomentaryPointer(e);
-                setBrake(false);
-                reactivateControls();
-              }}
-              onPointerLeave={() => {
-                setBrake(false);
-                reactivateControls();
-              }}
-              className="glass-button flight-control-button text-xs font-black tracking-widest"
-              style={{
-                background: 'linear-gradient(180deg, rgba(75,34,32,0.96), rgba(35,26,24,0.96))',
-                border: '1px solid rgba(255,107,86,0.5)',
-                color: '#ff745f',
-              }}
-            >
-              BRAKE
-            </button>
-            {isDogfight && (
-              <button
-                type="button"
-                aria-label="Fire"
-                onPointerDown={(e) => {
-                  stopMomentaryPointer(e);
-                  setFire(true);
-                }}
-                onPointerUp={(e) => {
-                  stopMomentaryPointer(e);
-                  setFire(false);
-                  reactivateControls();
-                }}
-                onPointerLeave={() => {
-                  setFire(false);
-                  reactivateControls();
-                }}
-                className="glass-button flight-control-button text-xs font-black tracking-widest"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(255,226,145,0.62), rgba(94,234,212,0.28))',
-                  border: '2px solid rgba(255,224,144,0.76)',
-                  color: '#fff2b8',
-                }}
-              >
-                FIRE
-              </button>
-            )}
           </div>
         </div>
       </div>

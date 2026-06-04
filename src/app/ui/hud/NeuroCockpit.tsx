@@ -89,7 +89,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
       return {
         state: 'ready',
         primaryLabel: 'CAMERA',
-        guidance: 'Camera signal ready',
+        guidance: 'Signal ready',
         detail: 'Signal proxies are tracking with useful confidence.',
         tone: 'ready',
         showCameraMetrics: true,
@@ -100,8 +100,8 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
       return {
         state: 'warming',
         primaryLabel: 'CAMERA',
-        guidance: 'Camera warming up',
-        detail: 'Face the camera while the signal settles.',
+        guidance: 'Camera warming',
+        detail: 'Center your face and hold steady while the signal settles.',
         tone: 'warming',
         showCameraMetrics: true,
         showEegAdvanced: false,
@@ -110,7 +110,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
     return {
       state: 'low-confidence',
       primaryLabel: 'CAMERA',
-      guidance: 'More light or steadier face',
+      guidance: 'More light',
       detail: 'Low-confidence moments stay out of signal insights.',
       tone: 'warning',
       showCameraMetrics: true,
@@ -168,18 +168,18 @@ function useThrottledDisplayValue<T>(value: T, intervalMs: number): T {
 function MetricChip({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div
-      className="rounded-md border"
+      className="neuro-metric-chip"
       style={{
-        minWidth: 74,
-        padding: '7px 9px',
-        background: 'rgba(255,255,255,0.06)',
-        borderColor: 'rgba(255,255,255,0.1)',
+        minWidth: 54,
       }}
     >
-      <div className="text-[9px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
+      <div className="text-[8px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
         {label}
       </div>
-      <div className="text-sm font-bold tabular-nums" style={{ color: tone ?? 'var(--color-text-primary)' }}>
+      <div
+        className="text-xs font-bold tabular-nums leading-tight"
+        style={{ color: tone ?? 'var(--color-text-primary)' }}
+      >
         {value}
       </div>
     </div>
@@ -206,7 +206,7 @@ function SignalBars({ value }: { value: number }) {
   );
 }
 
-function CameraPreview({ active }: { active: boolean }) {
+function CameraPreview({ active, compact = false }: { active: boolean; compact?: boolean }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -238,11 +238,10 @@ function CameraPreview({ active }: { active: boolean }) {
   return (
     <div
       ref={hostRef}
-      className="overflow-hidden rounded-md border"
+      className="neuro-camera-preview overflow-hidden"
       style={{
-        width: 76,
-        height: 46,
-        background: 'linear-gradient(135deg, rgba(94,234,212,0.18), rgba(250,204,21,0.12))',
+        width: compact ? 52 : 76,
+        height: compact ? 34 : 46,
         borderColor: active ? 'rgba(94,234,212,0.36)' : 'rgba(255,255,255,0.1)',
       }}
     >
@@ -253,6 +252,17 @@ function CameraPreview({ active }: { active: boolean }) {
       )}
     </div>
   );
+}
+
+function signalHintForState(state: BiofeedbackDisplayState, signalQuality: number): string {
+  if (state.state === 'permission-denied') return 'Check browser camera access';
+  if (state.state === 'low-confidence') return 'More light or a steadier face';
+  if (state.state === 'warming')
+    return signalQuality < 0.45 ? 'Center face in the camera' : 'Hold steady while signal settles';
+  if (state.state === 'ready') return 'Signal proxies are tracking';
+  if (state.state === 'simulated') return 'Simulation is driving practice signals';
+  if (state.state === 'eeg-active') return 'Headset active; camera optional';
+  return 'Fly normally; camera optional';
 }
 
 interface NeuroCockpitProps {
@@ -294,6 +304,9 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const displayState = useThrottledDisplayValue(rawDisplayState, 900);
 
   const tone = toneColor(displayState.tone, displaySignalQuality);
+  const activePreview = connection.cameraActive && !connection.error.camera;
+  const previewExpanded = previewOpen && activePreview;
+  const signalHint = signalHintForState(displayState, displaySignalQuality);
   const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';
   const hrv = displayHrv !== null ? `${Math.round(displayHrv)}ms` : '--';
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
@@ -303,27 +316,36 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
 
   return (
     <div
-      className={embedded ? 'pointer-events-auto' : 'absolute left-6 bottom-6 pointer-events-auto'}
+      className={
+        embedded
+          ? 'neuro-cockpit neuro-cockpit-embedded pointer-events-auto'
+          : 'neuro-cockpit absolute left-6 bottom-6 pointer-events-auto'
+      }
       style={{
         width: embedded ? '100%' : showAdvanced ? 430 : 342,
         fontFamily: 'var(--font-instrument)',
       }}
     >
       <div
-        className="premium-glass rounded-lg border shadow-lg"
+        className={`neuro-cockpit-panel ${
+          embedded ? 'neuro-cockpit-panel-flat' : 'premium-glass rounded-lg border shadow-lg'
+        }`}
         style={{
-          background: 'linear-gradient(135deg, rgba(7,30,38,0.74), rgba(255,255,255,0.07), rgba(18,26,26,0.58))',
-          borderColor: 'rgba(94,234,212,0.22)',
-          backdropFilter: 'blur(24px) saturate(1.7)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.7)',
-          boxShadow:
-            'inset 0 1px 0 rgba(255,255,255,0.24), inset 0 -14px 34px rgba(0,0,0,0.12), 0 14px 34px rgba(0,0,0,0.26)',
-          padding: 13,
+          background: embedded
+            ? undefined
+            : 'linear-gradient(135deg, rgba(7,30,38,0.74), rgba(255,255,255,0.07), rgba(18,26,26,0.58))',
+          borderColor: embedded ? undefined : 'rgba(94,234,212,0.22)',
+          backdropFilter: embedded ? undefined : 'blur(24px) saturate(1.7)',
+          WebkitBackdropFilter: embedded ? undefined : 'blur(24px) saturate(1.7)',
+          boxShadow: embedded
+            ? undefined
+            : 'inset 0 1px 0 rgba(255,255,255,0.24), inset 0 -14px 34px rgba(0,0,0,0.12), 0 14px 34px rgba(0,0,0,0.26)',
+          padding: embedded ? 0 : 13,
         }}
       >
-        <div className="flex items-center justify-between" style={{ gap: 10 }}>
-          <div className="flex items-center" style={{ gap: 10 }}>
-            <CameraPreview active={previewOpen && connection.cameraActive} />
+        <div className="flex items-center justify-between" style={{ gap: embedded ? 8 : 10 }}>
+          <div className="flex items-center" style={{ gap: embedded ? 8 : 10 }}>
+            <CameraPreview active={activePreview} compact={embedded && !previewExpanded} />
             <div>
               <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
                 Camera biofeedback
@@ -338,8 +360,13 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
                 {displayState.guidance}
               </div>
               <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                {displayState.detail}
+                {embedded ? signalHint : displayState.detail}
               </div>
+              {!embedded && (
+                <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                  {signalHint}
+                </div>
+              )}
             </div>
           </div>
 
@@ -347,27 +374,21 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
             <button
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
-              className="rounded-md border text-[10px] font-bold"
+              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
               style={{
-                minHeight: 30,
-                padding: '5px 8px',
                 borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
                 color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
-                background: 'rgba(255,255,255,0.05)',
               }}
             >
-              CAM
+              {previewOpen ? 'MIN' : 'CAM'}
             </button>
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="rounded-md border text-[10px] font-bold"
+              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
               style={{
-                minHeight: 30,
-                padding: '5px 8px',
                 borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
                 color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
-                background: 'rgba(255,255,255,0.05)',
               }}
             >
               {showAdvanced ? 'LESS' : 'MORE'}
@@ -375,7 +396,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-4" style={{ gap: 8 }}>
+        <div className="mt-2 grid grid-cols-4" style={{ gap: embedded ? 4 : 8 }}>
           <MetricChip
             label="BPM"
             value={displayState.showCameraMetrics ? bpm : '--'}

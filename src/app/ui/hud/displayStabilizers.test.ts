@@ -13,4 +13,8 @@ describe('nextStableNumber', () => {
   it('can animate score deltas without snapping to the final value', () => {
     expect(nextStableNumber(900, 1650, { maxStep: 140, smoothing: 0.42 })).toBe(1040);
   });
+
+  it('can ease small throttle values without jumping the display', () => {
+    expect(nextStableNumber(0.6, 1, { maxStep: 0.035, smoothing: 0.28, deadband: 0.006 })).toBeCloseTo(0.635);
+  });
 });

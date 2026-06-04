@@ -113,6 +113,19 @@ describe('gameStore', () => {
     expect(hud.aircraftId).toBe('storybook_biplane');
   });
 
+  it('updateHud() accepts structured flight notices', () => {
+    useGameStore.getState().updateHud({
+      bonusNotice: { id: 7, text: 'RIVAL HIT', tone: 'hit', durationMs: 1200 },
+    });
+
+    expect(useGameStore.getState().hud.bonusNotice).toEqual({
+      id: 7,
+      text: 'RIVAL HIT',
+      tone: 'hit',
+      durationMs: 1200,
+    });
+  });
+
   it('setLastSession() persists to sessionStorage', () => {
     const session = minimalSession({ score: 999, mode: 'combat' });
     useGameStore.getState().setLastSession(session);

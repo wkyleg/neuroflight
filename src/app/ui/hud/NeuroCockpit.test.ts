@@ -56,7 +56,7 @@ describe('getBiofeedbackDisplayState', () => {
     });
 
     expect(state.state).toBe('ready');
-    expect(state.guidance).toBe('Camera signal ready');
+    expect(state.guidance).toBe('Signal ready');
     expect(state.tone).toBe('ready');
   });
 
