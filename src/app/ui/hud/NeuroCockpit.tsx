@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNeuroConnection, useNeuroSignals } from '@/neuro/hooks.ts';
+import { useNeuroConnection, useNeuroSignals, useRppgSignal } from '@/neuro/hooks.ts';
+import type { RppgSignalSnapshot } from '@/neuro/rppgSignalTypes.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
 export type BiofeedbackDisplayStateKind = 'none' | 'permission-denied' | 'warming' | 'low-confidence' | 'ready';
@@ -97,6 +98,74 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
   };
 }
 
+export function getBiofeedbackDisplayStateFromGate(signal: RppgSignalSnapshot): BiofeedbackDisplayState {
+  switch (signal.status) {
+    case 'permission_needed':
+      return {
+        state: 'permission-denied',
+        primaryLabel: 'CAMERA',
+        guidance: 'Camera blocked',
+        detail: signal.userMessage,
+        tone: 'warning',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+    case 'ready':
+      return {
+        state: 'ready',
+        primaryLabel: 'CAMERA',
+        guidance: 'Signal ready',
+        detail: signal.userMessage,
+        tone: 'ready',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    case 'starting':
+    case 'warming':
+      return {
+        state: 'warming',
+        primaryLabel: 'CAMERA',
+        guidance: signal.status === 'starting' ? 'Starting camera' : 'Camera warming',
+        detail: signal.userMessage,
+        tone: 'warming',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    case 'weak':
+    case 'degraded':
+    case 'failed':
+      return {
+        state: 'low-confidence',
+        primaryLabel: 'CAMERA',
+        guidance: signal.status === 'failed' ? 'Unavailable' : 'Weak signal',
+        detail: signal.userMessage,
+        tone: 'warning',
+        showCameraMetrics: signal.status !== 'failed',
+        showEegAdvanced: false,
+      };
+    case 'behavior_only':
+      return {
+        state: 'none',
+        primaryLabel: 'OPTIONAL',
+        guidance: 'Behavior-only ready',
+        detail: signal.userMessage,
+        tone: 'neutral',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+    default:
+      return {
+        state: 'none',
+        primaryLabel: 'OPTIONAL',
+        guidance: 'Behavior-only ready',
+        detail: signal.userMessage,
+        tone: 'neutral',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+  }
+}
+
 function toneColor(tone: BiofeedbackDisplayTone, value: number): string {
   switch (tone) {
     case 'ready':
@@ -170,7 +239,7 @@ function SignalBars({ value }: { value: number }) {
   );
 }
 
-function CameraPreview({ active, compact = false }: { active: boolean; compact?: boolean }) {
+export function CameraPreview({ active, compact = false }: { active: boolean; compact?: boolean }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -234,42 +303,22 @@ interface NeuroCockpitProps {
 export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const neuro = useNeuroSignals();
   const connection = useNeuroConnection();
+  const { signal } = useRppgSignal();
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const displaySignalQuality = useThrottledDisplayValue(neuro.signalQuality, 1000);
-  const displayBpm = useThrottledDisplayValue(neuro.bpm, 1000);
-  const displayBpmQuality = useThrottledDisplayValue(neuro.bpmQuality, 1000);
   const displayHrv = useThrottledDisplayValue(neuro.hrvRmssd, 1000);
   const displayResp = useThrottledDisplayValue(neuro.respirationRate, 1000);
 
-  const rawDisplayState = useMemo(
-    () =>
-      getBiofeedbackDisplayState({
-        source: neuro.source,
-        cameraActive: connection.cameraActive,
-        eegConnected: connection.eegConnected,
-        mockEnabled: connection.mockEnabled,
-        signalQuality: displaySignalQuality,
-        bpmQuality: displayBpmQuality,
-        cameraError: connection.error.camera,
-      }),
-    [
-      neuro.source,
-      connection.cameraActive,
-      connection.eegConnected,
-      connection.mockEnabled,
-      connection.error.camera,
-      displaySignalQuality,
-      displayBpmQuality,
-    ],
-  );
+  const rawDisplayState = useMemo(() => getBiofeedbackDisplayStateFromGate(signal), [signal]);
   const displayState = useThrottledDisplayValue(rawDisplayState, 900);
 
-  const tone = toneColor(displayState.tone, displaySignalQuality);
+  const signalQuality = signal.coverageTrailing || displaySignalQuality;
+  const tone = toneColor(displayState.tone, signalQuality);
   const activePreview = connection.cameraActive && !connection.error.camera;
   const previewExpanded = previewOpen && activePreview;
   const signalHint = signalHintForState(displayState, displaySignalQuality);
-  const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';
+  const bpm = signal.displayBpm !== null ? Math.round(signal.displayBpm).toString() : '--';
   const hrv = displayHrv !== null ? `${Math.round(displayHrv)}ms` : '--';
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
@@ -316,7 +365,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
                 <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
                   {displayState.primaryLabel}
                 </span>
-                <SignalBars value={displaySignalQuality} />
+                <SignalBars value={signalQuality} />
               </div>
               <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
                 {displayState.guidance}
@@ -361,12 +410,12 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
         <div className="mt-2 grid grid-cols-4" style={{ gap: embedded ? 4 : 8 }}>
           <MetricChip
             label="BPM"
-            value={displayState.showCameraMetrics ? bpm : '--'}
-            tone={displayState.showCameraMetrics && displayBpmQuality > 0.4 ? '#fb7185' : undefined}
+            value={signal.displayBpm !== null ? bpm : '--'}
+            tone={signal.displayBpm !== null ? '#fb7185' : undefined}
           />
           <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
           <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
-          <MetricChip label="Sig" value={pct(displaySignalQuality)} tone={tone} />
+          <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
         </div>
 
         {showAdvanced && (

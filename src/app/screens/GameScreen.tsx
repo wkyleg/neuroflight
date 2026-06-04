@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { FlightHud } from '@/app/ui/hud/FlightHud.tsx';
+import { ReadinessOverlay } from '@/app/ui/hud/ReadinessOverlay.tsx';
 import { DEFAULT_AIRCRAFT_ID, getAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { Game } from '@/game/Game.ts';
 import { getModeMeta } from '@/game/modes.ts';
@@ -23,6 +24,7 @@ export function GameScreen() {
   const difficulty = parseDifficulty(searchParams.get('difficulty'));
   const tutorial = searchParams.get('tutorial') === '1';
   const [loading, setLoading] = useState(true);
+  const showReadiness = useGameStore((s) => s.hud.sessionPhase === 'readiness' && !s.hud.tutorial);
 
   const map = getMap(mapId);
   const aircraft = getAircraft(aircraftId);
@@ -103,6 +105,7 @@ export function GameScreen() {
       )}
 
       {!loading && <FlightHud />}
+      {!loading && !tutorial && showReadiness && <ReadinessOverlay />}
     </div>
   );
 }

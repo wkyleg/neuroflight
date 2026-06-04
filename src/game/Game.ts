@@ -332,6 +332,15 @@ export class Game {
     this.onSessionEnd = cb;
   }
 
+  resolveReadiness(): void {
+    this.sessionPhaseManager?.resolveReadiness();
+  }
+
+  continueBehaviorOnly(): void {
+    useNeuroStore.getState().disableCamera();
+    this.resolveReadiness();
+  }
+
   toggleMusic(): boolean {
     return this.toggleSound();
   }
@@ -557,7 +566,6 @@ export class Game {
     this.sessionRecorder.recordEvent('session_started', {
       label: this.tutorialMode ? 'Tutorial flight started' : 'Scored session started',
     });
-    this.sessionPhaseManager?.resolveReadiness();
     this.loop();
   }
 
@@ -1240,7 +1248,6 @@ export class Game {
     this.neuroAdaptationSystem.reset();
     this.tutorialDirector.reset();
     this.sessionPhaseManager?.reset();
-    this.sessionPhaseManager?.resolveReadiness();
     this.sessionPhase = this.sessionPhaseManager?.snapshot() ?? {
       ...this.sessionPhase,
       phase: 'warmup',
