@@ -360,6 +360,7 @@ export class Game {
     this.currentAircraftId = getAircraft(aircraftId).id;
     this.difficulty = difficulty;
     this.proceduralMusicSystem.setMode(mode);
+    this.proceduralMusicSystem.setSessionSeed(`${mapId}:${this.currentAircraftId}`);
     this.dogfightSpawnCursor = 0;
     this.zenRouteComplete = false;
     this.expeditionRouteComplete = false;

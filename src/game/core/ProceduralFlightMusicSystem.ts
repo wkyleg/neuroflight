@@ -2,6 +2,7 @@ import type * as ToneNamespace from 'tone';
 import type { NeuroAdaptationSnapshot } from '@/game/gameplay/NeuroAdaptationSystem.ts';
 import type { GameMode } from '@/game/types.ts';
 import { HeartTempoTracker, MODE_TEMPO_DEFAULTS } from './HeartTempoTracker.ts';
+import { euclideanRhythm, makeLcg, selectScale } from './musicMath.ts';
 
 export type ProceduralMusicEvent = 'ring' | 'fire' | 'hit' | 'win' | 'ufoBonus' | 'crash' | 'routeComplete';
 
@@ -25,7 +26,15 @@ interface ToneNodes {
   bell: ToneNamespace.FMSynth;
   shimmer: ToneNamespace.NoiseSynth;
   pulse: ToneNamespace.MembraneSynth;
+  kick: ToneNamespace.MembraneSynth;
+  snare: ToneNamespace.NoiseSynth;
+  hat: ToneNamespace.NoiseSynth;
   stinger: ToneNamespace.PolySynth;
+  binauralVolume: ToneNamespace.Volume;
+  binauralLeft: ToneNamespace.Oscillator;
+  binauralRight: ToneNamespace.Oscillator;
+  binauralLeftPan: ToneNamespace.Panner;
+  binauralRightPan: ToneNamespace.Panner;
 }
 
 interface MusicProfile {
@@ -36,12 +45,15 @@ interface MusicProfile {
   bassOctave: number;
   brightness: number;
   pulsePattern: number[];
+  drumPattern: { kick: number[]; snare: number[]; hat: number[] };
 }
 
 const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
 const MASTER_AUDIO_ENABLED_KEY = 'neuroflight.audio.masterEnabled';
 const MUSIC_VOLUME_KEY = 'neuroflight.audio.musicVolume';
+export const BINAURAL_ENABLED_KEY = 'neuroflight.audio.binauralEnabled';
 const DEFAULT_MUSIC_VOLUME = 0.15;
+const CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const MODE_PROFILES: Record<GameMode, MusicProfile> = {
   zen: {
@@ -57,6 +69,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     bassOctave: 2,
     brightness: 0.72,
     pulsePattern: [0, 0, 1, 0, 0, 1, 0, 0],
+    drumPattern: { kick: euclideanRhythm(2, 8), snare: euclideanRhythm(1, 8), hat: euclideanRhythm(5, 8) },
   },
   free: {
     root: 'A',
@@ -71,6 +84,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     bassOctave: 2,
     brightness: 0.82,
     pulsePattern: [1, 0, 0, 1, 0, 0, 1, 0],
+    drumPattern: { kick: euclideanRhythm(3, 8), snare: euclideanRhythm(2, 8), hat: euclideanRhythm(5, 8) },
   },
   dogfight: {
     root: 'G',
@@ -85,6 +99,7 @@ const MODE_PROFILES: Record<GameMode, MusicProfile> = {
     bassOctave: 2,
     brightness: 0.95,
     pulsePattern: [1, 0, 1, 0, 1, 1, 0, 1],
+    drumPattern: { kick: euclideanRhythm(4, 8), snare: euclideanRhythm(2, 8), hat: euclideanRhythm(6, 8) },
   },
 };
 
@@ -105,6 +120,11 @@ function readMusicVolume(): number {
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : DEFAULT_MUSIC_VOLUME;
 }
 
+function readBinauralEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(BINAURAL_ENABLED_KEY) === 'true';
+}
+
 function note(profile: MusicProfile, index: number, octave: number): string {
   const scaleIndex = ((index % profile.scale.length) + profile.scale.length) % profile.scale.length;
   return `${profile.scale[scaleIndex]}${octave}`;
@@ -119,6 +139,28 @@ export function getModeMusicProfile(mode: GameMode): MusicProfile {
   return MODE_PROFILES[mode] ?? MODE_PROFILES.zen;
 }
 
+function transposeScale(root: string, intervals: number[]): string[] {
+  const rootIndex = Math.max(0, CHROMATIC.indexOf(root.replace(/\d/g, '')));
+  return intervals.map((interval) => CHROMATIC[(rootIndex + interval) % CHROMATIC.length]);
+}
+
+export function createSeededMusicProfile(mode: GameMode, seed: string): MusicProfile {
+  const base = getModeMusicProfile(mode);
+  const rng = makeLcg(seed);
+  const scale = transposeScale(base.root, selectScale(seed, mode).intervals);
+  const chordRoots = [0, 3, 4, 1].map((index) => scale[index % scale.length]);
+  const chords = chordRoots.map((root, index) => {
+    const rootIndex = Math.max(0, scale.indexOf(root));
+    return [0, 2, 4, 6].map((offset) => `${scale[(rootIndex + offset) % scale.length]}${index === 3 ? 3 : 4}`);
+  });
+  return {
+    ...base,
+    scale,
+    chords,
+    brightness: Math.max(0.55, Math.min(1.05, base.brightness + (rng() - 0.5) * 0.12)),
+  };
+}
+
 export class ProceduralFlightMusicSystem {
   private readonly heartTempo = new HeartTempoTracker();
   private tone: typeof ToneNamespace | null = null;
@@ -127,15 +169,18 @@ export class ProceduralFlightMusicSystem {
   private adaptation: NeuroAdaptationSnapshot | null = null;
   private rppg: ProceduralRppgInput | null = null;
   private enabled = readMusicEnabled();
+  private binauralEnabled = readBinauralEnabled();
   private volume = readMusicVolume();
   private started = false;
   private startPromise: Promise<void> | null = null;
   private scheduleIds: number[] = [];
   private phrase = 0;
   private step = 0;
+  private activeProfile: MusicProfile;
 
   constructor(mode: GameMode) {
     this.mode = mode;
+    this.activeProfile = getModeMusicProfile(mode);
   }
 
   async start(): Promise<void> {
@@ -209,7 +254,24 @@ export class ProceduralFlightMusicSystem {
 
   setMode(mode: GameMode): void {
     this.mode = mode;
+    this.activeProfile = getModeMusicProfile(mode);
     this.updateToneState(4);
+  }
+
+  setSessionSeed(seed: string): void {
+    this.activeProfile = createSeededMusicProfile(this.mode, seed);
+  }
+
+  setBinauralEnabled(enabled: boolean): void {
+    this.binauralEnabled = enabled;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(BINAURAL_ENABLED_KEY, enabled ? 'true' : 'false');
+    }
+    this.updateBinauralState(0.6);
+  }
+
+  isBinauralEnabled(): boolean {
+    return this.binauralEnabled;
   }
 
   setRppg(input: ProceduralRppgInput): void {
@@ -226,7 +288,7 @@ export class ProceduralFlightMusicSystem {
   triggerEvent(event: ProceduralMusicEvent): void {
     if (!this.tone || !this.nodes || !this.started || !this.enabled) return;
     const time = this.tone.now();
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     switch (event) {
       case 'fire':
         this.nodes.pulse.triggerAttackRelease('C2', '32n', time, 0.32);
@@ -293,6 +355,13 @@ export class ProceduralFlightMusicSystem {
     await reverb.generate();
     const delay = new tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.22, wet: 0.18 }).connect(reverb);
     const filter = new tone.Filter({ frequency: 1850, type: 'lowpass', rolloff: -12, Q: 0.7 }).connect(delay);
+    const binauralVolume = new tone.Volume(-72).connect(limiter);
+    const binauralLeftPan = new tone.Panner(-1).connect(binauralVolume);
+    const binauralRightPan = new tone.Panner(1).connect(binauralVolume);
+    const binauralLeft = new tone.Oscillator({ frequency: 180, type: 'sine' }).connect(binauralLeftPan);
+    const binauralRight = new tone.Oscillator({ frequency: 188, type: 'sine' }).connect(binauralRightPan);
+    binauralLeft.start();
+    binauralRight.start();
 
     return {
       limiter,
@@ -333,11 +402,32 @@ export class ProceduralFlightMusicSystem {
         envelope: { attack: 0.002, decay: 0.18, sustain: 0.01, release: 0.2 },
         volume: -23,
       }).connect(filter),
+      kick: new tone.MembraneSynth({
+        pitchDecay: 0.018,
+        octaves: 3.8,
+        envelope: { attack: 0.002, decay: 0.16, sustain: 0.01, release: 0.18 },
+        volume: -28,
+      }).connect(filter),
+      snare: new tone.NoiseSynth({
+        noise: { type: 'pink' },
+        envelope: { attack: 0.002, decay: 0.08, sustain: 0, release: 0.08 },
+        volume: -34,
+      }).connect(filter),
+      hat: new tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.001, decay: 0.035, sustain: 0, release: 0.03 },
+        volume: -39,
+      }).connect(filter),
       stinger: new tone.PolySynth(tone.Synth, {
         oscillator: { type: 'sine8' },
         envelope: { attack: 0.01, decay: 0.2, sustain: 0.18, release: 1.4 },
         volume: -15,
       }).connect(reverb),
+      binauralVolume,
+      binauralLeft,
+      binauralRight,
+      binauralLeftPan,
+      binauralRightPan,
     };
   }
 
@@ -349,12 +439,13 @@ export class ProceduralFlightMusicSystem {
       tone.Transport.scheduleRepeat((time) => this.playBell(time), '2m'),
       tone.Transport.scheduleRepeat((time) => this.playShimmer(time), '1m'),
       tone.Transport.scheduleRepeat((time) => this.playPulse(time), '8n'),
+      tone.Transport.scheduleRepeat((time) => this.playDrums(time), '16n'),
     );
   }
 
   private playChord(time: number): void {
     if (!this.nodes) return;
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     const chord = profile.chords[this.phrase % profile.chords.length];
     const openness = clamp01(((this.rppg?.hrv ?? 42) - 20) / 80);
     const voicedChord = openness > 0.55 ? [...chord, note(profile, this.phrase + 4, 5)] : chord;
@@ -364,7 +455,7 @@ export class ProceduralFlightMusicSystem {
 
   private playBass(time: number): void {
     if (!this.nodes) return;
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     const rootIndex = Math.floor(this.step / 4) % profile.chords.length;
     const bassNote = profile.chords[rootIndex][0].replace(/\d$/, String(profile.bassOctave));
     this.nodes.bass.triggerAttackRelease(bassNote, '8n', time, 0.18 + clamp01(this.adaptation?.load ?? 0.35) * 0.12);
@@ -372,7 +463,7 @@ export class ProceduralFlightMusicSystem {
 
   private playArp(time: number): void {
     if (!this.nodes) return;
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     const flow = clamp01(this.adaptation?.flow ?? 0.45);
     const confidence = clamp01(this.rppg?.confidence ?? this.adaptation?.confidence ?? 0.35);
     const interval = flow > 0.62 ? 1 : 2;
@@ -383,7 +474,7 @@ export class ProceduralFlightMusicSystem {
 
   private playBell(time: number): void {
     if (!this.nodes) return;
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     const composure = clamp01(this.adaptation?.composure ?? 0.5);
     this.nodes.bell.triggerAttackRelease(note(profile, this.phrase + 2, 6), '4n', time, 0.08 + composure * 0.16);
   }
@@ -397,12 +488,23 @@ export class ProceduralFlightMusicSystem {
 
   private playPulse(time: number): void {
     if (!this.nodes) return;
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
     const load = clamp01(this.adaptation?.load ?? 0.35);
     const pattern = profile.pulsePattern[this.step % profile.pulsePattern.length];
     if (pattern || (this.mode === 'dogfight' && load > 0.62 && this.step % 4 === 3)) {
       this.nodes.pulse.triggerAttackRelease(note(profile, 0, 2), '32n', time, 0.08 + load * 0.16);
     }
+  }
+
+  private playDrums(time: number): void {
+    if (!this.nodes) return;
+    const pattern = this.activeProfile.drumPattern;
+    const index = this.step % pattern.kick.length;
+    const load = clamp01(this.adaptation?.load ?? 0.35);
+    const flow = clamp01(this.adaptation?.flow ?? 0.45);
+    if (pattern.kick[index]) this.nodes.kick.triggerAttackRelease('C1', '32n', time, 0.08 + load * 0.08);
+    if (pattern.snare[index]) this.nodes.snare.triggerAttackRelease('32n', time, 0.04 + load * 0.06);
+    if (pattern.hat[index] && flow > 0.35) this.nodes.hat.triggerAttackRelease('64n', time, 0.02 + flow * 0.05);
   }
 
   private updateToneState(rampSeconds: number): void {
@@ -415,12 +517,23 @@ export class ProceduralFlightMusicSystem {
     const flow = clamp01(this.adaptation?.flow ?? 0.45);
     const composure = clamp01(this.adaptation?.composure ?? 0.5);
     const confidence = clamp01(this.rppg?.confidence ?? this.adaptation?.confidence ?? 0.35);
-    const profile = getModeMusicProfile(this.mode);
+    const profile = this.activeProfile;
 
     const brightness = 900 + profile.brightness * 1000 + flow * 1200 + confidence * 450 - composure * 240 + load * 360;
     this.nodes.filter.frequency.rampTo(brightness, rampSeconds);
     this.nodes.reverb.wet.rampTo(0.2 + composure * 0.2 + clamp01((this.rppg?.hrv ?? 36) / 120) * 0.12, rampSeconds);
     this.nodes.delay.wet.rampTo(0.08 + flow * 0.2, rampSeconds);
     this.nodes.volume.volume.rampTo(volumeDb(this.volume, this.enabled), rampSeconds);
+    this.updateBinauralState(rampSeconds);
+  }
+
+  private updateBinauralState(rampSeconds: number): void {
+    if (!this.nodes) return;
+    const recovery = (this.adaptation?.recovery ?? 0.5) > 0.66;
+    const beatHz = recovery ? 8 : this.mode === 'dogfight' ? 16 : 14;
+    const carrier = this.mode === 'zen' ? 180 : this.mode === 'free' ? 210 : 230;
+    this.nodes.binauralLeft.frequency.rampTo(carrier, rampSeconds);
+    this.nodes.binauralRight.frequency.rampTo(carrier + beatHz, rampSeconds);
+    this.nodes.binauralVolume.volume.rampTo(this.enabled && this.binauralEnabled ? -42 : -72, rampSeconds);
   }
 }

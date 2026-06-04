@@ -1,8 +1,19 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { DeviceConnect } from '@/app/ui/components/DeviceConnect.tsx';
+import { BINAURAL_ENABLED_KEY } from '@/game/core/ProceduralFlightMusicSystem.ts';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
+  const [binauralEnabled, setBinauralEnabled] = useState(
+    () => window.localStorage.getItem(BINAURAL_ENABLED_KEY) === 'true',
+  );
+
+  const toggleBinaural = () => {
+    const next = !binauralEnabled;
+    window.localStorage.setItem(BINAURAL_ENABLED_KEY, next ? 'true' : 'false');
+    setBinauralEnabled(next);
+  };
 
   return (
     <div
@@ -38,6 +49,42 @@ export function SettingsScreen() {
 
       <div style={{ width: 420, marginBottom: 60 }}>
         <DeviceConnect />
+      </div>
+
+      <div
+        className="rounded-xl"
+        style={{
+          width: 420,
+          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'rgba(255,255,255,0.02)',
+          padding: '28px 32px',
+          marginBottom: 28,
+        }}
+      >
+        <h3
+          className="text-xs tracking-widest uppercase font-semibold"
+          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 14 }}
+        >
+          Optional Ambient Audio
+        </h3>
+        <button
+          type="button"
+          onClick={toggleBinaural}
+          className="w-full cursor-pointer rounded-lg border text-left transition-all hover:scale-[1.01]"
+          style={{
+            borderColor: binauralEnabled ? 'rgba(94,234,212,0.46)' : 'rgba(255,255,255,0.16)',
+            background: binauralEnabled ? 'rgba(94,234,212,0.08)' : 'rgba(255,255,255,0.03)',
+            color: 'var(--color-text-primary)',
+            padding: '14px 16px',
+          }}
+        >
+          <span className="block text-sm font-bold">
+            {binauralEnabled ? 'Binaural layer on' : 'Binaural layer off'}
+          </span>
+          <span className="mt-1 block text-xs leading-5" style={{ color: 'rgba(240,236,224,0.62)' }}>
+            A quiet stereo ambience some people find pleasant. Best with headphones; no performance or wellness claim.
+          </span>
+        </button>
       </div>
 
       <div
