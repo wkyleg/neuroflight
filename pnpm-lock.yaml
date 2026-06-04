@@ -6,14 +6,14 @@ settings:
 
 dependencies:
   '@elata-biosciences/eeg-web':
-    specifier: ^0.1.10
-    version: 0.1.12
+    specifier: ^0.7.0
+    version: 0.7.0
   '@elata-biosciences/eeg-web-ble':
-    specifier: ^0.1.10
-    version: 0.1.12(@elata-biosciences/eeg-web@0.1.12)
+    specifier: ^0.7.0
+    version: 0.7.0(@elata-biosciences/eeg-web@0.7.0)
   '@elata-biosciences/rppg-web':
-    specifier: ^0.1.10
-    version: 0.1.12
+    specifier: ^0.9.0
+    version: 0.9.0
   '@tailwindcss/vite':
     specifier: ^4.2.2
     version: 4.2.2(vite@8.0.3)
@@ -294,22 +294,22 @@ packages:
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
     dev: true
 
-  /@elata-biosciences/eeg-web-ble@0.1.12(@elata-biosciences/eeg-web@0.1.12):
-    resolution: {integrity: sha512-m0GgC8hwaKVoR9bCdaPI1wmrhgQbtLjCTJZ5XPbzO22noVpH6itx1yEPqy1D12SewPF898qqSy0wJxt5hCSimQ==}
+  /@elata-biosciences/eeg-web-ble@0.7.0(@elata-biosciences/eeg-web@0.7.0):
+    resolution: {integrity: sha512-fVbE87gX8UBPOtVU+4+h0wyjQUih9ZEGYO44yhy68ylRQn0hexlqeKwokcO4+2N0MoFjcsdKXSceKTbvGsR0Gw==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@elata-biosciences/eeg-web': ^0.1.0
+      '@elata-biosciences/eeg-web': ^0.2.1
     dependencies:
-      '@elata-biosciences/eeg-web': 0.1.12
+      '@elata-biosciences/eeg-web': 0.7.0
     dev: false
 
-  /@elata-biosciences/eeg-web@0.1.12:
-    resolution: {integrity: sha512-TbQEg3SPj8qijSZx2d8tb5MIOIcWZCEoLUIVIV/BOYpbQ0GVJmWGcH0ihXTGX5kKPpuc49o+gQ17ZW5rT+fsNw==}
+  /@elata-biosciences/eeg-web@0.7.0:
+    resolution: {integrity: sha512-JMKmE0HS4yQwLqdS0hmEmgyTi42hdaUdlsMTODXOvaFJSyQd+5/awPjIpif90hJySY7QPOCHR+B9DxJ6Ulwp8Q==}
     engines: {node: '>=20'}
     dev: false
 
-  /@elata-biosciences/rppg-web@0.1.12:
-    resolution: {integrity: sha512-lRL0GnEGJ4Xlap1XJ9KRERHKVPce6drRpS9Hfu8DVZUbQIYOk/cZ4fuKzzkfWcgQoUuyGPjRvcnwxCOPRCzIww==}
+  /@elata-biosciences/rppg-web@0.9.0:
+    resolution: {integrity: sha512-pxxE/jHMh5YvPpS/ruq3Xq0p4itA0aGhS/K7AFp9EkTOgOFF1Mfoell1hlgMIFFrILeFMXOjrVhq9y9S4wsu1A==}
     engines: {node: '>=20'}
     dev: false
 

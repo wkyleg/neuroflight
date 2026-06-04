@@ -17,9 +17,9 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@elata-biosciences/eeg-web": "^0.1.10",
-    "@elata-biosciences/eeg-web-ble": "^0.1.10",
-    "@elata-biosciences/rppg-web": "^0.1.10",
+    "@elata-biosciences/eeg-web": "^0.7.0",
+    "@elata-biosciences/eeg-web-ble": "^0.7.0",
+    "@elata-biosciences/rppg-web": "^0.9.0",
     "@tailwindcss/vite": "^4.2.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
