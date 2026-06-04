@@ -20,6 +20,8 @@ Thumbs.db
 
 # Test
 coverage
+playwright-report
+test-results
 
 # Local asset intake. Keep bulky raw/extracted/candidate art out of git;
 # track only manifests, attribution, and small documentation files.
