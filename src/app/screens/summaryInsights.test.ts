@@ -6,6 +6,10 @@ import { buildDebriefInsights } from './summaryInsights.ts';
 function sample(t: number, flow = 0.5): FlightSample {
   return {
     t,
+    phase: 'wave_1',
+    rppgStatus: 'ready',
+    canPublish: true,
+    signalCoverageTrailing: 0.8,
     speed: 120,
     altitude: 240,
     throttle: 0.75,
@@ -81,6 +85,15 @@ function summary(overrides: Partial<SessionSummary> = {}): SessionSummary {
     avgLoad: null,
     avgFlow: null,
     signalCoveragePct: 0,
+    tutorial: false,
+    sessionScore: 72,
+    focusScore: 70,
+    controlScore: 74,
+    pressureScore: 68,
+    recoveryBehaviorScore: 76,
+    insightConfidence: 0,
+    insightConfidenceLabel: 'behavior_only',
+    recoveryWindows: [],
     ...overrides,
   };
 }
@@ -112,7 +125,7 @@ describe('buildDebriefInsights', () => {
         scoreLabel: 'Discovery Score',
         objectivesCompleted: 4,
         objectiveGoal: 5,
-        events: [{ t: 28, type: 'postcard', label: 'Lighthouse postcard', score: 500 }],
+        events: [{ t: 28, type: 'postcard', phase: 'wave_1', label: 'Lighthouse postcard', score: 500 }],
       }),
     );
 
@@ -132,7 +145,7 @@ describe('buildDebriefInsights', () => {
         deaths: 1,
         objectivesCompleted: 2,
         objectiveGoal: 3,
-        events: [{ t: 18, type: 'kill', score: 550 }],
+        events: [{ t: 18, type: 'kill', phase: 'wave_1', score: 550 }],
       }),
     );
     const visibleCopy = insights.map((insight) => `${insight.title} ${insight.body}`).join(' ');
@@ -149,7 +162,7 @@ describe('buildDebriefInsights', () => {
         neuroSource: 'rppg',
         signalCoveragePct: 82,
         samples: [sample(1), sample(10, 0.5), sample(14, 0.66), sample(24, 0.7)],
-        events: [{ t: 14, type: 'ring_hit', label: 'Sun gate', score: 120 }],
+        events: [{ t: 14, type: 'ring_hit', phase: 'wave_1', label: 'Sun gate', score: 120 }],
       }),
     );
 
@@ -162,7 +175,7 @@ describe('buildDebriefInsights', () => {
         ringsPassed: 6,
         objectivesCompleted: 6,
         objectiveGoal: 6,
-        events: [{ t: 52, type: 'route_complete', label: 'Glowing route complete', score: 650 }],
+        events: [{ t: 52, type: 'route_complete', phase: 'wave_1', label: 'Glowing route complete', score: 650 }],
       }),
     );
 
