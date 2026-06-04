@@ -563,7 +563,7 @@ function SessionPhaseChip({
   tutorial: boolean;
   accent: string;
 }) {
-  const timeLabel = tutorial ? 'Open' : `${Math.ceil(Math.max(0, remainingMs) / 1000)}s`;
+  const timeLabel = tutorial ? 'Practice' : `${Math.ceil(Math.max(0, remainingMs) / 1000)}s`;
   return (
     <div
       className="premium-glass flight-score-panel rounded-xl border text-center"
@@ -576,7 +576,7 @@ function SessionPhaseChip({
       }}
     >
       <div className="text-[9px] tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
-        {tutorial ? 'Practice' : label}
+        {label}
       </div>
       <div className="text-lg font-black tabular-nums leading-none" style={{ color: accent }}>
         {timeLabel}

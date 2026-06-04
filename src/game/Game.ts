@@ -30,6 +30,7 @@ import { SessionPhaseManager } from './session/SessionPhaseManager.ts';
 import { SessionScoreBuilder } from './session/SessionScoreBuilder.ts';
 import { MODE_PHASE_CONFIG } from './session/sessionConfig.ts';
 import { type SessionPhaseSnapshot, sessionPhaseLabel } from './session/sessionTypes.ts';
+import { TutorialDirector } from './session/TutorialDirector.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
@@ -181,6 +182,7 @@ export class Game {
   };
   private neuroAdaptationSystem: NeuroAdaptationSystem;
   private flightSafetySystem: FlightSafetySystem;
+  private readonly tutorialDirector = new TutorialDirector();
   private planeController: PlaneController | null = null;
   private aircraftTrailSystem: AircraftTrailSystem | null = null;
   private mode: GameMode = 'zen';
@@ -464,6 +466,7 @@ export class Game {
     const modeMeta = getModeMeta(mode);
     const initialInput = this.inputManager.getInput();
     const initialDogfightGoal = map.missionRoutes?.dogfight.length ? 3 : 0;
+    const initialTutorialSnapshot = this.tutorialMode ? this.tutorialDirector.snapshot(0) : null;
     useGameStore.getState().updateHud({
       mode,
       aircraftId: this.currentAircraftId,
@@ -484,6 +487,9 @@ export class Game {
           : mode === 'free'
             ? (map.missionRoutes?.expedition.length ?? 0)
             : initialDogfightGoal,
+      sessionPhaseLabel: initialTutorialSnapshot?.title ?? sessionPhaseLabel(this.sessionPhase.phase),
+      sessionPhasePrompt: initialTutorialSnapshot?.prompt ?? this.getSessionPhasePrompt(),
+      tutorial: this.tutorialMode,
     });
     this.activateControls();
   }
@@ -989,6 +995,9 @@ export class Game {
           : this.mode === 'zen'
             ? `Gate ${Math.min(this.scoreManager.getRingsPassed() + 1, zenGoal || 1)}/${Math.max(zenGoal, 1)} - use the route arrow when the ring is offscreen.`
             : 'Stay composed, keep visual contact, and use the landmarks.';
+      const tutorialSnapshot = this.tutorialMode
+        ? this.tutorialDirector.snapshot(this.sessionPhase.totalElapsedMs)
+        : null;
 
       useGameStore.getState().updateHud({
         speed: Math.round(speed),
@@ -1040,10 +1049,10 @@ export class Game {
         signalCoverage: adaptation.coverage,
         neuroPrompt: adaptation.prompt,
         sessionPhase: this.sessionPhase.phase,
-        sessionPhaseLabel: this.tutorialMode ? 'Tutorial' : sessionPhaseLabel(this.sessionPhase.phase),
+        sessionPhaseLabel: tutorialSnapshot?.title ?? sessionPhaseLabel(this.sessionPhase.phase),
         sessionPhaseRemainingMs: this.sessionPhase.phaseRemainingMs,
         sessionPhaseElapsedMs: this.sessionPhase.phaseElapsedMs,
-        sessionPhasePrompt: this.getSessionPhasePrompt(),
+        sessionPhasePrompt: tutorialSnapshot?.prompt ?? this.getSessionPhasePrompt(),
         tutorial: this.tutorialMode,
       });
     }
@@ -1229,6 +1238,7 @@ export class Game {
     this.lastRecoveryEventAt = -999;
     this.bonusNotice = null;
     this.neuroAdaptationSystem.reset();
+    this.tutorialDirector.reset();
     this.sessionPhaseManager?.reset();
     this.sessionPhaseManager?.resolveReadiness();
     this.sessionPhase = this.sessionPhaseManager?.snapshot() ?? {
