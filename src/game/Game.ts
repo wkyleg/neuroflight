@@ -355,6 +355,21 @@ export class Game {
     this.resolveReadiness();
   }
 
+  advanceTutorial(): void {
+    if (!this.tutorialMode) return;
+    const snapshot = this.tutorialDirector.advanceManual();
+    useGameStore.getState().updateHud({
+      sessionPhaseLabel: snapshot.title,
+      sessionPhasePrompt: snapshot.prompt,
+      tutorialStageTitle: snapshot.title,
+      tutorialStagePrompt: snapshot.prompt,
+      tutorialStageHint: snapshot.hint,
+      tutorialStageProgress: snapshot.progress,
+      tutorialStageComplete: snapshot.completed,
+    });
+    this.activateControls();
+  }
+
   toggleMusic(): boolean {
     return this.toggleSound();
   }

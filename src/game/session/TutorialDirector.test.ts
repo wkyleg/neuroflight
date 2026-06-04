@@ -18,23 +18,31 @@ function input(overrides: Partial<TutorialProgressInput> = {}): TutorialProgress
 }
 
 describe('TutorialDirector', () => {
-  it('starts at controls and advances only after sustained pitch and roll', () => {
+  it('starts at pitch, then advances after sustained roll', () => {
     const director = new TutorialDirector();
 
-    expect(director.snapshot().id).toBe('controls');
-    director.update(input({ pitch: 0.5, roll: 0 }));
-    expect(director.snapshot().id).toBe('controls');
+    expect(director.snapshot().id).toBe('pitch');
+    director.update(input({ pitch: 0, roll: 0.5 }));
+    expect(director.snapshot().id).toBe('pitch');
 
-    for (let i = 0; i < 20; i++) {
-      director.update(input({ pitch: 0.5, roll: -0.5 }));
-    }
+    for (let i = 0; i < 13; i++) director.update(input({ pitch: 0.5 }));
 
+    expect(director.snapshot().id).toBe('roll');
+    for (let i = 0; i < 13; i++) director.update(input({ roll: -0.5 }));
     expect(director.snapshot().id).toBe('throttle');
+  });
+
+  it('can advance manually when a skill gate stalls', () => {
+    const director = new TutorialDirector();
+
+    expect(director.advanceManual().id).toBe('roll');
+    expect(director.advanceManual().id).toBe('throttle');
   });
 
   it('advances through gates and fire from real counters', () => {
     const director = new TutorialDirector();
-    for (let i = 0; i < 20; i++) director.update(input({ pitch: 0.5, roll: 0.5 }));
+    for (let i = 0; i < 13; i++) director.update(input({ pitch: 0.5 }));
+    for (let i = 0; i < 13; i++) director.update(input({ roll: 0.5 }));
     director.update(input({ throttle: 0.9, speed: 145 }));
 
     expect(director.snapshot().id).toBe('gates');
@@ -49,7 +57,8 @@ describe('TutorialDirector', () => {
 
   it('requires dogfight contact before free practice', () => {
     const director = new TutorialDirector();
-    for (let i = 0; i < 20; i++) director.update(input({ pitch: 0.5, roll: 0.5 }));
+    for (let i = 0; i < 13; i++) director.update(input({ pitch: 0.5 }));
+    for (let i = 0; i < 13; i++) director.update(input({ roll: 0.5 }));
     director.update(input({ throttle: 0.9, speed: 145 }));
     director.update(input({ throttle: 0.9, speed: 145, ringsPassed: 2 }));
     director.update(input({ throttle: 0.9, speed: 145, ringsPassed: 2, shotsFired: 3 }));

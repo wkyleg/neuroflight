@@ -1,4 +1,4 @@
-export type TutorialStageId = 'controls' | 'throttle' | 'gates' | 'fire' | 'dogfight_intro' | 'free_practice';
+export type TutorialStageId = 'pitch' | 'roll' | 'throttle' | 'gates' | 'fire' | 'dogfight_intro' | 'free_practice';
 
 export interface TutorialProgressInput {
   dtMs: number;
@@ -30,11 +30,18 @@ export interface TutorialSnapshot extends TutorialStageConfig {
 
 const TUTORIAL_STAGES: TutorialStageConfig[] = [
   {
-    id: 'controls',
-    title: 'Controls',
-    prompt: 'Pitch and roll until the aircraft responds smoothly.',
-    hint: 'Use W/S and A/D, or the touch stick.',
-    target: 1.8,
+    id: 'pitch',
+    title: 'Pitch',
+    prompt: 'Hold W or Up to climb, then S or Down to descend.',
+    hint: 'Small holds work better than taps. The aircraft should settle into a gentle climb.',
+    target: 1.2,
+  },
+  {
+    id: 'roll',
+    title: 'Roll and Turn',
+    prompt: 'Hold A/D or Left/Right to bank and turn.',
+    hint: 'Bank gently, then release to level out.',
+    target: 1.2,
   },
   {
     id: 'throttle',
@@ -94,6 +101,24 @@ export class TutorialDirector {
     return this.snapshot();
   }
 
+  advanceManual(): TutorialSnapshot {
+    if (this.currentStage.id !== 'free_practice') {
+      this.advance({
+        dtMs: 0,
+        pitch: 0,
+        roll: 0,
+        throttle: this.initialThrottle ?? 0.6,
+        speed: this.initialSpeed ?? 0,
+        ringsPassed: this.baselineRings,
+        shotsFired: this.baselineShots,
+        shotsHit: this.baselineHits,
+        kills: this.baselineKills,
+        rivalDistance: null,
+      });
+    }
+    return this.snapshot();
+  }
+
   snapshot(_elapsedMs = 0): TutorialSnapshot {
     const stage = this.currentStage;
     const nextStage = TUTORIAL_STAGES[this.stageIndex + 1] ?? null;
@@ -127,8 +152,14 @@ export class TutorialDirector {
 
   private progressFor(stage: TutorialStageConfig, input: TutorialProgressInput): number {
     switch (stage.id) {
-      case 'controls':
-        if (Math.abs(input.pitch) > 0.18 && Math.abs(input.roll) > 0.18) {
+      case 'pitch':
+        if (Math.abs(input.pitch) > 0.18) {
+          this.controlSeconds += input.dtMs / 1000;
+        }
+        this.lastProgress = Math.min(1, this.controlSeconds / stage.target);
+        return this.lastProgress;
+      case 'roll':
+        if (Math.abs(input.roll) > 0.18) {
           this.controlSeconds += input.dtMs / 1000;
         }
         this.lastProgress = Math.min(1, this.controlSeconds / stage.target);
@@ -165,6 +196,7 @@ export class TutorialDirector {
     this.stageIndex = Math.min(TUTORIAL_STAGES.length - 1, this.stageIndex + 1);
     this.elapsedMs = 0;
     this.lastProgress = 0;
+    this.controlSeconds = 0;
     this.baselineRings = input.ringsPassed;
     this.baselineShots = input.shotsFired;
     this.baselineHits = input.shotsHit;

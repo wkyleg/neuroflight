@@ -1,14 +1,17 @@
 import { useGameStore } from '@/stores/gameStore.ts';
 
 function keyHints(title: string): string[] {
+  if (title.includes('Pitch')) return ['W', 'S'];
+  if (title.includes('Roll')) return ['A', 'D'];
   if (title.includes('Throttle')) return ['Shift', 'Ctrl'];
   if (title.includes('Gate')) return ['W/S', 'A/D'];
-  if (title.includes('Fire') || title.includes('Rival')) return ['F', 'Space'];
+  if (title.includes('Fire') || title.includes('Rival')) return ['F', 'Click'];
   return ['W/S', 'A/D'];
 }
 
 export function TutorialOverlay() {
   const hud = useGameStore((s) => s.hud);
+  const game = useGameStore((s) => s.game);
   if (!hud.tutorial) return null;
 
   return (
@@ -50,6 +53,18 @@ export function TutorialOverlay() {
               background: 'linear-gradient(90deg, #5eead4, #facc15)',
             }}
           />
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[10px] leading-4" style={{ color: 'rgba(240,236,224,0.52)' }}>
+            Skill progress advances automatically. Next is always available.
+          </p>
+          <button
+            type="button"
+            onClick={() => game?.advanceTutorial()}
+            className="glass-button pointer-events-auto rounded-lg px-5 py-3 text-xs font-black"
+          >
+            Next
+          </button>
         </div>
         {hud.tutorialStageComplete && (
           <p className="mt-3 text-xs font-bold" style={{ color: '#a7f3d0' }}>

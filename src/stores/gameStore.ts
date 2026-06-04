@@ -178,9 +178,9 @@ const DEFAULT_HUD: FlightHudState = {
   sessionPhaseElapsedMs: 0,
   sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
   tutorial: false,
-  tutorialStageTitle: 'Controls',
-  tutorialStagePrompt: 'Pitch and roll until the aircraft responds smoothly.',
-  tutorialStageHint: 'Use W/S and A/D, or the touch stick.',
+  tutorialStageTitle: 'Pitch',
+  tutorialStagePrompt: 'Hold W or Up to climb, then S or Down to descend.',
+  tutorialStageHint: 'Small holds work better than taps. The aircraft should settle into a gentle climb.',
   tutorialStageProgress: 0,
   tutorialStageComplete: false,
 };

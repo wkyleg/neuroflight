@@ -1,48 +1,58 @@
 import { useNavigate } from 'react-router';
 
-const sources = [
+const sections = [
   {
-    label: 'FDA De Novo summary for EndeavorRx / AKL-T01',
-    href: 'https://www.accessdata.fda.gov/cdrh_docs/reviews/DEN200026.pdf',
+    icon: 'FLY',
+    title: 'How to fly',
+    body: 'Use W/S or the arrow keys to pitch, A/D to bank, Shift/Ctrl for throttle, and Space/F/click to fire in Dogfight. Small held inputs are easier than taps: hold, watch the aircraft settle, then release.',
   },
   {
-    label: 'NeuroRacer cognitive-control study',
-    href: 'https://doi.org/10.1038/nature12486',
+    icon: 'FLOW',
+    title: 'Waves and recovery',
+    body: 'A scored session starts with readiness, then warmup, three focus waves, recovery breaks, a final recovery, and a debrief. Waves coach performance; recovery coaches breathing and settling. The report compares how you flew in each state.',
   },
   {
-    label: 'NASA TLX workload resource',
-    href: 'https://humansystems.arc.nasa.gov/groups/TLX/',
+    icon: 'CAM',
+    title: 'Camera pulse estimates',
+    body: 'If you enable the webcam, rPPG estimates pulse trends locally from tiny color changes in the face video. It works best with steady light and low motion. When the signal is weak, the app says so and falls back to behavior-only scoring.',
   },
   {
-    label: 'Lehrer and Gevirtz HRV biofeedback review',
-    href: 'https://doi.org/10.3389/fpsyg.2014.00756',
+    icon: 'GUIDE',
+    title: 'Focus and calm practice',
+    body: 'Focus guidance comes from behavior such as route progress, smoothness, and staying on task. Calm guidance appears during recovery and can include signal confidence or pulse settling when the camera signal is good. Neither meter changes score, aim, damage, or difficulty.',
   },
   {
-    label: 'Webcam heart-rate and variability estimation limits',
-    href: 'https://arxiv.org/abs/2012.15846',
+    icon: 'MUSIC',
+    title: 'Adaptive music',
+    body: 'The music uses slow generative patterns. Heart-rate estimates can gently pull tempo into a musical range, and recovery phases quiet the texture. The binaural layer is an optional stereo ambience, not a medical effect.',
   },
   {
-    label: 'FTC Lumosity claim-boundary reference',
-    href: 'https://www.ftc.gov/news-events/news/press-releases/2016/01/lumosity-pay-2-million-settle-ftc-deceptive-advertising-charges-its-brain-training-program',
+    icon: 'REPORT',
+    title: 'What the debrief means',
+    body: 'The debrief is a fitness-style reflection on flight behavior: completion, control, pressure handling, and recovery-window behavior. Low camera coverage is handled gracefully with behavior-based labels and confidence notes.',
   },
 ];
 
-const cards = [
+const sources = [
   {
-    title: 'Game Modes',
-    body: 'Zen Flight rewards smooth route gates, Expedition rewards landmarks and beacons, and Dogfight rewards playful rival outcomes. The score is built from behavior: completion, control, safety, and recovery-window flying.',
+    title: 'Anguera et al., Nature 2013',
+    summary: 'A video-game cognitive-control study showing how adaptive game tasks can train attention-like skills.',
+    href: 'https://doi.org/10.1038/nature12486',
   },
   {
-    title: 'Session Protocol',
-    body: 'A scored run moves through readiness, warmup, pressure waves, short recovery windows, and debrief. Recovery windows soften the action so the report can compare pressure and reset periods without changing the rules.',
+    title: 'Lehrer & Gevirtz, Frontiers in Psychology 2014',
+    summary: 'A peer-reviewed overview of HRV biofeedback and paced-breathing mechanisms.',
+    href: 'https://doi.org/10.3389/fpsyg.2014.00756',
   },
   {
-    title: 'Camera Biofeedback',
-    body: 'The webcam can estimate pulse trends locally through rPPG when the signal is usable. It contributes readiness, coverage, optional BPM display, and insight confidence. It does not decide focus, stress, aim assist, damage, difficulty, or score.',
+    title: 'Webcam rPPG review, arXiv 2020',
+    summary: 'A technical review of camera-based pulse estimation and its limitations.',
+    href: 'https://arxiv.org/abs/2012.15846',
   },
   {
-    title: 'Adaptive Music',
-    body: 'Heart-rate estimates can nudge the music tempo into a musical range, while composure/load signals shape filter, ambience, weather clarity, and HUD glow. The optional binaural layer is off by default and is only a quiet stereo texture.',
+    title: 'Verkruysse et al., Optics Express 2008',
+    summary: 'A foundational remote photoplethysmography paper using ambient light and ordinary cameras.',
+    href: 'https://doi.org/10.1364/OE.16.021434',
   },
 ];
 
@@ -68,57 +78,83 @@ export function HowItWorksScreen() {
         </div>
       </header>
 
-      <section
-        className="relative z-10 mx-auto grid w-[min(1120px,calc(100vw-40px))] gap-5"
-        style={{ paddingTop: 126, paddingBottom: 64 }}
-      >
-        <div className="premium-glass-strong rounded-xl border p-8" style={{ borderColor: 'rgba(255,255,255,0.14)' }}>
+      <section className="relative z-10 mx-auto w-[min(1120px,calc(100vw-36px))] py-28">
+        <div className="max-w-4xl">
           <p className="menu-card-kicker">How it works</p>
-          <h1 className="mt-2 text-4xl font-black tracking-wide" style={{ color: 'var(--color-accent-gold)' }}>
-            A camera-first flight practice session
+          <h1
+            className="mt-3 text-4xl font-black leading-tight md:text-5xl"
+            style={{ color: 'var(--color-accent-gold)' }}
+          >
+            Flight practice for focus waves and calm recovery
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7" style={{ color: 'rgba(240,236,224,0.76)' }}>
-            NeuroFlight is a browser flight game for practicing steady performance under pressure and clean recovery
-            after pressure. It is not a medical device, diagnostic tool, or treatment.
+          <p className="mt-5 max-w-3xl text-base leading-8" style={{ color: 'rgba(240,236,224,0.78)' }}>
+            NeuroFlight is a browser flight game. It uses behavior-first scoring and optional webcam pulse estimates to
+            make the session feel responsive. It is not a medical device, diagnostic tool, treatment, or claim about
+            your health.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {cards.map((card) => (
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {sections.map((section) => (
             <article
-              key={card.title}
+              key={section.title}
               className="premium-glass rounded-lg border p-6"
               style={{ borderColor: 'rgba(255,255,255,0.13)' }}
             >
-              <h2 className="text-xl font-black" style={{ color: '#5eead4' }}>
-                {card.title}
-              </h2>
-              <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(240,236,224,0.74)' }}>
-                {card.body}
+              <div className="flex items-center gap-3">
+                <div
+                  className="grid h-10 w-12 shrink-0 place-items-center rounded-lg border text-[10px] font-black"
+                  style={{ borderColor: 'rgba(94,234,212,0.28)', color: '#5eead4' }}
+                >
+                  {section.icon}
+                </div>
+                <h2 className="text-lg font-black" style={{ color: '#fff0c2' }}>
+                  {section.title}
+                </h2>
+              </div>
+              <p className="mt-4 text-sm leading-7" style={{ color: 'rgba(240,236,224,0.74)' }}>
+                {section.body}
               </p>
             </article>
           ))}
         </div>
 
-        <section className="premium-glass rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.13)' }}>
-          <h2 className="text-xl font-black" style={{ color: '#ffb86b' }}>
-            Evidence Boundary
-          </h2>
-          <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(240,236,224,0.74)' }}>
-            The design borrows from digital attention-training games, workload research, HRV biofeedback literature, and
-            webcam rPPG measurement work. Those sources support a conservative build: behavior-first scoring,
-            transparent signal quality, and camera data used only for context and ambience.
+        <section className="premium-glass mt-6 rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.13)' }}>
+          <div className="flex items-center gap-3">
+            <div
+              className="grid h-10 w-10 place-items-center rounded-lg border"
+              style={{ borderColor: 'rgba(255,184,107,0.34)', color: '#ffb86b' }}
+            >
+              REF
+            </div>
+            <div>
+              <p className="menu-card-kicker">Evidence boundary</p>
+              <h2 className="text-xl font-black" style={{ color: '#ffb86b' }}>
+                Conservative by design
+              </h2>
+            </div>
+          </div>
+          <p className="mt-4 max-w-4xl text-sm leading-7" style={{ color: 'rgba(240,236,224,0.74)' }}>
+            The app borrows ideas from digital attention-training research, workload framing, HRV biofeedback, and
+            camera rPPG measurement. Those sources support cautious design choices: transparent signal quality,
+            behavior-first scoring, no medical claims, and optional physiology used only for presentation and
+            reflection.
           </p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {sources.map((source) => (
               <a
                 key={source.href}
-                className="glass-button rounded-lg px-4 py-3 text-left text-xs font-bold leading-5"
+                className="glass-button rounded-lg px-4 py-4 text-left"
                 href={source.href}
                 target="_blank"
                 rel="noreferrer"
               >
-                {source.label}
+                <span className="block text-sm font-black" style={{ color: '#fff0c2' }}>
+                  {source.title}
+                </span>
+                <span className="mt-1 block text-xs leading-5" style={{ color: 'rgba(240,236,224,0.64)' }}>
+                  {source.summary}
+                </span>
               </a>
             ))}
           </div>
