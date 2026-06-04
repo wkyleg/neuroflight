@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { SkyObjectLayerConfig, SkyOrientationPreset } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface SkyObjectInstance {
   object: THREE.Object3D;
@@ -89,8 +91,10 @@ export class SkyObjectSystem {
   }
 
   private async loadLayer(layer: SkyObjectLayerConfig): Promise<void> {
+    const url = resolveAssetUrl(layer.assetPath);
     try {
-      const gltf = await this.loader.loadAsync(layer.assetPath);
+      logger.info('Assets', 'Loading sky object', { path: layer.assetPath, url });
+      const gltf = await this.loader.loadAsync(url);
       const asset = this.makeAsset(gltf.scene);
       for (let i = 0; i < layer.count; i++) {
         const object = new THREE.Group();
@@ -131,7 +135,7 @@ export class SkyObjectSystem {
         });
       }
     } catch (error) {
-      console.warn(`[SkyObjectSystem] Failed to load ${layer.assetPath}`, error);
+      logger.warn('Assets', 'Failed to load sky object', { path: layer.assetPath, url, error });
     }
   }
 

@@ -230,9 +230,11 @@ export function MainMenu() {
           <button type="button" onClick={() => navigate('/how-it-works')} className="glass-button menu-utility-button">
             How It Works
           </button>
-          <button type="button" onClick={() => navigate('/assets')} className="glass-button menu-utility-button">
-            Asset Lab
-          </button>
+          {import.meta.env.DEV && (
+            <button type="button" onClick={() => navigate('/assets')} className="glass-button menu-utility-button">
+              Asset Lab
+            </button>
+          )}
           <button type="button" onClick={() => navigate('/settings')} className="glass-button menu-utility-button">
             Settings
           </button>

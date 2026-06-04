@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { CombatVfxConfig } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface SpriteFx {
   sprite: THREE.Sprite;
@@ -38,7 +40,11 @@ export class CombatVfxSystem {
         config.explosionTexturePath,
         config.smokeTexturePath,
       ]) {
-        const texture = this.loader.load(texturePath);
+        const url = resolveAssetUrl(texturePath);
+        logger.info('Assets', 'Loading combat texture', { path: texturePath, url });
+        const texture = this.loader.load(url, undefined, undefined, (error) =>
+          logger.warn('Assets', 'Failed to load combat texture', { path: texturePath, url, error }),
+        );
         texture.colorSpace = THREE.SRGBColorSpace;
         this.textures.push(texture);
       }

@@ -137,7 +137,7 @@ function assetLabPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), wasm(), topLevelAwait(), tailwindcss(), assetLabPlugin()],
+  plugins: [react(), wasm(), topLevelAwait(), tailwindcss(), process.env.NODE_ENV !== 'production' && assetLabPlugin()],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

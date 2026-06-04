@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { AtmosphereVfxConfig } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface SpriteParticle {
   sprite: THREE.Sprite;
@@ -128,7 +130,11 @@ export class AtmosphereVfxSystem {
     horizontalSpeed: number;
     rotation?: number;
   }): void {
-    const texture = this.loader.load(config.texturePath);
+    const url = resolveAssetUrl(config.texturePath);
+    logger.info('Assets', 'Loading atmosphere texture', { path: config.texturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load atmosphere texture', { path: config.texturePath, url, error }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 
@@ -161,7 +167,15 @@ export class AtmosphereVfxSystem {
   }
 
   private createLightning(config: AtmosphereVfxConfig): void {
-    const texture = this.loader.load(config.lightningTexturePath);
+    const url = resolveAssetUrl(config.lightningTexturePath);
+    logger.info('Assets', 'Loading atmosphere lightning texture', { path: config.lightningTexturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load atmosphere lightning texture', {
+        path: config.lightningTexturePath,
+        url,
+        error,
+      }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 
