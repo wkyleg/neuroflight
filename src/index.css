@@ -1485,7 +1485,9 @@ canvas {
     bottom: max(8px, env(safe-area-inset-bottom));
     flex-direction: column;
     gap: 10px;
+    width: auto;
     padding: 12px;
+    transform: none;
   }
 
   .menu-launch-summary strong,
