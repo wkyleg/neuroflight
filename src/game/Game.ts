@@ -611,6 +611,9 @@ export class Game {
       missionSafeZones,
     );
     if (safetyEvent) {
+      if (this.mode === 'dogfight' && safetyEvent.type === 'crash') {
+        this.dogfightManager?.recordPlayerCrash();
+      }
       this.flightSafetySystem.applyRespawn(this.planeController.flightModel, safetyEvent);
       this.inputManager.clearInput();
       this.scoreManager.addBonus(safetyEvent.scorePenalty);
@@ -712,6 +715,10 @@ export class Game {
       if (dogfightEngaged && !this.dogfightManager.isAiDead()) {
         // AI uses direct movement — no FlightModel.update needed
         this.aiController.update(dt, this.planeController.flightModel.getPosition());
+        if (this.didRivalCrash(this.aiController.getPosition(), obstacleVolumes)) {
+          this.dogfightManager.recordRivalCrash();
+          this.sessionRecorder.recordEvent('crash', { label: 'Rival crash counted as win' });
+        }
 
         if (this.aiController.consumeFire()) {
           const aiPos = this.aiController.getPosition().clone();
@@ -1097,6 +1104,11 @@ export class Game {
   private getSessionPhasePrompt(): string {
     if (this.tutorialMode) return 'Tutorial flight. Practice freely; no score report will be saved.';
     return MODE_PHASE_CONFIG[this.mode][this.sessionPhase.phase].prompt;
+  }
+
+  private didRivalCrash(position: THREE.Vector3, obstacles: Array<{ center: THREE.Vector3; radius: number }>): boolean {
+    if (position.y <= 8) return true;
+    return obstacles.some((obstacle) => obstacle.radius > 0 && position.distanceTo(obstacle.center) <= obstacle.radius);
   }
 
   private firePlayerWeapon(): void {

@@ -54,6 +54,23 @@ describe('DogfightManager', () => {
     expect(emitSpy).toHaveBeenCalledWith('dogfight:player_death');
   });
 
+  it('player crashes count as losses', () => {
+    dogfight.recordPlayerCrash();
+    const s = dogfight.getState();
+    expect(s.deaths).toBe(1);
+    expect(s.playerHealth).toBe(100);
+    expect(emitSpy).toHaveBeenCalledWith('dogfight:player_death');
+  });
+
+  it('rival crashes count as wins and trigger respawn', () => {
+    dogfight.recordRivalCrash();
+    const s = dogfight.getState();
+    expect(s.kills).toBe(1);
+    expect(s.aiHealth).toBe(0);
+    expect(dogfight.isAiDead()).toBe(true);
+    expect(emitSpy).toHaveBeenCalledWith('dogfight:ai_kill');
+  });
+
   it('reset() restores health and counters', () => {
     dogfight.applyDamage('ai');
     dogfight.recordPlayerShot();
