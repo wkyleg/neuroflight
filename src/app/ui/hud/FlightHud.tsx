@@ -1,11 +1,16 @@
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { getModeMeta } from '@/game/modes.ts';
+import type { SessionPhase } from '@/game/session/sessionTypes.ts';
 import type { GameMode } from '@/game/types.ts';
 import type { FlightHudNotice } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
+import { RecoveryOverlay } from './RecoveryOverlay.tsx';
+import { SessionBriefingOverlay } from './SessionBriefingOverlay.tsx';
+import { SessionPhaseBanner } from './SessionPhaseBanner.tsx';
+import { phasePosition } from './sessionPhaseUi.ts';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
@@ -552,21 +557,25 @@ function InstrumentTile({
 
 function SessionPhaseChip({
   label,
+  phase,
   remainingMs,
-  prompt,
+  elapsedMs,
   tutorial,
   accent,
 }: {
   label: string;
+  phase: SessionPhase;
   remainingMs: number;
-  prompt: string;
+  elapsedMs: number;
   tutorial: boolean;
   accent: string;
 }) {
   const timeLabel = tutorial ? 'Practice' : `${Math.ceil(Math.max(0, remainingMs) / 1000)}s`;
+  const totalMs = Math.max(1, elapsedMs + remainingMs);
+  const pct = tutorial ? 1 : Math.max(0, Math.min(1, elapsedMs / totalMs));
   return (
     <div
-      className="premium-glass flight-score-panel rounded-xl border text-center"
+      className="premium-glass flight-score-panel rounded-xl border"
       style={{
         minWidth: 154,
         background: 'linear-gradient(135deg, rgba(20,58,68,0.58), rgba(7,20,28,0.56))',
@@ -575,14 +584,26 @@ function SessionPhaseChip({
         WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
       }}
     >
-      <div className="text-[9px] tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
-        {label}
-      </div>
-      <div className="text-lg font-black tabular-nums leading-none" style={{ color: accent }}>
-        {timeLabel}
-      </div>
-      <div className="mt-1 truncate text-[9px]" style={{ color: 'rgba(255,246,220,0.58)' }} title={prompt}>
-        {prompt}
+      <div className="flex items-center gap-3">
+        <div
+          className="grid h-10 w-10 place-items-center rounded-full"
+          style={{
+            background: `conic-gradient(${accent} ${pct * 360}deg, rgba(255,255,255,0.12) 0deg)`,
+          }}
+        >
+          <div className="h-7 w-7 rounded-full bg-black/45" />
+        </div>
+        <div className="min-w-0 text-left">
+          <div className="truncate text-[9px] uppercase tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+            {phasePosition(phase)}
+          </div>
+          <div className="truncate text-sm font-black leading-tight" style={{ color: accent }}>
+            {label}
+          </div>
+          <div className="text-[10px] tabular-nums" style={{ color: 'rgba(255,246,220,0.58)' }}>
+            {timeLabel}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -901,6 +922,9 @@ export function FlightHud() {
       className="neuroflight-hud absolute inset-0 pointer-events-none select-none"
       style={{ fontFamily: 'var(--font-instrument)' }}
     >
+      <SessionPhaseBanner />
+      <SessionBriefingOverlay />
+      <RecoveryOverlay />
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
       {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}
 
@@ -971,8 +995,9 @@ export function FlightHud() {
           </div>
           <SessionPhaseChip
             label={hud.sessionPhaseLabel}
+            phase={hud.sessionPhase}
             remainingMs={hud.sessionPhaseRemainingMs}
-            prompt={hud.sessionPhasePrompt}
+            elapsedMs={hud.sessionPhaseElapsedMs}
             tutorial={hud.tutorial}
             accent={modeMeta.accent}
           />

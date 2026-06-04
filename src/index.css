@@ -203,6 +203,24 @@ button:disabled,
   transform: translateY(1px) scale(0.985);
 }
 
+@keyframes neuroflight-breathe {
+  0%,
+  100% {
+    transform: scale(0.78);
+    opacity: 0.58;
+  }
+  50% {
+    transform: scale(1.55);
+    opacity: 0.94;
+  }
+}
+
+.neuroflight-breathing-orb {
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.9), rgba(56, 189, 248, 0.18));
+  box-shadow: 0 0 34px rgba(94, 234, 212, 0.28);
+  animation: neuroflight-breathe 10.9s ease-in-out infinite;
+}
+
 .neuroflight-menu .premium-glass,
 .neuroflight-menu .premium-glass-strong,
 .neuroflight-menu .glass-button,
