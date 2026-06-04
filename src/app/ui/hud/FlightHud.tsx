@@ -1039,7 +1039,7 @@ export function FlightHud() {
               WebkitBackdropFilter: 'blur(22px) saturate(1.65)',
             }}
           >
-            END
+            DEBRIEF
           </button>
         </div>
       </div>

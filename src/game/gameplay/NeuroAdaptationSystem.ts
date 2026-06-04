@@ -8,7 +8,9 @@ export interface NeuroAdaptationSnapshot {
   flow: number;
   confidence: number;
   coverage: number;
+  /** Neutral telemetry-only v1 compatibility field; physiology must not change scoring. */
   scoreMultiplier: number;
+  /** Neutral telemetry-only v1 compatibility field; physiology must not change aim assist. */
   aimAssist: number;
   weatherClarity: number;
   audioIntensity: number;

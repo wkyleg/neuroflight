@@ -1,17 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { DeviceConnect } from '@/app/ui/components/DeviceConnect.tsx';
 import { BINAURAL_ENABLED_KEY } from '@/game/core/ProceduralFlightMusicSystem.ts';
+import { useGameStore } from '@/stores/gameStore.ts';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
+  const game = useGameStore((state) => state.game);
   const [binauralEnabled, setBinauralEnabled] = useState(
-    () => window.localStorage.getItem(BINAURAL_ENABLED_KEY) === 'true',
+    () => game?.isBinauralEnabled() ?? window.localStorage.getItem(BINAURAL_ENABLED_KEY) === 'true',
   );
+
+  useEffect(() => {
+    if (game) setBinauralEnabled(game.isBinauralEnabled());
+  }, [game]);
 
   const toggleBinaural = () => {
     const next = !binauralEnabled;
-    window.localStorage.setItem(BINAURAL_ENABLED_KEY, next ? 'true' : 'false');
+    if (game) {
+      game.setBinauralEnabled(next);
+    } else {
+      window.localStorage.setItem(BINAURAL_ENABLED_KEY, next ? 'true' : 'false');
+    }
     setBinauralEnabled(next);
   };
 

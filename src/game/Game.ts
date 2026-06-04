@@ -198,6 +198,8 @@ export class Game {
   private zenRouteComplete = false;
   private expeditionRouteComplete = false;
   private tutorialMode = false;
+  private endingSession = false;
+  private sessionEndTimeout: number | null = null;
 
   // Dogfight systems
   private aiController: AIController | null = null;
@@ -360,6 +362,14 @@ export class Game {
     return this.proceduralMusicSystem.isSoundEnabled();
   }
 
+  setBinauralEnabled(enabled: boolean): void {
+    this.proceduralMusicSystem.setBinauralEnabled(enabled);
+  }
+
+  isBinauralEnabled(): boolean {
+    return this.proceduralMusicSystem.isBinauralEnabled();
+  }
+
   async init(
     mode: GameMode,
     mapId = 'desert_expanse',
@@ -376,6 +386,11 @@ export class Game {
     this.zenRouteComplete = false;
     this.expeditionRouteComplete = false;
     this.bonusNotice = null;
+    this.endingSession = false;
+    if (this.sessionEndTimeout !== null) {
+      window.clearTimeout(this.sessionEndTimeout);
+      this.sessionEndTimeout = null;
+    }
 
     const map = getMap(mapId);
     const preset = getPreset(map.environmentPresetId);
@@ -675,10 +690,6 @@ export class Game {
       respiration: neuroState.respirationRate,
       timestamp: performance.now() / 1000,
     });
-    if (this.sessionPhase.isRecovery) {
-      this.weatherIdentitySystem?.setAdaptiveClarity(1.05);
-      this.audioPolishSystem?.setIntensity(0.38);
-    }
     this.weaponSystem?.setAimAssist(1);
 
     const plane = this.planeController.getObject();
@@ -1130,7 +1141,7 @@ export class Game {
     if (this.sessionPhase.terminal) {
       logger.info('Session', 'Session protocol complete', { mode: this.mode, difficulty: this.difficulty });
       this.sessionRecorder.recordEvent('session_completed', { phase: 'debrief', label: 'Session complete' });
-      this.endSession();
+      this.endSession({ completed: true });
       return true;
     }
 
@@ -1269,6 +1280,11 @@ export class Game {
     this.adaptationSamples = 0;
     this.lastRecoveryEventAt = -999;
     this.bonusNotice = null;
+    this.endingSession = false;
+    if (this.sessionEndTimeout !== null) {
+      window.clearTimeout(this.sessionEndTimeout);
+      this.sessionEndTimeout = null;
+    }
     this.neuroAdaptationSystem.reset();
     this.tutorialDirector.reset();
     this.sessionPhaseManager?.reset();
@@ -1288,14 +1304,24 @@ export class Game {
     // placeholder for pause
   }
 
-  endSession(): void {
+  endSession(options: { completed?: boolean } = {}): void {
+    if (this.endingSession) return;
+    this.endingSession = true;
     this.running = false;
     cancelAnimationFrame(this.rafId);
 
     if (this.tutorialMode) {
       this.sessionRecorder.stop();
-      this.onSessionEnd?.();
+      this.finishSessionNavigation(0);
       return;
+    }
+
+    const completed = options.completed === true;
+    if (!completed) {
+      this.sessionRecorder.recordEvent('session_ended_early', {
+        phase: this.sessionPhase.phase,
+        label: 'Manual debrief',
+      });
     }
 
     const neuroState = useNeuroStore.getState();
@@ -1437,7 +1463,32 @@ export class Game {
     };
 
     useGameStore.getState().setLastSession(summary);
-    this.onSessionEnd?.();
+    this.audioManager.playChime();
+    this.proceduralMusicSystem.triggerEvent(completed ? 'win' : 'ring');
+    const notice: FlightHudNotice = {
+      id: ++this.bonusNoticeId,
+      text: completed ? 'SESSION COMPLETE' : 'DEBRIEF READY',
+      tone: completed ? 'win' : 'bonus',
+      durationMs: 900,
+    };
+    this.bonusNotice = { ...notice, expiresAt: performance.now() / 1000 + notice.durationMs / 1000 };
+    useGameStore.getState().updateHud({ bonusNotice: notice });
+    this.finishSessionNavigation(900);
+  }
+
+  private finishSessionNavigation(delayMs: number): void {
+    if (this.sessionEndTimeout !== null) {
+      window.clearTimeout(this.sessionEndTimeout);
+      this.sessionEndTimeout = null;
+    }
+    if (delayMs <= 0) {
+      this.onSessionEnd?.();
+      return;
+    }
+    this.sessionEndTimeout = window.setTimeout(() => {
+      this.sessionEndTimeout = null;
+      this.onSessionEnd?.();
+    }, delayMs);
   }
 
   getInputManager(): InputManager {
@@ -1455,6 +1506,10 @@ export class Game {
   destroy(): void {
     this.running = false;
     cancelAnimationFrame(this.rafId);
+    if (this.sessionEndTimeout !== null) {
+      window.clearTimeout(this.sessionEndTimeout);
+      this.sessionEndTimeout = null;
+    }
     window.removeEventListener('mousedown', this.handleMouseDown);
     window.removeEventListener('mouseup', this.handleMouseUp);
     this.inputManager.destroy();

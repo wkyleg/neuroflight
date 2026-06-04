@@ -43,6 +43,7 @@ export interface FlightSample {
 export type FlightEventType =
   | 'session_started'
   | 'session_completed'
+  | 'session_ended_early'
   | 'phase_started'
   | 'phase_completed'
   | 'recovery_started'
