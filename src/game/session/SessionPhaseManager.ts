@@ -48,7 +48,7 @@ export class SessionPhaseManager {
         phase: this.currentPhase,
         elapsedMs: this.totalElapsedMs,
       });
-      if (this.currentPhase === 'debrief') break;
+      if (this.phaseIndex === SESSION_PHASES.length - 1) break;
     }
 
     return this.consumeEvents();

@@ -24,6 +24,7 @@ export class RingManager {
   private routeCursor = 0;
   private lastPlayerPos = new THREE.Vector3();
   private adaptiveGlow = 1;
+  private recoveryMode = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -113,6 +114,10 @@ export class RingManager {
     this.adaptiveGlow = THREE.MathUtils.clamp(intensity, 0.7, 1.6);
   }
 
+  setRecoveryMode(active: boolean): void {
+    this.recoveryMode = active;
+  }
+
   update(playerPos: THREE.Vector3, playerDir: THREE.Vector3): number {
     let ringsHit = 0;
     this.lastPlayerPos.copy(playerPos);
@@ -122,7 +127,7 @@ export class RingManager {
       const dist = ring.position.distanceTo(playerPos);
       const hitScale = typeof ring.userData.hitScale === 'number' ? ring.userData.hitScale : 1;
 
-      if (dist < PASS_THRESHOLD * hitScale && !this.passed.has(ring)) {
+      if (!this.recoveryMode && dist < PASS_THRESHOLD * hitScale && !this.passed.has(ring)) {
         this.passed.add(ring);
         ringsHit++;
         eventBus.emit('ring:passed');
@@ -147,12 +152,12 @@ export class RingManager {
       }
 
       const material = ring.material as THREE.MeshStandardMaterial;
-      material.emissiveIntensity = this.passed.has(ring) ? 2.4 : 0.7 * this.adaptiveGlow;
+      material.emissiveIntensity = this.recoveryMode ? 0.38 : this.passed.has(ring) ? 2.4 : 0.7 * this.adaptiveGlow;
       ring.children.forEach((child) => {
         if (child instanceof THREE.Mesh) {
           child.rotation.z += 0.015;
           const glowMat = child.material as THREE.MeshBasicMaterial;
-          glowMat.opacity = 0.24 + (this.adaptiveGlow - 0.7) * 0.22;
+          glowMat.opacity = this.recoveryMode ? 0.1 : 0.24 + (this.adaptiveGlow - 0.7) * 0.22;
         }
       });
     }

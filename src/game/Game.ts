@@ -569,6 +569,7 @@ export class Game {
   private update(dt: number): void {
     if (!this.planeController) return;
     if (this.updateSessionPhase(dt)) return;
+    this.applySessionPhaseDirector();
 
     this.inputManager.update(dt);
     const input = this.inputManager.getInput();
@@ -644,6 +645,10 @@ export class Game {
       respiration: neuroState.respirationRate,
       timestamp: performance.now() / 1000,
     });
+    if (this.sessionPhase.isRecovery) {
+      this.weatherIdentitySystem?.setAdaptiveClarity(1.05);
+      this.audioPolishSystem?.setIntensity(0.38);
+    }
     this.weaponSystem?.setAimAssist(1);
 
     const plane = this.planeController.getObject();
@@ -702,7 +707,8 @@ export class Game {
 
     // Dogfight update
     if (this.mode === 'dogfight' && this.aiController && this.weaponSystem && this.dogfightManager) {
-      if (!this.dogfightManager.isAiDead()) {
+      const dogfightEngaged = !this.sessionPhase.isRecovery;
+      if (dogfightEngaged && !this.dogfightManager.isAiDead()) {
         // AI uses direct movement — no FlightModel.update needed
         this.aiController.update(dt, this.planeController.flightModel.getPosition());
 
@@ -718,7 +724,7 @@ export class Game {
 
       // Update AI marker position
       if (this.aiMarker) {
-        if (this.dogfightManager.isAiDead()) {
+        if (!dogfightEngaged || this.dogfightManager.isAiDead()) {
           this.aiMarker.visible = false;
         } else {
           this.aiMarker.visible = true;
@@ -737,7 +743,7 @@ export class Game {
       }
 
       // Provide AI target positions for bullet magnetism
-      if (!this.dogfightManager.isAiDead()) {
+      if (dogfightEngaged && !this.dogfightManager.isAiDead()) {
         this.weaponSystem.setAiTargets([this.aiController.getPosition()]);
       } else {
         this.weaponSystem.setAiTargets([]);
@@ -746,7 +752,7 @@ export class Game {
       this.weaponSystem.update(dt);
 
       const targets: WeaponTarget[] = [{ position: this.planeController.flightModel.getPosition(), owner: 'player' }];
-      if (!this.dogfightManager.isAiDead()) {
+      if (dogfightEngaged && !this.dogfightManager.isAiDead()) {
         targets.push({ position: this.aiController.getPosition(), owner: 'ai' });
       }
       for (const target of this.livingWorldDirector?.getBonusTargets() ?? []) {
@@ -800,7 +806,7 @@ export class Game {
         this.aiController.setHealth(this.dogfightManager.getAiHealthFraction() * 100);
       }
 
-      if (this.dogfightManager.isAiDead()) {
+      if (!dogfightEngaged || this.dogfightManager.isAiDead()) {
         this.aiController.getObject().visible = false;
       } else {
         this.aiController.getObject().visible = true;
@@ -1073,6 +1079,16 @@ export class Game {
     }
 
     return false;
+  }
+
+  private applySessionPhaseDirector(): void {
+    const recovery = this.sessionPhase.isRecovery;
+    this.ringManager?.setRecoveryMode(recovery);
+    this.missionObjectiveSystem?.setRecoveryMode(recovery);
+    if (recovery) {
+      this.weatherIdentitySystem?.setAdaptiveClarity(1.05);
+      this.audioPolishSystem?.setIntensity(0.38);
+    }
   }
 
   private getSessionPhasePrompt(): string {
