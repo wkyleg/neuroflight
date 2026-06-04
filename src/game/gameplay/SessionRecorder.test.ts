@@ -3,6 +3,10 @@ import { type FlightSample, SessionRecorder } from './SessionRecorder';
 
 function samplePayload(overrides: Partial<Omit<FlightSample, 't'>> = {}): Omit<FlightSample, 't'> {
   return {
+    phase: 'warmup',
+    rppgStatus: 'ready',
+    canPublish: true,
+    signalCoverageTrailing: 0.8,
     speed: 1,
     altitude: 2,
     throttle: 0.5,
@@ -92,9 +96,15 @@ describe('SessionRecorder', () => {
     recorder.recordEvent('kill');
     const { events } = recorder.stop();
     expect(events).toHaveLength(3);
-    expect(events[0]).toEqual({ t: 2, type: 'ring_hit' });
-    expect(events[1]).toEqual({ t: 2, type: 'route_complete', label: 'Glowing route complete', score: 650 });
-    expect(events[2]).toEqual({ t: 2, type: 'kill' });
+    expect(events[0]).toEqual({ t: 2, type: 'ring_hit', phase: 'readiness' });
+    expect(events[1]).toEqual({
+      t: 2,
+      type: 'route_complete',
+      phase: 'readiness',
+      label: 'Glowing route complete',
+      score: 650,
+    });
+    expect(events[2]).toEqual({ t: 2, type: 'kill', phase: 'readiness' });
   });
 
   it('stop() returns collected samples and events', () => {

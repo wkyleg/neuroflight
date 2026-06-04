@@ -24,6 +24,9 @@ import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { type WeaponDifficultySettings, WeaponSystem, type WeaponTarget } from './gameplay/WeaponSystem.ts';
 import { getModeMeta } from './modes.ts';
+import { SessionPhaseManager } from './session/SessionPhaseManager.ts';
+import { MODE_PHASE_CONFIG } from './session/sessionConfig.ts';
+import { type SessionPhaseSnapshot, sessionPhaseLabel } from './session/sessionTypes.ts';
 import type { GameDifficulty, GameMode, MapDefinition, MissionWaypointConfig } from './types.ts';
 import { AtmosphereVfxSystem } from './world/AtmosphereVfxSystem.ts';
 import { CloudSystem } from './world/CloudSystem.ts';
@@ -161,6 +164,18 @@ export class Game {
   private worldManager: WorldManager | null = null;
   private scoreManager: ScoreManager;
   private sessionRecorder: SessionRecorder;
+  private sessionPhaseManager: SessionPhaseManager | null = null;
+  private sessionPhase: SessionPhaseSnapshot = {
+    phase: 'readiness',
+    phaseElapsedMs: 0,
+    phaseRemainingMs: 0,
+    totalElapsedMs: 0,
+    isWave: false,
+    isRecovery: false,
+    index: 1,
+    total: 9,
+    terminal: false,
+  };
   private neuroAdaptationSystem: NeuroAdaptationSystem;
   private flightSafetySystem: FlightSafetySystem;
   private planeController: PlaneController | null = null;
@@ -177,6 +192,7 @@ export class Game {
   private readonly HUD_UPDATE_INTERVAL = 1 / 10;
   private zenRouteComplete = false;
   private expeditionRouteComplete = false;
+  private tutorialMode = false;
 
   // Dogfight systems
   private aiController: AIController | null = null;
@@ -208,8 +224,9 @@ export class Game {
   private onSessionEnd: (() => void) | null = null;
   private canvas: HTMLCanvasElement;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, options: { tutorial?: boolean } = {}) {
     this.canvas = canvas;
+    this.tutorialMode = options.tutorial === true;
     this.canvas.tabIndex = 0;
     this.canvas.style.outline = 'none';
     this.renderer = new Renderer(this.canvas);
@@ -224,6 +241,7 @@ export class Game {
     this.sessionRecorder = new SessionRecorder();
     this.neuroAdaptationSystem = new NeuroAdaptationSystem();
     this.flightSafetySystem = new FlightSafetySystem();
+    this.sessionPhaseManager = this.tutorialMode ? null : new SessionPhaseManager();
 
     this.inputManager.onDevKey((key) => {
       if (key === 'Escape') this.togglePause();
@@ -525,6 +543,11 @@ export class Game {
     this.running = true;
     this.lastTime = performance.now() / 1000;
     this.sessionRecorder.start();
+    this.sessionRecorder.setPhase(this.sessionPhase.phase);
+    this.sessionRecorder.recordEvent('session_started', {
+      label: this.tutorialMode ? 'Tutorial flight started' : 'Scored session started',
+    });
+    this.sessionPhaseManager?.resolveReadiness();
     this.loop();
   }
 
@@ -543,6 +566,7 @@ export class Game {
 
   private update(dt: number): void {
     if (!this.planeController) return;
+    if (this.updateSessionPhase(dt)) return;
 
     this.inputManager.update(dt);
     const input = this.inputManager.getInput();
@@ -815,6 +839,10 @@ export class Game {
       const completedObjectives = this.missionObjectiveSystem?.getCompletedCount() ?? 0;
       const totalObjectives = this.missionObjectiveSystem?.getTotalCount() ?? 0;
       this.sessionRecorder.sample(this.HUD_UPDATE_INTERVAL, {
+        phase: this.sessionPhase.phase,
+        rppgStatus: neuroState.rppgSignal.status,
+        canPublish: neuroState.rppgSignal.canPublish,
+        signalCoverageTrailing: neuroState.rppgSignal.coverageTrailing,
         speed: Math.round(speed),
         altitude: Math.round(this.planeController.flightModel.getAltitude()),
         throttle: input.throttle,
@@ -990,8 +1018,64 @@ export class Game {
         adaptationConfidence: adaptation.confidence,
         signalCoverage: adaptation.coverage,
         neuroPrompt: adaptation.prompt,
+        sessionPhase: this.sessionPhase.phase,
+        sessionPhaseLabel: this.tutorialMode ? 'Tutorial' : sessionPhaseLabel(this.sessionPhase.phase),
+        sessionPhaseRemainingMs: this.sessionPhase.phaseRemainingMs,
+        sessionPhaseElapsedMs: this.sessionPhase.phaseElapsedMs,
+        sessionPhasePrompt: this.getSessionPhasePrompt(),
+        tutorial: this.tutorialMode,
       });
     }
+  }
+
+  private updateSessionPhase(dt: number): boolean {
+    if (!this.sessionPhaseManager) {
+      this.sessionPhase = {
+        ...this.sessionPhase,
+        phase: 'warmup',
+        phaseElapsedMs: this.scoreManager.getElapsedMs(),
+        phaseRemainingMs: 0,
+        totalElapsedMs: this.scoreManager.getElapsedMs(),
+        terminal: false,
+      };
+      this.sessionRecorder.setPhase(this.sessionPhase.phase);
+      return false;
+    }
+
+    const events = this.sessionPhaseManager.tick(dt * 1000);
+    this.sessionPhase = this.sessionPhaseManager.snapshot();
+    this.sessionRecorder.setPhase(this.sessionPhase.phase);
+    for (const event of events) {
+      this.sessionRecorder.recordEvent(event.type, {
+        phase: event.phase,
+        label: sessionPhaseLabel(event.phase),
+      });
+      if (event.type === 'phase_started' && this.sessionPhase.isRecovery) {
+        this.sessionRecorder.recordEvent('recovery_started', {
+          phase: event.phase,
+          label: sessionPhaseLabel(event.phase),
+        });
+      }
+      if (event.type === 'phase_completed' && event.phase.includes('recovery')) {
+        this.sessionRecorder.recordEvent('recovery_completed', {
+          phase: event.phase,
+          label: sessionPhaseLabel(event.phase),
+        });
+      }
+    }
+
+    if (this.sessionPhase.terminal) {
+      this.sessionRecorder.recordEvent('session_completed', { phase: 'debrief', label: 'Session complete' });
+      this.endSession();
+      return true;
+    }
+
+    return false;
+  }
+
+  private getSessionPhasePrompt(): string {
+    if (this.tutorialMode) return 'Tutorial flight. Practice freely; no score report will be saved.';
+    return MODE_PHASE_CONFIG[this.mode][this.sessionPhase.phase].prompt;
   }
 
   private firePlayerWeapon(): void {
@@ -1107,7 +1191,18 @@ export class Game {
     this.lastRecoveryEventAt = -999;
     this.bonusNotice = null;
     this.neuroAdaptationSystem.reset();
+    this.sessionPhaseManager?.reset();
+    this.sessionPhaseManager?.resolveReadiness();
+    this.sessionPhase = this.sessionPhaseManager?.snapshot() ?? {
+      ...this.sessionPhase,
+      phase: 'warmup',
+      phaseElapsedMs: 0,
+      phaseRemainingMs: 0,
+      totalElapsedMs: 0,
+      terminal: false,
+    };
     this.sessionRecorder.reset();
+    this.sessionRecorder.setPhase(this.sessionPhase.phase);
   }
 
   private togglePause(): void {
@@ -1117,6 +1212,12 @@ export class Game {
   endSession(): void {
     this.running = false;
     cancelAnimationFrame(this.rafId);
+
+    if (this.tutorialMode) {
+      this.sessionRecorder.stop();
+      this.onSessionEnd?.();
+      return;
+    }
 
     const neuroState = useNeuroStore.getState();
     const dfState = this.dogfightManager?.getState();
@@ -1223,6 +1324,7 @@ export class Game {
       avgLoad: this.adaptationSamples > 0 ? this.loadSum / this.adaptationSamples : null,
       avgFlow: this.adaptationSamples > 0 ? this.flowSum / this.adaptationSamples : null,
       signalCoveragePct: this.neuroAdaptationSystem.getSnapshot().coverage * 100,
+      tutorial: this.tutorialMode,
     };
 
     useGameStore.getState().setLastSession(summary);

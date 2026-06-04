@@ -204,6 +204,10 @@ export function MainMenu() {
     navigate(`/fly?mode=${selectedMode}&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=${selectedDifficulty}`);
   };
 
+  const launchTutorial = () => {
+    navigate(`/fly?tutorial=1&mode=zen&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=rookie`);
+  };
+
   const enableCamera = async () => {
     await useNeuroStore.getState().enableCamera();
   };
@@ -228,6 +232,9 @@ export function MainMenu() {
           </button>
           <button type="button" onClick={() => navigate('/settings')} className="glass-button menu-utility-button">
             Settings
+          </button>
+          <button type="button" onClick={launchTutorial} className="glass-button menu-utility-button">
+            Tutorial
           </button>
         </div>
       </header>
@@ -473,6 +480,9 @@ export function MainMenu() {
           style={{ background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)` }}
         >
           Launch {mode.title}
+        </button>
+        <button type="button" onClick={launchTutorial} className="glass-button menu-utility-button">
+          Practice
         </button>
       </footer>
     </main>

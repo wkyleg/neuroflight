@@ -40,6 +40,12 @@ const DEFAULT_HUD = {
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
+  sessionPhase: 'readiness',
+  sessionPhaseLabel: 'Readiness',
+  sessionPhaseRemainingMs: 0,
+  sessionPhaseElapsedMs: 0,
+  sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
+  tutorial: false,
 };
 
 function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary {
@@ -83,6 +89,7 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     avgLoad: null,
     avgFlow: null,
     signalCoveragePct: 0,
+    tutorial: false,
     ...overrides,
   };
 }

@@ -21,6 +21,7 @@ export function GameScreen() {
   const mapId = searchParams.get('map') ?? 'desert_expanse';
   const aircraftId = searchParams.get('aircraft') ?? DEFAULT_AIRCRAFT_ID;
   const difficulty = parseDifficulty(searchParams.get('difficulty'));
+  const tutorial = searchParams.get('tutorial') === '1';
   const [loading, setLoading] = useState(true);
 
   const map = getMap(mapId);
@@ -31,11 +32,11 @@ export function GameScreen() {
   const initGame = useCallback(async () => {
     if (!canvasRef.current || gameRef.current) return;
 
-    const game = new Game(canvasRef.current);
+    const game = new Game(canvasRef.current, { tutorial });
     gameRef.current = game;
 
     game.setOnSessionEnd(() => {
-      navigate('/summary');
+      navigate(tutorial ? '/' : '/summary');
     });
 
     await game.init(mode, mapId, aircraft.id, difficulty);
@@ -43,7 +44,7 @@ export function GameScreen() {
 
     useGameStore.getState().setGame(game);
     setLoading(false);
-  }, [mode, mapId, aircraft.id, difficulty, navigate]);
+  }, [mode, mapId, aircraft.id, difficulty, navigate, tutorial]);
 
   useEffect(() => {
     initGame();
@@ -84,7 +85,7 @@ export function GameScreen() {
             className="text-xs"
             style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-secondary)', opacity: 0.6 }}
           >
-            {aircraft.name} &middot; {modeMeta.title} &middot; {difficulty.toUpperCase()}
+            {aircraft.name} &middot; {tutorial ? 'Tutorial' : modeMeta.title} &middot; {difficulty.toUpperCase()}
           </p>
           <p className="mt-3 max-w-md text-center text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
             {modeMeta.loadingLine}

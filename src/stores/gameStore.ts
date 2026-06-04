@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
+import type { SessionPhase } from '@/game/session/sessionTypes.ts';
 import type { GameDifficulty, GameMode } from '@/game/types.ts';
 
 export interface SessionSummary {
@@ -46,6 +47,7 @@ export interface SessionSummary {
   avgLoad: number | null;
   avgFlow: number | null;
   signalCoveragePct: number;
+  tutorial: boolean;
 }
 
 export type FlightHudNoticeTone = 'hit' | 'win' | 'bonus' | 'reset';
@@ -96,6 +98,12 @@ export interface FlightHudState {
   signalCoverage: number;
   neuroPrompt: string;
   bonusNotice: FlightHudNotice | null;
+  sessionPhase: SessionPhase;
+  sessionPhaseLabel: string;
+  sessionPhaseRemainingMs: number;
+  sessionPhaseElapsedMs: number;
+  sessionPhasePrompt: string;
+  tutorial: boolean;
 }
 
 interface GameStoreState {
@@ -147,6 +155,12 @@ const DEFAULT_HUD: FlightHudState = {
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
+  sessionPhase: 'readiness',
+  sessionPhaseLabel: 'Readiness',
+  sessionPhaseRemainingMs: 0,
+  sessionPhaseElapsedMs: 0,
+  sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
+  tutorial: false,
 };
 
 function loadPersistedSession(): SessionSummary | null {

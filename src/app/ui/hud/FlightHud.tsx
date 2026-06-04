@@ -550,6 +550,44 @@ function InstrumentTile({
   );
 }
 
+function SessionPhaseChip({
+  label,
+  remainingMs,
+  prompt,
+  tutorial,
+  accent,
+}: {
+  label: string;
+  remainingMs: number;
+  prompt: string;
+  tutorial: boolean;
+  accent: string;
+}) {
+  const timeLabel = tutorial ? 'Open' : `${Math.ceil(Math.max(0, remainingMs) / 1000)}s`;
+  return (
+    <div
+      className="premium-glass flight-score-panel rounded-xl border text-center"
+      style={{
+        minWidth: 154,
+        background: 'linear-gradient(135deg, rgba(20,58,68,0.58), rgba(7,20,28,0.56))',
+        borderColor: 'rgba(255,255,255,0.18)',
+        backdropFilter: 'blur(24px) saturate(1.75)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
+      }}
+    >
+      <div className="text-[9px] tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+        {tutorial ? 'Practice' : label}
+      </div>
+      <div className="text-lg font-black tabular-nums leading-none" style={{ color: accent }}>
+        {timeLabel}
+      </div>
+      <div className="mt-1 truncate text-[9px]" style={{ color: 'rgba(255,246,220,0.58)' }} title={prompt}>
+        {prompt}
+      </div>
+    </div>
+  );
+}
+
 function ThrottleInstrument({ value }: { value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
@@ -931,6 +969,13 @@ export function FlightHud() {
               {Math.round(displayScore)}
             </div>
           </div>
+          <SessionPhaseChip
+            label={hud.sessionPhaseLabel}
+            remainingMs={hud.sessionPhaseRemainingMs}
+            prompt={hud.sessionPhasePrompt}
+            tutorial={hud.tutorial}
+            accent={modeMeta.accent}
+          />
           <button
             type="button"
             onPointerDown={stopHudPointer}
