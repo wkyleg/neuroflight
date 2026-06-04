@@ -46,6 +46,11 @@ const DEFAULT_HUD = {
   sessionPhaseElapsedMs: 0,
   sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
   tutorial: false,
+  tutorialStageTitle: 'Controls',
+  tutorialStagePrompt: 'Pitch and roll until the aircraft responds smoothly.',
+  tutorialStageHint: 'Use W/S and A/D, or the touch stick.',
+  tutorialStageProgress: 0,
+  tutorialStageComplete: false,
 };
 
 function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary {

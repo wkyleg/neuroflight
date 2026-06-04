@@ -11,6 +11,7 @@ import { RecoveryOverlay } from './RecoveryOverlay.tsx';
 import { SessionBriefingOverlay } from './SessionBriefingOverlay.tsx';
 import { SessionPhaseBanner } from './SessionPhaseBanner.tsx';
 import { phasePosition } from './sessionPhaseUi.ts';
+import { TutorialOverlay } from './TutorialOverlay.tsx';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
@@ -925,6 +926,7 @@ export function FlightHud() {
       <SessionPhaseBanner />
       <SessionBriefingOverlay />
       <RecoveryOverlay />
+      <TutorialOverlay />
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
       {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}
 

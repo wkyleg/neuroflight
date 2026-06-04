@@ -205,7 +205,7 @@ export function MainMenu() {
   };
 
   const launchTutorial = () => {
-    navigate(`/fly?tutorial=1&mode=zen&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=rookie`);
+    navigate(`/fly?tutorial=1&mode=dogfight&map=${selectedMap}&aircraft=${aircraft.id}&difficulty=rookie`);
   };
 
   const enableCamera = async () => {
@@ -483,9 +483,6 @@ export function MainMenu() {
           style={{ background: `linear-gradient(135deg, ${mode.accent} 0%, #fff4ca 100%)` }}
         >
           Launch {mode.title}
-        </button>
-        <button type="button" onClick={launchTutorial} className="glass-button menu-utility-button">
-          Practice
         </button>
       </footer>
     </main>

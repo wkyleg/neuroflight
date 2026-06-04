@@ -401,7 +401,7 @@ export class Game {
     this.worldManager = new WorldManager(this.scene);
     this.worldManager.loadMap(map);
 
-    if (mode === 'zen') {
+    if (mode === 'zen' || this.tutorialMode) {
       this.ringManager = new RingManager(this.scene);
     }
 
@@ -419,7 +419,9 @@ export class Game {
       const aiSpawn = this.getDogfightSpawnPosition(map, new THREE.Vector3(...map.playerSpawn));
       this.aiController = new AIController(aiAircraft, aiSpawn);
       this.aiController.setDifficulty(getDifficultyConfig(this.difficulty).ai);
-      this.aiController.setAttackWarmup(getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds);
+      this.aiController.setAttackWarmup(
+        this.tutorialMode ? 9999 : getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds,
+      );
       await this.aiController.loadModel(this.assetManager, this.scene);
 
       const markerCanvas = document.createElement('canvas');
@@ -475,7 +477,7 @@ export class Game {
     const modeMeta = getModeMeta(mode);
     const initialInput = this.inputManager.getInput();
     const initialDogfightGoal = map.missionRoutes?.dogfight.length ? 3 : 0;
-    const initialTutorialSnapshot = this.tutorialMode ? this.tutorialDirector.snapshot(0) : null;
+    const initialTutorialSnapshot = this.tutorialMode ? this.tutorialDirector.snapshot() : null;
     useGameStore.getState().updateHud({
       mode,
       aircraftId: this.currentAircraftId,
@@ -499,6 +501,11 @@ export class Game {
       sessionPhaseLabel: initialTutorialSnapshot?.title ?? sessionPhaseLabel(this.sessionPhase.phase),
       sessionPhasePrompt: initialTutorialSnapshot?.prompt ?? this.getSessionPhasePrompt(),
       tutorial: this.tutorialMode,
+      tutorialStageTitle: initialTutorialSnapshot?.title ?? 'Controls',
+      tutorialStagePrompt: initialTutorialSnapshot?.prompt ?? '',
+      tutorialStageHint: initialTutorialSnapshot?.hint ?? '',
+      tutorialStageProgress: initialTutorialSnapshot?.progress ?? 0,
+      tutorialStageComplete: initialTutorialSnapshot?.completed ?? false,
     });
     this.activateControls();
   }
@@ -826,7 +833,9 @@ export class Game {
         const playerPos = this.planeController.flightModel.getPosition();
         const respawnPos = this.getDogfightSpawnPosition(map, playerPos);
         this.aiController.respawn(respawnPos);
-        this.aiController.setAttackWarmup(getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds);
+        this.aiController.setAttackWarmup(
+          this.tutorialMode ? 9999 : getDifficultyConfig(this.difficulty).dogfight.attackWarmupSeconds,
+        );
         this.aiController.setHealth(100);
         this.sessionRecorder.recordEvent('respawn', { label: 'Rival rejoined the route' });
       } else if (!this.dogfightManager.isAiDead()) {
@@ -981,6 +990,20 @@ export class Game {
       const dfState = this.dogfightManager?.getState();
 
       const aiDebug = this.aiController?.getDebugInfo();
+      const tutorialSnapshot = this.tutorialMode
+        ? this.tutorialDirector.update({
+            dtMs: this.HUD_UPDATE_INTERVAL * 1000,
+            pitch: input.pitch,
+            roll: input.roll,
+            throttle: input.throttle,
+            speed,
+            ringsPassed: this.scoreManager.getRingsPassed(),
+            shotsFired: dfState?.shotsFired ?? 0,
+            shotsHit: dfState?.shotsHit ?? 0,
+            kills: dfState?.kills ?? 0,
+            rivalDistance: aiDebug?.distance ?? null,
+          })
+        : null;
       const currentMap = map;
       const modeMeta = getModeMeta(this.mode);
       const hudActiveObjective = missionNav?.display ?? this.missionObjectiveSystem?.getActiveWaypoint();
@@ -1003,10 +1026,6 @@ export class Game {
           : this.mode === 'zen'
             ? `Gate ${Math.min(this.scoreManager.getRingsPassed() + 1, zenGoal || 1)}/${Math.max(zenGoal, 1)} - use the route arrow when the ring is offscreen.`
             : 'Stay composed, keep visual contact, and use the landmarks.';
-      const tutorialSnapshot = this.tutorialMode
-        ? this.tutorialDirector.snapshot(this.sessionPhase.totalElapsedMs)
-        : null;
-
       useGameStore.getState().updateHud({
         speed: Math.round(speed),
         altitude: Math.round(this.planeController.flightModel.getAltitude()),
@@ -1062,6 +1081,11 @@ export class Game {
         sessionPhaseElapsedMs: this.sessionPhase.phaseElapsedMs,
         sessionPhasePrompt: tutorialSnapshot?.prompt ?? this.getSessionPhasePrompt(),
         tutorial: this.tutorialMode,
+        tutorialStageTitle: tutorialSnapshot?.title ?? '',
+        tutorialStagePrompt: tutorialSnapshot?.prompt ?? '',
+        tutorialStageHint: tutorialSnapshot?.hint ?? '',
+        tutorialStageProgress: tutorialSnapshot?.progress ?? 0,
+        tutorialStageComplete: tutorialSnapshot?.completed ?? false,
       });
     }
   }

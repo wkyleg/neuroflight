@@ -1,81 +1,175 @@
-export interface TutorialStage {
-  id: 'controls' | 'throttle' | 'gates' | 'route' | 'signal' | 'free_practice';
-  title: string;
-  prompt: string;
-  startsAtMs: number;
+export type TutorialStageId = 'controls' | 'throttle' | 'gates' | 'fire' | 'dogfight_intro' | 'free_practice';
+
+export interface TutorialProgressInput {
+  dtMs: number;
+  pitch: number;
+  roll: number;
+  throttle: number;
+  speed: number;
+  ringsPassed: number;
+  shotsFired: number;
+  shotsHit: number;
+  kills: number;
+  rivalDistance: number | null;
 }
 
-export interface TutorialSnapshot extends TutorialStage {
+interface TutorialStageConfig {
+  id: TutorialStageId;
+  title: string;
+  prompt: string;
+  hint: string;
+  target: number;
+}
+
+export interface TutorialSnapshot extends TutorialStageConfig {
   elapsedMs: number;
   progress: number;
   nextTitle: string | null;
+  completed: boolean;
 }
 
-const TUTORIAL_STAGES: TutorialStage[] = [
+const TUTORIAL_STAGES: TutorialStageConfig[] = [
   {
     id: 'controls',
     title: 'Controls',
-    prompt: 'Pitch with W/S, roll with A/D, and keep the nose near the horizon.',
-    startsAtMs: 0,
+    prompt: 'Pitch and roll until the aircraft responds smoothly.',
+    hint: 'Use W/S and A/D, or the touch stick.',
+    target: 1.8,
   },
   {
     id: 'throttle',
     title: 'Throttle',
-    prompt: 'Use Shift and Ctrl to find a comfortable cruising speed.',
-    startsAtMs: 18_000,
+    prompt: 'Change speed with Shift and Ctrl.',
+    hint: 'Build or reduce speed by at least 20.',
+    target: 20,
   },
   {
     id: 'gates',
-    title: 'Gates',
-    prompt: 'Fly through the bright gates. Misses are fine; this run is not scored.',
-    startsAtMs: 38_000,
+    title: 'Practice Gates',
+    prompt: 'Fly through two bright gates.',
+    hint: 'Follow the route arrow when the next gate is offscreen.',
+    target: 2,
   },
   {
-    id: 'route',
-    title: 'Route Cues',
-    prompt: 'When a gate is offscreen, follow the route arrow back toward it.',
-    startsAtMs: 68_000,
+    id: 'fire',
+    title: 'Fire Control',
+    prompt: 'Fire a few bright trails.',
+    hint: 'Press F, Space, Enter, or the FIRE button.',
+    target: 3,
   },
   {
-    id: 'signal',
-    title: 'Camera Signal',
-    prompt: 'Camera biofeedback is optional; steady framing only changes ambience.',
-    startsAtMs: 96_000,
+    id: 'dogfight_intro',
+    title: 'Rival Intro',
+    prompt: 'Keep the rival in view and land one hit.',
+    hint: 'Close the distance, line up, then fire.',
+    target: 1,
   },
   {
     id: 'free_practice',
     title: 'Free Practice',
-    prompt: 'Practice turns, gates, and smooth recoveries for as long as you like.',
-    startsAtMs: 126_000,
+    prompt: 'Practice gates, aim, and smooth recoveries as long as you like.',
+    hint: 'This run is unscored and will not create a report.',
+    target: 1,
   },
 ];
 
 export class TutorialDirector {
-  snapshot(elapsedMs: number): TutorialSnapshot {
-    const safeElapsedMs = Math.max(0, elapsedMs);
-    const currentIndex = this.stageIndexAt(safeElapsedMs);
-    const stage = TUTORIAL_STAGES[currentIndex];
-    const nextStage = TUTORIAL_STAGES[currentIndex + 1] ?? null;
-    const stageDurationMs = nextStage ? nextStage.startsAtMs - stage.startsAtMs : 1;
-    const progress = nextStage ? Math.min(1, (safeElapsedMs - stage.startsAtMs) / stageDurationMs) : 1;
+  private stageIndex = 0;
+  private elapsedMs = 0;
+  private controlSeconds = 0;
+  private initialThrottle: number | null = null;
+  private initialSpeed: number | null = null;
+  private baselineRings = 0;
+  private baselineShots = 0;
+  private baselineHits = 0;
+  private baselineKills = 0;
 
+  update(input: TutorialProgressInput): TutorialSnapshot {
+    this.elapsedMs += Math.max(0, input.dtMs);
+    const stage = this.currentStage;
+    const progress = this.progressFor(stage, input);
+    if (progress >= 1 && stage.id !== 'free_practice') {
+      this.advance(input);
+    }
+    return this.snapshot();
+  }
+
+  snapshot(_elapsedMs = 0): TutorialSnapshot {
+    const stage = this.currentStage;
+    const nextStage = TUTORIAL_STAGES[this.stageIndex + 1] ?? null;
     return {
       ...stage,
-      elapsedMs: safeElapsedMs - stage.startsAtMs,
-      progress,
+      elapsedMs: this.elapsedMs,
+      progress: stage.id === 'free_practice' ? 1 : this.lastProgress,
       nextTitle: nextStage?.title ?? null,
+      completed: stage.id === 'free_practice',
     };
   }
 
   reset(): void {
-    // The director is stateless today; reset keeps the Game lifecycle explicit.
+    this.stageIndex = 0;
+    this.elapsedMs = 0;
+    this.controlSeconds = 0;
+    this.initialThrottle = null;
+    this.initialSpeed = null;
+    this.baselineRings = 0;
+    this.baselineShots = 0;
+    this.baselineHits = 0;
+    this.baselineKills = 0;
+    this.lastProgress = 0;
   }
 
-  private stageIndexAt(elapsedMs: number): number {
-    let index = 0;
-    for (let i = 0; i < TUTORIAL_STAGES.length; i++) {
-      if (elapsedMs >= TUTORIAL_STAGES[i].startsAtMs) index = i;
+  private lastProgress = 0;
+
+  private get currentStage(): TutorialStageConfig {
+    return TUTORIAL_STAGES[this.stageIndex];
+  }
+
+  private progressFor(stage: TutorialStageConfig, input: TutorialProgressInput): number {
+    switch (stage.id) {
+      case 'controls':
+        if (Math.abs(input.pitch) > 0.18 && Math.abs(input.roll) > 0.18) {
+          this.controlSeconds += input.dtMs / 1000;
+        }
+        this.lastProgress = Math.min(1, this.controlSeconds / stage.target);
+        return this.lastProgress;
+      case 'throttle': {
+        this.initialThrottle ??= input.throttle;
+        this.initialSpeed ??= input.speed;
+        const delta = Math.max(
+          Math.abs(input.throttle - this.initialThrottle) * 100,
+          Math.abs(input.speed - this.initialSpeed),
+        );
+        this.lastProgress = Math.min(1, delta / stage.target);
+        return this.lastProgress;
+      }
+      case 'gates':
+        this.lastProgress = Math.min(1, (input.ringsPassed - this.baselineRings) / stage.target);
+        return this.lastProgress;
+      case 'fire':
+        this.lastProgress = Math.min(1, (input.shotsFired - this.baselineShots) / stage.target);
+        return this.lastProgress;
+      case 'dogfight_intro': {
+        const closeBonus = input.rivalDistance !== null && input.rivalDistance < 700 ? 0.35 : 0;
+        const hitProgress = input.shotsHit - this.baselineHits + (input.kills - this.baselineKills);
+        this.lastProgress = Math.min(1, closeBonus + hitProgress / stage.target);
+        return this.lastProgress;
+      }
+      case 'free_practice':
+        this.lastProgress = 1;
+        return 1;
     }
-    return index;
+  }
+
+  private advance(input: TutorialProgressInput): void {
+    this.stageIndex = Math.min(TUTORIAL_STAGES.length - 1, this.stageIndex + 1);
+    this.elapsedMs = 0;
+    this.lastProgress = 0;
+    this.baselineRings = input.ringsPassed;
+    this.baselineShots = input.shotsFired;
+    this.baselineHits = input.shotsHit;
+    this.baselineKills = input.kills;
+    this.initialThrottle = input.throttle;
+    this.initialSpeed = input.speed;
   }
 }

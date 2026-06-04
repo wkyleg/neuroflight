@@ -114,6 +114,11 @@ export interface FlightHudState {
   sessionPhaseElapsedMs: number;
   sessionPhasePrompt: string;
   tutorial: boolean;
+  tutorialStageTitle: string;
+  tutorialStagePrompt: string;
+  tutorialStageHint: string;
+  tutorialStageProgress: number;
+  tutorialStageComplete: boolean;
 }
 
 interface GameStoreState {
@@ -171,6 +176,11 @@ const DEFAULT_HUD: FlightHudState = {
   sessionPhaseElapsedMs: 0,
   sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
   tutorial: false,
+  tutorialStageTitle: 'Controls',
+  tutorialStagePrompt: 'Pitch and roll until the aircraft responds smoothly.',
+  tutorialStageHint: 'Use W/S and A/D, or the touch stick.',
+  tutorialStageProgress: 0,
+  tutorialStageComplete: false,
 };
 
 function loadPersistedSession(): SessionSummary | null {
