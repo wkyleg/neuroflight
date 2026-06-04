@@ -21,6 +21,13 @@ describe('HeartTempoTracker', () => {
     expect(tracker.getTargetTempo('dogfight', 75)).toBeCloseTo(109.08, 1);
   });
 
+  it('subdivides unusually low heart rates into audible tempo', () => {
+    const tracker = new HeartTempoTracker();
+    tracker.addSample({ bpm: 44, confidence: 0.8, timestamp: 0 });
+
+    expect(tracker.getTargetTempo('zen', 1)).toBeCloseTo(86.24, 1);
+  });
+
   it('falls back to mode defaults only before any valid BPM appears', () => {
     const tracker = new HeartTempoTracker();
     tracker.addSample({ bpm: 118, confidence: 0.02, timestamp: 0 });

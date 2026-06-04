@@ -1,4 +1,5 @@
 import type { GameMode } from '@/game/types.ts';
+import { lockTempoToHeartRate } from './musicMath.ts';
 
 export interface HeartTempoSample {
   bpm: number | null;
@@ -22,12 +23,8 @@ const SAMPLE_WINDOW_SECONDS = 60;
 const MIN_VALID_BPM = 35;
 const MAX_VALID_BPM = 220;
 const MIN_CONFIDENCE = 0.08;
-const MIN_TRANSPORT_BPM = 72;
-const MAX_TRANSPORT_BPM = 152;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
+const MIN_TRANSPORT_BPM = 60;
+const MAX_TRANSPORT_BPM = 140;
 
 function median(values: number[]): number | null {
   if (values.length === 0) return null;
@@ -65,7 +62,12 @@ export class HeartTempoTracker {
   }
 
   getTargetTempo(mode: GameMode, now: number): number {
-    return clamp(this.getMedianBpm(mode, now) * MODE_TEMPO_FACTORS[mode], MIN_TRANSPORT_BPM, MAX_TRANSPORT_BPM);
+    return lockTempoToHeartRate(
+      this.getMedianBpm(mode, now),
+      MODE_TEMPO_FACTORS[mode],
+      MIN_TRANSPORT_BPM,
+      MAX_TRANSPORT_BPM,
+    ).transportBpm;
   }
 
   getLastValidBpm(): number | null {
