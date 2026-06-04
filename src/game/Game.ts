@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import logger from '@/neuro/logger.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 import type { FlightHudNotice, FlightHudNoticeTone, SessionSummary } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
@@ -1058,6 +1059,7 @@ export class Game {
         phase: event.phase,
         label: sessionPhaseLabel(event.phase),
       });
+      logger.info('Session', event.type, { phase: event.phase, mode: this.mode, elapsedMs: event.elapsedMs });
       if (event.type === 'phase_started' && this.sessionPhase.isRecovery) {
         this.sessionRecorder.recordEvent('recovery_started', {
           phase: event.phase,
@@ -1073,6 +1075,7 @@ export class Game {
     }
 
     if (this.sessionPhase.terminal) {
+      logger.info('Session', 'Session protocol complete', { mode: this.mode, difficulty: this.difficulty });
       this.sessionRecorder.recordEvent('session_completed', { phase: 'debrief', label: 'Session complete' });
       this.endSession();
       return true;
@@ -1267,6 +1270,11 @@ export class Game {
       shotsFired: dfState?.shotsFired ?? 0,
       shotsHit: dfState?.shotsHit ?? 0,
       recoveryWindows,
+    });
+    logger.info('Session', 'Built session score', {
+      mode: this.mode,
+      score: sessionScores.sessionScore,
+      confidence: sessionScores.insightConfidenceLabel,
     });
 
     let peakBpm: number | null = null;

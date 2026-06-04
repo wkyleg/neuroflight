@@ -118,6 +118,7 @@ export class NeuroManager {
   private mockEnabled = false;
   private wasmReady = false;
   private previousSource: NeuroState['source'] = 'none';
+  private previousRppgSignalStatus = DEFAULT_RPPG_SIGNAL_SNAPSHOT.status;
   private smoothedCalm = 0;
   private smoothedArousal = 0;
 
@@ -357,6 +358,15 @@ export class NeuroManager {
       activeMs: rppgState.activeTime * 1000,
       nowMs: performance.now(),
     });
+    if (this.state.rppgSignal.status !== this.previousRppgSignalStatus) {
+      logger.info('rPPG', 'Signal status changed', {
+        from: this.previousRppgSignalStatus,
+        to: this.state.rppgSignal.status,
+        coverage: this.state.rppgSignal.coverageSession,
+        backendUnavailable: this.state.rppgSignal.backendUnavailable,
+      });
+      this.previousRppgSignalStatus = this.state.rppgSignal.status;
+    }
 
     if (source !== this.previousSource) {
       logger.info('Neuro', `Source changed: ${this.previousSource} -> ${source}`);
