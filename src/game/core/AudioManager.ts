@@ -1,4 +1,5 @@
 import type { AircraftDefinition } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 type AircraftAudioProfile = NonNullable<AircraftDefinition['audioProfile']>;
 
@@ -131,6 +132,7 @@ export class AudioManager {
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
+      logger.info('AudioManager', 'Creating Web Audio context');
       this.ctx = new AudioContext();
     }
     return this.ctx;
@@ -140,9 +142,11 @@ export class AudioManager {
     if (this.started) return;
     const ctx = this.ensureContext();
     if (ctx.state === 'suspended') {
+      logger.info('AudioManager', 'Resuming suspended Web Audio context');
       ctx.resume();
     }
     this.started = true;
+    logger.info('AudioManager', 'Starting engine and wind beds', { enabled: this.enabled });
 
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = this.enabled ? 0.02 : 0;
@@ -377,6 +381,7 @@ export class AudioManager {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+    logger.info('AudioManager', 'Set enabled', { enabled });
     if (!enabled) {
       if (this.engineGain) this.engineGain.gain.value = 0;
       if (this.windGain) this.windGain.gain.value = 0;
@@ -389,6 +394,7 @@ export class AudioManager {
   }
 
   destroy(): void {
+    logger.info('AudioManager', 'Destroying audio manager');
     this.engineOsc1?.stop();
     this.engineOsc2?.stop();
     this.lfo?.stop();

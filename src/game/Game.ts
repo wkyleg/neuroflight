@@ -200,6 +200,7 @@ export class Game {
   private tutorialMode = false;
   private endingSession = false;
   private sessionEndTimeout: number | null = null;
+  private destroyed = false;
 
   // Dogfight systems
   private aiController: AIController | null = null;
@@ -229,11 +230,14 @@ export class Game {
   private lastRecoveryEventAt = -999;
 
   private onSessionEnd: (() => void) | null = null;
+  private onSessionEnding: (() => void) | null = null;
   private canvas: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement, options: { tutorial?: boolean } = {}) {
     this.canvas = canvas;
     this.tutorialMode = options.tutorial === true;
+    this.destroyed = false;
+    logger.info('Game', 'Constructing game instance', { tutorial: this.tutorialMode });
     this.canvas.tabIndex = 0;
     this.canvas.style.outline = 'none';
     this.renderer = new Renderer(this.canvas);
@@ -257,6 +261,7 @@ export class Game {
 
     const startAudio = () => {
       if (!this.audioStarted) {
+        logger.info('Audio', 'Starting audio systems from user gesture');
         this.audioManager.start();
         this.audioPolishSystem?.start();
         void this.proceduralMusicSystem.start();
@@ -334,8 +339,14 @@ export class Game {
     this.onSessionEnd = cb;
   }
 
+  setOnSessionEnding(cb: () => void): void {
+    this.onSessionEnding = cb;
+  }
+
   resolveReadiness(): void {
+    logger.info('Session', 'Readiness resolved by player', { phase: this.sessionPhase.phase });
     this.sessionPhaseManager?.resolveReadiness();
+    this.activateControls();
   }
 
   continueBehaviorOnly(): void {
@@ -355,6 +366,7 @@ export class Game {
     const enabled = this.proceduralMusicSystem.toggleSound();
     this.audioManager.setEnabled(enabled);
     this.audioPolishSystem?.setMasterEnabled(enabled);
+    logger.info('Audio', 'Master sound toggled', { enabled });
     return enabled;
   }
 
@@ -376,6 +388,13 @@ export class Game {
     aircraftId = DEFAULT_AIRCRAFT_ID,
     difficulty: GameDifficulty = 'rookie',
   ): Promise<void> {
+    logger.info('Game', 'Initializing session', {
+      mode,
+      mapId,
+      aircraftId,
+      difficulty,
+      tutorial: this.tutorialMode,
+    });
     this.mode = mode;
     this.currentMapId = mapId;
     this.currentAircraftId = getAircraft(aircraftId).id;
@@ -523,6 +542,12 @@ export class Game {
       tutorialStageComplete: initialTutorialSnapshot?.completed ?? false,
     });
     this.activateControls();
+    logger.info('Game', 'Session initialized', {
+      mode,
+      mapId,
+      aircraftId: this.currentAircraftId,
+      difficulty: this.difficulty,
+    });
   }
 
   private getInitialObjectiveText(mode: GameMode, expeditionRoute?: MissionWaypointConfig[]): string {
@@ -581,8 +606,17 @@ export class Game {
   }
 
   start(): void {
+    if (this.destroyed) {
+      logger.warn('Game', 'start() ignored because game was destroyed');
+      return;
+    }
+    if (this.running) {
+      logger.warn('Game', 'start() ignored because game is already running');
+      return;
+    }
     this.running = true;
     this.lastTime = performance.now() / 1000;
+    logger.info('Game', 'Starting RAF loop', { tutorial: this.tutorialMode, phase: this.sessionPhase.phase });
     this.sessionRecorder.start();
     this.sessionRecorder.setPhase(this.sessionPhase.phase);
     this.sessionRecorder.recordEvent('session_started', {
@@ -1309,6 +1343,13 @@ export class Game {
     this.endingSession = true;
     this.running = false;
     cancelAnimationFrame(this.rafId);
+    this.renderer.resetForSession();
+    logger.info('Session', 'Ending session', {
+      completed: options.completed === true,
+      tutorial: this.tutorialMode,
+      phase: this.sessionPhase.phase,
+    });
+    this.onSessionEnding?.();
 
     if (this.tutorialMode) {
       this.sessionRecorder.stop();
@@ -1498,12 +1539,23 @@ export class Game {
   activateControls(): void {
     const active = document.activeElement;
     if (active instanceof HTMLElement && active !== this.canvas) {
+      logger.debug('Input', 'Blurring focused element before canvas activation', {
+        tagName: active.tagName,
+        className: active.className,
+      });
       active.blur();
     }
     this.canvas.focus({ preventScroll: true });
+    logger.debug('Input', 'Canvas focused for flight controls');
   }
 
   destroy(): void {
+    if (this.destroyed) {
+      logger.warn('Game', 'destroy() ignored because game is already destroyed');
+      return;
+    }
+    this.destroyed = true;
+    logger.info('Game', 'Destroying game instance', { running: this.running, phase: this.sessionPhase.phase });
     this.running = false;
     cancelAnimationFrame(this.rafId);
     if (this.sessionEndTimeout !== null) {

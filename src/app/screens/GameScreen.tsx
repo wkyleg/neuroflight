@@ -7,6 +7,7 @@ import { Game } from '@/game/Game.ts';
 import { getModeMeta } from '@/game/modes.ts';
 import type { GameDifficulty, GameMode } from '@/game/types.ts';
 import { getMap } from '@/game/world/MapRegistry.ts';
+import logger from '@/neuro/logger.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 
 function parseDifficulty(value: string | null): GameDifficulty {
@@ -24,6 +25,7 @@ export function GameScreen() {
   const difficulty = parseDifficulty(searchParams.get('difficulty'));
   const tutorial = searchParams.get('tutorial') === '1';
   const [loading, setLoading] = useState(true);
+  const [ending, setEnding] = useState(false);
   const showReadiness = useGameStore((s) => s.hud.sessionPhase === 'readiness' && !s.hud.tutorial);
 
   const map = getMap(mapId);
@@ -34,14 +36,26 @@ export function GameScreen() {
   const initGame = useCallback(async () => {
     if (!canvasRef.current || gameRef.current) return;
 
+    logger.info('GameScreen', 'Mounting game screen', { mode, mapId, aircraftId: aircraft.id, difficulty, tutorial });
+    setEnding(false);
     const game = new Game(canvasRef.current, { tutorial });
     gameRef.current = game;
 
+    game.setOnSessionEnding(() => {
+      logger.info('GameScreen', 'Session ending overlay shown');
+      setEnding(true);
+    });
+
     game.setOnSessionEnd(() => {
+      logger.info('GameScreen', 'Session end navigation', { tutorial });
       navigate(tutorial ? '/' : '/summary');
     });
 
     await game.init(mode, mapId, aircraft.id, difficulty);
+    if (gameRef.current !== game) {
+      logger.warn('GameScreen', 'Game init completed after unmount; start skipped');
+      return;
+    }
     game.start();
 
     useGameStore.getState().setGame(game);
@@ -52,6 +66,7 @@ export function GameScreen() {
     initGame();
     return () => {
       if (gameRef.current) {
+        logger.info('GameScreen', 'Unmounting game screen');
         gameRef.current.destroy();
         gameRef.current = null;
         useGameStore.getState().setGame(null);
@@ -106,6 +121,25 @@ export function GameScreen() {
 
       {!loading && <FlightHud />}
       {!loading && !tutorial && showReadiness && <ReadinessOverlay />}
+      {ending && (
+        <div
+          className="absolute inset-0 z-[70] flex items-center justify-center"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 38%, rgba(38,59,65,0.82), rgba(4,12,16,0.96) 62%, rgba(0,0,0,0.98))',
+            color: 'var(--color-accent-gold)',
+            fontFamily: 'var(--font-heading)',
+            letterSpacing: 4,
+          }}
+        >
+          <div className="text-center">
+            <div className="text-sm font-black uppercase" style={{ color: 'rgba(255,255,255,0.58)' }}>
+              Preparing Debrief
+            </div>
+            <div className="mt-3 text-3xl font-black uppercase">Session Complete</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

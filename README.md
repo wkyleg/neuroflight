@@ -82,7 +82,17 @@ In the browser console, `window.__ELATA_LOGGER__` exposes:
 - `download()` -- save `neuroflight-debug-<timestamp>.json`
 - `setLevel("DEBUG" | "INFO" | "WARN" | "ERROR")`
 
-Useful lifecycle tags include `Session`, `rPPG`, `Neuro`, and `React`.
+Useful lifecycle tags include `GameScreen`, `Game`, `Renderer`, `Input`, `Audio`, `AudioManager`,
+`Assets`, `Session`, `rPPG`, `Neuro`, and `React`. For playtest triage, reproduce the issue, then run:
+
+```js
+window.__ELATA_LOGGER__.getLogs()
+window.__ELATA_LOGGER__.download()
+```
+
+The log buffer is intentionally verbose in production so lifecycle problems such as WebGL context loss,
+input focus, asset loading, audio mute state, readiness, and phase transitions can be diagnosed from a
+player console.
 
 ## Deployment
 

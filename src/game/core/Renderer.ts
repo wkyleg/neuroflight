@@ -4,6 +4,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import logger from '@/neuro/logger.ts';
 
 export interface VisualGradeConfig {
   saturation: number;
@@ -114,6 +115,8 @@ export class Renderer {
   private bloomPass: UnrealBloomPass | null = null;
   private outputPass: OutputPass | null = null;
   private contextLost = false;
+  private postScene: THREE.Scene | null = null;
+  private postCamera: THREE.Camera | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -121,6 +124,11 @@ export class Renderer {
       antialias: true,
       alpha: false,
       logarithmicDepthBuffer: true,
+    });
+    logger.info('Renderer', 'Creating WebGL renderer', {
+      pixelRatio: window.devicePixelRatio,
+      canvasWidth: canvas.clientWidth,
+      canvasHeight: canvas.clientHeight,
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -134,11 +142,14 @@ export class Renderer {
   }
 
   initPostProcessing(scene: THREE.Scene, camera: THREE.Camera): void {
+    this.postScene = scene;
+    this.postCamera = camera;
     this.disposeComposer();
     this.contextLost = false;
     this.resetForSession();
 
     try {
+      logger.info('Renderer', 'Initializing post-processing composer');
       this.composer = new EffectComposer(this.renderer);
 
       this.renderPass = new RenderPass(scene, camera);
@@ -160,7 +171,7 @@ export class Renderer {
       this.resize();
       this.setVisualGrade(DEFAULT_GRADE);
     } catch (err) {
-      console.warn('Post-processing failed to initialize; using direct renderer.', err);
+      logger.warn('Renderer', 'Post-processing failed to initialize; using direct renderer', err);
       this.disposeComposer();
       this.resetForSession();
     }
@@ -188,12 +199,20 @@ export class Renderer {
   }
 
   disablePostProcessing(): void {
+    logger.info('Renderer', 'Disabling post-processing');
     this.disposeComposer();
     this.resetForSession();
   }
 
   setVisualGrade(config: Partial<VisualGradeConfig>): void {
     const grade = { ...DEFAULT_GRADE, ...config };
+    logger.info('Renderer', 'Applying visual grade', {
+      exposure: grade.exposure,
+      saturation: grade.saturation,
+      contrast: grade.contrast,
+      warmth: grade.warmth,
+      bloomStrength: grade.bloomStrength,
+    });
     this.renderer.toneMappingExposure = grade.exposure;
     if (this.gradePass) {
       this.gradePass.uniforms.saturation.value = grade.saturation;
@@ -242,6 +261,7 @@ export class Renderer {
   }
 
   private disposeComposer(): void {
+    if (this.composer) logger.info('Renderer', 'Disposing post-processing composer');
     this.composer?.dispose();
     this.composer = null;
     this.renderPass = null;
@@ -253,21 +273,27 @@ export class Renderer {
   private onContextLost = (event: Event): void => {
     event.preventDefault();
     this.contextLost = true;
-    console.warn('WebGL context lost; rendering paused until the browser restores it.');
+    logger.warn('Renderer', 'WebGL context lost; rendering paused until restored');
     this.disposeComposer();
   };
 
   private onContextRestored = (): void => {
     this.contextLost = false;
-    console.warn('WebGL context restored; direct rendering will resume.');
-    this.resetForSession();
+    logger.warn('Renderer', 'WebGL context restored; rebuilding post-processing');
+    if (this.postScene && this.postCamera) {
+      this.initPostProcessing(this.postScene, this.postCamera);
+    } else {
+      this.resetForSession();
+    }
   };
 
   destroy(): void {
+    logger.info('Renderer', 'Destroying WebGL renderer');
     window.removeEventListener('resize', this.resize);
     this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.onContextRestored);
     this.disposeComposer();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 }
