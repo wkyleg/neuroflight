@@ -94,12 +94,12 @@ describe('logger', () => {
 
   it('uses a NeuroFlight default download filename', () => {
     const click = vi.fn();
-    let anchor: HTMLAnchorElement | null = null;
+    const anchors: HTMLAnchorElement[] = [];
     const createEl = document.createElement.bind(document);
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
       const el = createEl(tag);
       if (tag === 'a') {
-        anchor = el as HTMLAnchorElement;
+        anchors.push(el as HTMLAnchorElement);
         el.click = click;
       }
       return el;
@@ -108,7 +108,7 @@ describe('logger', () => {
 
     logger.download();
 
-    expect(anchor?.download).toMatch(/^neuroflight-debug-\d+\.json$/);
+    expect(anchors[0]?.download).toMatch(/^neuroflight-debug-\d+\.json$/);
   });
 
   it('exposes devtools helpers on window when available', () => {
