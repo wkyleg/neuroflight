@@ -426,6 +426,8 @@ button:disabled,
 
 .menu-step-heading p,
 .menu-card-kicker {
+  display: block;
+  padding-inline: 2px;
   color: #5eead4;
   font-size: 12px;
   font-weight: 800;

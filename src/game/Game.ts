@@ -201,6 +201,7 @@ export class Game {
   private endingSession = false;
   private sessionEndTimeout: number | null = null;
   private destroyed = false;
+  private lastReadinessSecond = -1;
 
   // Dogfight systems
   private aiController: AIController | null = null;
@@ -406,6 +407,7 @@ export class Game {
     this.expeditionRouteComplete = false;
     this.bonusNotice = null;
     this.endingSession = false;
+    this.lastReadinessSecond = -1;
     if (this.sessionEndTimeout !== null) {
       window.clearTimeout(this.sessionEndTimeout);
       this.sessionEndTimeout = null;
@@ -641,6 +643,21 @@ export class Game {
   private update(dt: number): void {
     if (!this.planeController) return;
     if (this.updateSessionPhase(dt)) return;
+    if (!this.tutorialMode && this.sessionPhase.phase === 'readiness') {
+      const remainingSecond = Math.ceil(Math.max(0, this.sessionPhase.phaseRemainingMs) / 1000);
+      if (remainingSecond !== this.lastReadinessSecond) {
+        this.lastReadinessSecond = remainingSecond;
+        useGameStore.getState().updateHud({
+          sessionPhase: this.sessionPhase.phase,
+          sessionPhaseLabel: sessionPhaseLabel(this.sessionPhase.phase),
+          sessionPhaseRemainingMs: this.sessionPhase.phaseRemainingMs,
+          sessionPhaseElapsedMs: this.sessionPhase.phaseElapsedMs,
+          sessionPhasePrompt: this.getSessionPhasePrompt(),
+          tutorial: false,
+        });
+      }
+      return;
+    }
     this.applySessionPhaseDirector();
 
     this.inputManager.update(dt);
@@ -1315,6 +1332,7 @@ export class Game {
     this.lastRecoveryEventAt = -999;
     this.bonusNotice = null;
     this.endingSession = false;
+    this.lastReadinessSecond = -1;
     if (this.sessionEndTimeout !== null) {
       window.clearTimeout(this.sessionEndTimeout);
       this.sessionEndTimeout = null;

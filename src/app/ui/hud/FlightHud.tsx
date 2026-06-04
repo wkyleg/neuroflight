@@ -7,8 +7,6 @@ import { useGameStore } from '@/stores/gameStore.ts';
 import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
 import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
-import { RecoveryOverlay } from './RecoveryOverlay.tsx';
-import { SessionBriefingOverlay } from './SessionBriefingOverlay.tsx';
 import { SessionPhaseBanner } from './SessionPhaseBanner.tsx';
 import { phasePosition } from './sessionPhaseUi.ts';
 import { TutorialOverlay } from './TutorialOverlay.tsx';
@@ -905,6 +903,8 @@ export function FlightHud() {
   const displayKills = useThrottledDisplayValue(hud.kills, 260);
   const displayDeaths = useThrottledDisplayValue(hud.deaths, 260);
   const displayElapsedMs = useThrottledDisplayValue(hud.elapsedMs, 1000);
+  const displaySessionPhaseRemainingMs = useThrottledDisplayValue(hud.sessionPhaseRemainingMs, 1000);
+  const displaySessionPhaseElapsedMs = useThrottledDisplayValue(hud.sessionPhaseElapsedMs, 1000);
   const displayMissionSubtitle = useDwelledDisplayValue(hud.missionSubtitle, 800);
   const displayObjectiveText = useDwelledDisplayValue(hud.objectiveText, 850);
   const displayObjectiveSubtext = useDwelledDisplayValue(hud.objectiveSubtext, 1050);
@@ -924,8 +924,6 @@ export function FlightHud() {
       style={{ fontFamily: 'var(--font-instrument)' }}
     >
       <SessionPhaseBanner />
-      <SessionBriefingOverlay />
-      <RecoveryOverlay />
       <TutorialOverlay />
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
       {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}
@@ -998,8 +996,8 @@ export function FlightHud() {
           <SessionPhaseChip
             label={hud.sessionPhaseLabel}
             phase={hud.sessionPhase}
-            remainingMs={hud.sessionPhaseRemainingMs}
-            elapsedMs={hud.sessionPhaseElapsedMs}
+            remainingMs={displaySessionPhaseRemainingMs}
+            elapsedMs={displaySessionPhaseElapsedMs}
             tutorial={hud.tutorial}
             accent={modeMeta.accent}
           />
@@ -1221,7 +1219,7 @@ export function FlightHud() {
 
           <div className="flight-zone-instruments flex min-w-0 flex-col gap-2">
             <div className="flight-instrument-grid">
-              <InstrumentTile label="Speed" value={Math.round(displaySpeed)} unit={`${speedKnots}kt`} />
+              <InstrumentTile label="Speed" value={speedKnots} unit="kt" />
               <InstrumentTile label="Altitude" value={Math.round(displayAltitude)} unit="ft" />
               <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
               <ThrottleInstrument value={displayThrottle} />

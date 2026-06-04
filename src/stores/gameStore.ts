@@ -109,6 +109,7 @@ export interface FlightHudState {
   neuroPrompt: string;
   bonusNotice: FlightHudNotice | null;
   sessionPhase: SessionPhase;
+  phaseChangeId: number;
   sessionPhaseLabel: string;
   sessionPhaseRemainingMs: number;
   sessionPhaseElapsedMs: number;
@@ -171,6 +172,7 @@ const DEFAULT_HUD: FlightHudState = {
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
   sessionPhase: 'readiness',
+  phaseChangeId: 0,
   sessionPhaseLabel: 'Readiness',
   sessionPhaseRemainingMs: 0,
   sessionPhaseElapsedMs: 0,
@@ -199,7 +201,17 @@ export const useGameStore = create<GameStoreState>((set) => ({
   lastSession: loadPersistedSession(),
 
   setGame: (game) => set({ game }),
-  updateHud: (partial) => set((s) => ({ hud: { ...s.hud, ...partial } })),
+  updateHud: (partial) =>
+    set((s) => {
+      const phaseChanged = partial.sessionPhase !== undefined && partial.sessionPhase !== s.hud.sessionPhase;
+      return {
+        hud: {
+          ...s.hud,
+          ...partial,
+          phaseChangeId: phaseChanged ? s.hud.phaseChangeId + 1 : (partial.phaseChangeId ?? s.hud.phaseChangeId),
+        },
+      };
+    }),
   setLastSession: (session) => {
     try {
       sessionStorage.setItem('neuroflight_lastSession', JSON.stringify(session));

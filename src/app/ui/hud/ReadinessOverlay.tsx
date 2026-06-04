@@ -41,7 +41,7 @@ export function ReadinessOverlay() {
     <div className="pointer-events-auto absolute inset-0 z-40 flex items-center justify-center px-4 py-8">
       <div className="absolute inset-0 bg-black/48 backdrop-blur-[2px]" />
       <section
-        className="premium-glass-strong relative grid w-[min(760px,calc(100vw-24px))] gap-5 rounded-xl border p-5 md:grid-cols-[220px_1fr] md:p-7"
+        className="premium-glass-strong relative grid w-[min(760px,calc(100vw-24px))] gap-5 rounded-xl border p-6 md:grid-cols-[220px_1fr] md:p-8"
         style={{ borderColor: 'rgba(255,255,255,0.18)' }}
       >
         <div>

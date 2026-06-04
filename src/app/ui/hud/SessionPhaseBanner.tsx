@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { phaseAccent, phasePosition } from './sessionPhaseUi.ts';
 
@@ -7,19 +7,17 @@ export function SessionPhaseBanner() {
   const label = useGameStore((s) => s.hud.sessionPhaseLabel);
   const prompt = useGameStore((s) => s.hud.sessionPhasePrompt);
   const tutorial = useGameStore((s) => s.hud.tutorial);
-  const previousPhase = useRef(phase);
+  const phaseChangeId = useGameStore((s) => s.hud.phaseChangeId);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (tutorial || phase === 'readiness' || phase === previousPhase.current) {
-      previousPhase.current = phase;
+    if (tutorial || phase === 'readiness' || phaseChangeId === 0) {
       return;
     }
-    previousPhase.current = phase;
     setVisible(true);
     const timer = window.setTimeout(() => setVisible(false), 3200);
     return () => window.clearTimeout(timer);
-  }, [phase, tutorial]);
+  }, [phase, phaseChangeId, tutorial]);
 
   if (!visible) return null;
 

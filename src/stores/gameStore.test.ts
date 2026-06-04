@@ -41,6 +41,7 @@ const DEFAULT_HUD = {
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
   sessionPhase: 'readiness',
+  phaseChangeId: 0,
   sessionPhaseLabel: 'Readiness',
   sessionPhaseRemainingMs: 0,
   sessionPhaseElapsedMs: 0,
@@ -131,6 +132,17 @@ describe('gameStore', () => {
     expect(hud.paused).toBe(true);
     expect(hud.altitude).toBe(0);
     expect(hud.aircraftId).toBe('storybook_biplane');
+  });
+
+  it('increments phaseChangeId only when the session phase changes', () => {
+    useGameStore.getState().updateHud({ sessionPhaseLabel: 'Ready' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(0);
+
+    useGameStore.getState().updateHud({ sessionPhase: 'warmup' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(1);
+
+    useGameStore.getState().updateHud({ sessionPhase: 'warmup', sessionPhaseLabel: 'Warmup' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(1);
   });
 
   it('updateHud() accepts structured flight notices', () => {

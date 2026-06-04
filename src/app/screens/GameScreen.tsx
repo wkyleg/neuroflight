@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { FlightHud } from '@/app/ui/hud/FlightHud.tsx';
 import { ReadinessOverlay } from '@/app/ui/hud/ReadinessOverlay.tsx';
+import { RecoveryOverlay } from '@/app/ui/hud/RecoveryOverlay.tsx';
+import { SessionBriefingOverlay } from '@/app/ui/hud/SessionBriefingOverlay.tsx';
 import { DEFAULT_AIRCRAFT_ID, getAircraft } from '@/game/flight/AircraftRegistry.ts';
 import { Game } from '@/game/Game.ts';
 import { getModeMeta } from '@/game/modes.ts';
@@ -121,6 +123,8 @@ export function GameScreen() {
 
       {!loading && <FlightHud />}
       {!loading && !tutorial && showReadiness && <ReadinessOverlay />}
+      {!loading && !tutorial && !showReadiness && <SessionBriefingOverlay />}
+      {!loading && !tutorial && !showReadiness && <RecoveryOverlay />}
       {ending && (
         <div
           className="absolute inset-0 z-[70] flex items-center justify-center"

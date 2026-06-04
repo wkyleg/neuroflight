@@ -23,9 +23,9 @@ export function SessionBriefingOverlay() {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center px-4">
+    <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center px-4 py-6">
       <section
-        className="premium-glass-strong pointer-events-auto w-[min(560px,calc(100vw-28px))] rounded-xl border p-5"
+        className="premium-glass-strong pointer-events-auto w-[min(560px,calc(100vw-28px))] rounded-xl border p-6"
         style={{ borderColor: 'rgba(255,255,255,0.18)' }}
       >
         <p className="menu-card-kicker">Session briefing</p>
