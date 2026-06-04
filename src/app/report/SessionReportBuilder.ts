@@ -16,6 +16,12 @@ export interface ReportPhaseSummary {
   label: string;
   eventCount: number;
   signalLabel: string;
+  targetLabel: string;
+  targetScore: number;
+  targetSource: 'camera-assisted' | 'behavior-based';
+  targetCopy: string;
+  focusProxy: number;
+  calmProxy: number;
   recoveryTrend: string | null;
   sampleCount: number;
   avgScore: number;
@@ -49,6 +55,36 @@ function average(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function clampScore(value: number): number {
+  return Math.round(Math.max(0, Math.min(100, value)));
+}
+
+function focusProxy(sample: SessionSummary['samples'][number]): number {
+  const routeProgress = clamp01(sample.objectiveProgress);
+  const combo = clamp01(sample.combo / 8);
+  const cameraAssist = sample.canPublish
+    ? sample.flow * 0.5 + sample.composure * 0.32 + (1 - sample.neuroLoad) * 0.18
+    : 0;
+  const behavior = routeProgress * 0.44 + combo * 0.22 + sample.flow * 0.2 + sample.composure * 0.14;
+  return clampScore((sample.canPublish ? cameraAssist * 0.68 + behavior * 0.32 : behavior) * 100);
+}
+
+function calmProxy(sample: SessionSummary['samples'][number]): number {
+  const stableThrottle = 1 - Math.min(1, Math.abs(sample.throttle - 0.58) / 0.58);
+  const cameraAssist = sample.canPublish ? sample.recovery * 0.48 + sample.calm * 0.34 + sample.composure * 0.18 : 0;
+  const behavior =
+    sample.composure * 0.42 + (1 - sample.neuroLoad) * 0.3 + stableThrottle * 0.16 + sample.recovery * 0.12;
+  return clampScore((sample.canPublish ? cameraAssist * 0.7 + behavior * 0.3 : behavior) * 100);
+}
+
+function isRecoveryPhase(phase: SessionPhase): boolean {
+  return phase === 'recovery_1' || phase === 'final_recovery';
+}
+
 function signalCopy(session: SessionSummary): { value: string; body: string; confidence: string } {
   const coverage = Math.round(session.signalCoveragePct);
   const confidence = session.insightConfidenceLabel.replace(/_/g, '-');
@@ -71,6 +107,10 @@ export class SessionReportBuilder {
     const signal = signalCopy(session);
     const recoveryTrend = session.recoveryWindows.at(-1)?.trendLabel ?? 'unclear';
     const timeline = SessionReportBuilder.timeline(session);
+    const avgTarget =
+      timeline.length > 0
+        ? average(timeline.filter((phase) => phase.sampleCount > 0).map((phase) => phase.targetScore))
+        : 0;
     const bestPhase = timeline
       .filter((phase) => phase.sampleCount > 0)
       .sort((a, b) => b.objectiveProgress - a.objectiveProgress || b.avgScore - a.avgScore)[0];
@@ -93,7 +133,7 @@ export class SessionReportBuilder {
         {
           id: 'focus',
           title: 'Focus',
-          value: pct(session.focusScore),
+          value: pct(session.focusScore || avgTarget),
           body: scoreBody(
             session.focusScore,
             `You stayed on task through ${session.objectivesCompleted}/${Math.max(1, session.objectiveGoal)} objectives.`,
@@ -155,11 +195,35 @@ export class SessionReportBuilder {
       const coverage = samples.length > 0 ? samples.filter((sample) => sample.canPublish).length / samples.length : 0;
       const signalLabel =
         coverage >= 0.8 ? 'Strong' : coverage >= 0.6 ? 'Partial' : coverage >= 0.3 ? 'Weak' : 'Behavior-only';
+      const phaseFocus = clampScore(average(samples.map((sample) => focusProxy(sample))));
+      const phaseCalm = clampScore(average(samples.map((sample) => calmProxy(sample))));
+      const recoveryPhase = isRecoveryPhase(phase);
+      const sampleBackedScore = recoveryPhase
+        ? recovery
+          ? Math.round((recovery.behaviorScore + phaseCalm) / 2)
+          : phaseCalm
+        : phaseFocus;
+      const targetScore =
+        samples.length > 0 ? sampleBackedScore : recoveryPhase ? session.recoveryBehaviorScore : session.focusScore;
+      const targetSource = coverage >= 0.45 ? 'camera-assisted' : 'behavior-based';
+      const targetLabel = recoveryPhase ? 'Calm practice' : 'Focus practice';
+      const targetCopy =
+        samples.length === 0
+          ? `${targetLabel} uses the session-level behavior score because this phase had no saved samples.`
+          : targetScore >= 76
+            ? `${targetLabel} was steady here, based on ${targetSource} signals.`
+            : `${targetLabel} has room to rise here; use smoother corrections next run.`;
       return {
         phase,
         label: sessionPhaseLabel(phase),
         eventCount: events.length,
         signalLabel,
+        targetLabel,
+        targetScore,
+        targetSource,
+        targetCopy,
+        focusProxy: phaseFocus,
+        calmProxy: phaseCalm,
         recoveryTrend: recovery?.trendLabel ?? null,
         sampleCount: samples.length,
         avgScore: Math.round(average(samples.map((sample) => sample.score))),
