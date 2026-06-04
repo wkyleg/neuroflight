@@ -6,7 +6,6 @@ import type { FlightHudNotice } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
-import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
 import { SessionPhaseBanner } from './SessionPhaseBanner.tsx';
 import { phasePosition } from './sessionPhaseUi.ts';
 import { TutorialOverlay } from './TutorialOverlay.tsx';
@@ -1301,7 +1300,6 @@ export function FlightHud() {
           </div>
 
           <div className="flight-zone-bio flex min-w-0 flex-col gap-2">
-            <NeuroConnectBanner variant="dock" />
             <NeuroCockpit embedded />
           </div>
         </div>

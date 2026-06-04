@@ -126,8 +126,8 @@ function readMusicVolume(): number {
 }
 
 function readBinauralEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(BINAURAL_ENABLED_KEY) === 'true';
+  if (typeof window === 'undefined') return true;
+  return window.localStorage.getItem(BINAURAL_ENABLED_KEY) !== 'false';
 }
 
 function note(profile: MusicProfile, index: number, octave: number): string {

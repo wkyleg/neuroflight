@@ -323,7 +323,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
     neuro.baselineDelta !== null ? `${neuro.baselineDelta > 0 ? '+' : ''}${Math.round(neuro.baselineDelta)}` : '--';
-  const showAdvanced = expanded;
+  const showAdvanced = expanded && !embedded;
 
   return (
     <div
@@ -356,7 +356,7 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
       >
         <div className="flex items-center justify-between" style={{ gap: embedded ? 8 : 10 }}>
           <div className="flex items-center" style={{ gap: embedded ? 8 : 10 }}>
-            <CameraPreview active={activePreview} compact={embedded && !previewExpanded} />
+            {!embedded && <CameraPreview active={activePreview} compact={previewExpanded} />}
             <div>
               <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
                 Camera biofeedback
@@ -370,9 +370,11 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
               <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
                 {displayState.guidance}
               </div>
-              <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                {embedded ? signalHint : displayState.detail}
-              </div>
+              {!embedded && (
+                <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                  {displayState.detail}
+                </div>
+              )}
               {!embedded && (
                 <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
                   {signalHint}
@@ -381,42 +383,46 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
             </div>
           </div>
 
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen((v) => !v)}
-              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-              style={{
-                borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
-                color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
-              }}
-            >
-              {previewOpen ? 'MIN' : 'CAM'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-              style={{
-                borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
-                color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
-              }}
-            >
-              {showAdvanced ? 'LESS' : 'MORE'}
-            </button>
-          </div>
+          {!embedded && (
+            <div className="flex items-center" style={{ gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen((v) => !v)}
+                className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                style={{
+                  borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
+                  color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
+                }}
+              >
+                {previewOpen ? 'MIN' : 'CAM'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                style={{
+                  borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
+                  color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
+                }}
+              >
+                {showAdvanced ? 'LESS' : 'MORE'}
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="mt-2 grid grid-cols-4" style={{ gap: embedded ? 4 : 8 }}>
-          <MetricChip
-            label="BPM"
-            value={signal.displayBpm !== null ? bpm : '--'}
-            tone={signal.displayBpm !== null ? '#fb7185' : undefined}
-          />
-          <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
-          <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
-          <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
-        </div>
+        {!embedded && (
+          <div className="mt-2 grid grid-cols-4" style={{ gap: 8 }}>
+            <MetricChip
+              label="BPM"
+              value={signal.displayBpm !== null ? bpm : '--'}
+              tone={signal.displayBpm !== null ? '#fb7185' : undefined}
+            />
+            <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
+            <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
+            <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
+          </div>
+        )}
 
         {showAdvanced && (
           <div

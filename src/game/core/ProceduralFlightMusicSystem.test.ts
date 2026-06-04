@@ -48,10 +48,10 @@ describe('ProceduralFlightMusicSystem', () => {
   it('persists the optional binaural layer toggle', () => {
     const system = new ProceduralFlightMusicSystem('zen');
 
-    expect(system.isBinauralEnabled()).toBe(false);
-    system.setBinauralEnabled(true);
+    expect(system.isBinauralEnabled()).toBe(true);
+    system.setBinauralEnabled(false);
 
-    expect(window.localStorage.getItem(BINAURAL_ENABLED_KEY)).toBe('true');
-    expect(new ProceduralFlightMusicSystem('free').isBinauralEnabled()).toBe(true);
+    expect(window.localStorage.getItem(BINAURAL_ENABLED_KEY)).toBe('false');
+    expect(new ProceduralFlightMusicSystem('free').isBinauralEnabled()).toBe(false);
   });
 });

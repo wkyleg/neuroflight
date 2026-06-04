@@ -22,13 +22,15 @@ describe('SettingsScreen binaural toggle', () => {
     useGameStore.getState().setGame(null);
   });
 
-  it('persists the optional binaural layer when no game is active', () => {
+  it('defaults the optional binaural layer on and persists opt-out when no game is active', () => {
     render(<SettingsScreen />);
 
-    fireEvent.click(screen.getByRole('button', { name: /binaural layer off/i }));
-
-    expect(window.localStorage.getItem(BINAURAL_ENABLED_KEY)).toBe('true');
     expect(screen.getByRole('button', { name: /binaural layer on/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /binaural layer on/i }));
+
+    expect(window.localStorage.getItem(BINAURAL_ENABLED_KEY)).toBe('false');
+    expect(screen.getByRole('button', { name: /binaural layer off/i })).toBeInTheDocument();
   });
 
   it('updates the live game music system when a game is active', () => {
