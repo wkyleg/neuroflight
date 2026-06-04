@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { NeuroState } from '@/neuro/neuroManager.ts';
 import { DEFAULT_RPPG_SIGNAL_SNAPSHOT } from '@/neuro/rppgSignalTypes.ts';
-import { NeuroAdaptationSystem } from './NeuroAdaptationSystem.ts';
+import {
+  computeAmbientBiostateBias,
+  type NeuroAdaptationSnapshot,
+  NeuroAdaptationSystem,
+} from './NeuroAdaptationSystem.ts';
 
 const neuroState: NeuroState = {
   source: 'rppg',
@@ -41,5 +45,26 @@ describe('NeuroAdaptationSystem', () => {
     expect(snapshot.aimAssist).toBe(1);
     expect(snapshot.weatherClarity).toBeLessThan(1);
     expect(snapshot.audioIntensity).toBeGreaterThan(0);
+  });
+
+  it('keeps ambient biostate bias signal-gated and tightly bounded', () => {
+    const base: NeuroAdaptationSnapshot = {
+      composure: 1,
+      load: 0,
+      recovery: 1,
+      flow: 1,
+      confidence: 1,
+      coverage: 1,
+      scoreMultiplier: 1,
+      aimAssist: 1,
+      weatherClarity: 1,
+      audioIntensity: 0.5,
+      prompt: 'Adaptive ambience',
+    };
+
+    expect(computeAmbientBiostateBias(base)).toBeCloseTo(0.09);
+    expect(computeAmbientBiostateBias({ ...base, composure: 0 })).toBeCloseTo(-0.09);
+    expect(computeAmbientBiostateBias({ ...base, confidence: 0 })).toBe(0);
+    expect(computeAmbientBiostateBias({ ...base, coverage: 0 })).toBe(0);
   });
 });

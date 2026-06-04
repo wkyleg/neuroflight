@@ -20,7 +20,7 @@ import { CombatVfxSystem } from './gameplay/CombatVfxSystem.ts';
 import { DogfightManager } from './gameplay/DogfightManager.ts';
 import { FlightSafetySystem } from './gameplay/FlightSafetySystem.ts';
 import { MissionObjectiveSystem } from './gameplay/MissionObjectiveSystem.ts';
-import { NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
+import { computeAmbientBiostateBias, NeuroAdaptationSystem } from './gameplay/NeuroAdaptationSystem.ts';
 import { ScoreManager } from './gameplay/ScoreManager.ts';
 import { SessionRecorder } from './gameplay/SessionRecorder.ts';
 import { type WeaponDifficultySettings, WeaponSystem, type WeaponTarget } from './gameplay/WeaponSystem.ts';
@@ -639,8 +639,12 @@ export class Game {
         : Math.min(1, this.scoreManager.getRingsPassed() / Math.max(1, objectiveGoal || 6));
     this.neuroAdaptationSystem.update(dt, neuroState, this.mode, speed / maxSpd, objectiveProgress);
     const adaptation = this.neuroAdaptationSystem.getSnapshot();
+    const ambientBias = computeAmbientBiostateBias(adaptation);
     this.ringManager?.setAdaptiveGlow(1 + adaptation.composure * adaptation.confidence * 0.55);
     this.weatherIdentitySystem?.setAdaptiveClarity(adaptation.weatherClarity);
+    this.atmosphereVfxSystem?.setAdaptiveIntensity(1 + ambientBias);
+    this.livingWorldDirector?.setAmbientBias(ambientBias);
+    this.skyObjectSystem?.setAmbientBias(ambientBias);
     this.audioPolishSystem?.setIntensity(adaptation.audioIntensity);
     this.proceduralMusicSystem.setAdaptation(adaptation);
     this.proceduralMusicSystem.setRppg({

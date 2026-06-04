@@ -15,6 +15,12 @@ export interface NeuroAdaptationSnapshot {
   prompt: string;
 }
 
+export function computeAmbientBiostateBias(snapshot: NeuroAdaptationSnapshot): number {
+  const signalGate = clamp01(snapshot.confidence) * clamp01(snapshot.coverage);
+  const composureDelta = clamp01(snapshot.composure) - 0.5;
+  return Math.max(-0.09, Math.min(0.09, signalGate * composureDelta * 0.18));
+}
+
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }

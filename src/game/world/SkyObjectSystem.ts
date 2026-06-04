@@ -32,6 +32,7 @@ export class SkyObjectSystem {
   private readonly rng = seededRng(1337);
   private readonly instances: SkyObjectInstance[] = [];
   private readonly scene: THREE.Scene;
+  private ambientBias = 0;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -41,12 +42,19 @@ export class SkyObjectSystem {
     await Promise.all(layers.map((layer) => this.loadLayer(layer)));
   }
 
+  setAmbientBias(bias: number): void {
+    this.ambientBias = THREE.MathUtils.clamp(bias, -0.09, 0.09);
+  }
+
   update(dt: number, cameraPos: THREE.Vector3): void {
+    const bobMultiplier = 1 + this.ambientBias * 0.65;
     for (const instance of this.instances) {
       instance.object.position.addScaledVector(instance.drift, dt);
       instance.object.position.y =
         instance.baseY +
-        Math.sin(performance.now() * 0.001 * instance.bobSpeed + instance.bobPhase) * instance.bobAmplitude;
+        Math.sin(performance.now() * 0.001 * instance.bobSpeed + instance.bobPhase) *
+          instance.bobAmplitude *
+          bobMultiplier;
       if (this.shouldFaceVelocity(instance.layer) && instance.drift.lengthSq() > 0.001) {
         instance.object.lookAt(instance.object.position.clone().add(instance.drift));
       } else {
