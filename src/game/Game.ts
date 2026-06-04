@@ -1031,7 +1031,7 @@ export class Game {
       }
 
       let enemyDir: { x: number; y: number } | null = null;
-      if (this.aiController && !this.dogfightManager?.isAiDead()) {
+      if (this.aiController && !this.sessionPhase.isRecovery && !this.dogfightManager?.isAiDead()) {
         const dir = this.aiController.getPosition().clone().sub(this.planeController.flightModel.getPosition());
         const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(this.cameraManager.camera.quaternion);
         const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.cameraManager.camera.quaternion);
@@ -1204,7 +1204,7 @@ export class Game {
     this.ringManager?.setRecoveryMode(recovery);
     this.missionObjectiveSystem?.setRecoveryMode(recovery);
     if (recovery) {
-      this.weatherIdentitySystem?.setAdaptiveClarity(1.05);
+      this.weatherIdentitySystem?.setAdaptiveClarity(1);
       this.audioPolishSystem?.setIntensity(0.38);
     }
   }

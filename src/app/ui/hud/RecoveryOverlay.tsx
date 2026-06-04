@@ -11,13 +11,18 @@ export function RecoveryOverlay() {
 
   if (tutorial || !recovery) return null;
 
+  const coaching =
+    phase === 'final_recovery'
+      ? 'Last one. Long, slow exhale. Settle your shoulders and let the cockpit quiet before your debrief.'
+      : 'Ease off the controls. Breathe in for 4, out for 6. Let your shoulders and pulse settle.';
+
   return (
-    <div className="pointer-events-none absolute bottom-40 left-1/2 z-20 w-[min(420px,calc(100vw-32px))] -translate-x-1/2">
+    <div className="pointer-events-none absolute left-1/2 top-[18vh] z-50 w-[min(460px,calc(100vw-32px))] -translate-x-1/2">
       <section
-        className="premium-glass rounded-xl border px-5 py-4 text-center"
+        className="premium-glass rounded-xl border px-6 py-5 text-center"
         style={{
           borderColor: 'rgba(94,234,212,0.24)',
-          background: 'linear-gradient(135deg, rgba(12,54,58,0.52), rgba(8,21,28,0.56))',
+          background: 'linear-gradient(135deg, rgba(12,54,58,0.76), rgba(8,21,28,0.82))',
         }}
       >
         <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-teal-200/25">
@@ -27,6 +32,9 @@ export function RecoveryOverlay() {
           {label}
         </h3>
         <p className="mt-1 text-xs leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+          {coaching}
+        </p>
+        <p className="mt-2 text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.58)' }}>
           {prompt}
         </p>
         <p className="mt-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: 'rgba(240,236,224,0.52)' }}>

@@ -554,6 +554,40 @@ function InstrumentTile({
   );
 }
 
+function GuidanceMeter({ phase, focus, calm }: { phase: SessionPhase; focus: number; calm: number }) {
+  const recovery = phase.includes('recovery');
+  const label = recovery ? 'Calm / settle' : 'Focus / steadiness';
+  const value = Math.max(0, Math.min(1, recovery ? calm : focus));
+  const pct = Math.round(value * 100);
+  const color = recovery ? '#5eead4' : '#facc15';
+  return (
+    <div className="flight-cockpit-section">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.58)' }}>
+            Guidance only
+          </div>
+          <div className="truncate text-xs font-black" style={{ color }}>
+            {label}
+          </div>
+        </div>
+        <div className="text-lg font-black tabular-nums" style={{ color }}>
+          {pct}%
+        </div>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+      <div className="mt-1 text-[10px] leading-4" style={{ color: 'rgba(255,246,220,0.58)' }}>
+        Your score comes from flight performance. This meter is coaching, not scoring.
+      </div>
+    </div>
+  );
+}
+
 function SessionPhaseChip({
   label,
   phase,
@@ -915,6 +949,21 @@ export function FlightHud() {
   const displayEnemyDir = useSmoothedDirectionValue(hud.enemyDir);
   const speedKnots = Math.round(displaySpeed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
+  const isRecoveryPhase = hud.sessionPhase.includes('recovery');
+  const showRivalHud = isDogfight && !isRecoveryPhase;
+  const focusGuidance = Math.max(
+    0,
+    Math.min(
+      1,
+      displayFlow * 0.52 +
+        (1 - Math.abs(displayLoad - 0.42)) * 0.22 +
+        (displayObjectiveProgress / Math.max(1, displayObjectiveGoal)) * 0.26,
+    ),
+  );
+  const calmGuidance = Math.max(
+    0,
+    Math.min(1, displayComposure * 0.58 + hud.recovery * 0.34 + (1 - displayLoad) * 0.08),
+  );
   const modeMeta = getModeMeta(hud.mode);
   const headingText = headingLabel(displayHeading);
 
@@ -938,7 +987,9 @@ export function FlightHud() {
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
           <FlightEventNotice notice={hud.bonusNotice} />
-          {displayEnemyDir && <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />}
+          {showRivalHud && displayEnemyDir && (
+            <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />
+          )}
         </>
       )}
 
@@ -1240,7 +1291,8 @@ export function FlightHud() {
                 {displayPrompt}
               </div>
             </div>
-            {isDogfight && (
+            <GuidanceMeter phase={hud.sessionPhase} focus={focusGuidance} calm={calmGuidance} />
+            {showRivalHud && (
               <div className="flight-cockpit-section flight-health-strip">
                 <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" />
                 <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff6b6b" />
