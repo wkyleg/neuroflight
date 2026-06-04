@@ -1,6 +1,6 @@
 import { v1Flags } from '@/config/v1Flags.ts';
 import { type BCI_PRESETS, MockBCIProvider } from './bciMock';
-import { type EEGProviderState, ElataEEGProvider } from './eegProvider';
+import type { EEGProviderState, ElataEEGProvider } from './eegProvider';
 import logger from './logger';
 import { ElataRppgProvider, type RppgProviderState } from './rppgProvider';
 import { RppgSignalGate } from './rppgSignalGate.ts';
@@ -81,6 +81,8 @@ const DEFAULT_RPPG_STATE: Readonly<RppgProviderState> = {
 };
 
 const NEURO_EMA_ALPHA = 0.08;
+const EEG_ENABLED =
+  import.meta.env.VITE_NEUROFLIGHT_EEG_ENABLED === '1' || import.meta.env.VITE_NEUROFLIGHT_EEG_ENABLED === 'true';
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -111,7 +113,8 @@ export interface NeuroEventData {
 }
 
 export class NeuroManager {
-  private eegProvider: ElataEEGProvider | null;
+  private eegProvider: ElataEEGProvider | null = null;
+  private eegProviderLoad: Promise<ElataEEGProvider | null> | null = null;
   private rppgProvider: ElataRppgProvider;
   private mockProvider: MockBCIProvider | null;
   private rppgSignalGate = new RppgSignalGate();
@@ -151,14 +154,8 @@ export class NeuroManager {
   };
 
   constructor() {
-    this.eegProvider = v1Flags.EEG_ENABLED ? new ElataEEGProvider() : null;
     this.rppgProvider = new ElataRppgProvider();
     this.mockProvider = v1Flags.SIM_ENABLED ? new MockBCIProvider() : null;
-
-    this.eegProvider?.setCallbacks(
-      () => this.emitEvent({ type: 'disconnected', detail: { source: 'eeg' } }),
-      () => this.emitEvent({ type: 'reconnected', detail: { source: 'eeg' } }),
-    );
 
     this.rppgProvider.setCallbacks(() => {
       this.emitEvent({ type: 'camera_quality_low' });
@@ -167,12 +164,13 @@ export class NeuroManager {
 
   async initWasm(): Promise<void> {
     try {
-      if (!this.eegProvider) {
+      const eegProvider = await this.loadEegProvider();
+      if (!eegProvider) {
         this.wasmReady = false;
         logger.info('Neuro', 'EEG features disabled for v1');
         return;
       }
-      await this.eegProvider.initAsync();
+      await eegProvider.initAsync();
       this.wasmReady = true;
       logger.info('Neuro', 'WASM init succeeded — EEG features ready');
     } catch (err) {
@@ -452,5 +450,25 @@ export class NeuroManager {
 
   private lastCameraErrorMessage(): string | null {
     return this.rppgProvider.getLastError() ? this.rppgProvider.getErrorMessage() : null;
+  }
+
+  private async loadEegProvider(): Promise<ElataEEGProvider | null> {
+    if (!EEG_ENABLED) return null;
+    if (this.eegProvider) return this.eegProvider;
+    this.eegProviderLoad ??= import('./eegProvider')
+      .then(({ ElataEEGProvider }) => {
+        const provider = new ElataEEGProvider();
+        provider.setCallbacks(
+          () => this.emitEvent({ type: 'disconnected', detail: { source: 'eeg' } }),
+          () => this.emitEvent({ type: 'reconnected', detail: { source: 'eeg' } }),
+        );
+        this.eegProvider = provider;
+        return provider;
+      })
+      .catch((error) => {
+        logger.warn('Neuro', 'EEG provider failed to load', error);
+        return null;
+      });
+    return this.eegProviderLoad;
   }
 }
