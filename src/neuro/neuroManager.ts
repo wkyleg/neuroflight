@@ -1,7 +1,10 @@
+import { v1Flags } from '@/config/v1Flags.ts';
 import { type BCI_PRESETS, MockBCIProvider } from './bciMock';
-import { type EEGProviderState, ElataEEGProvider } from './eegProvider';
+import type { EEGProviderState, ElataEEGProvider } from './eegProvider';
 import logger from './logger';
 import { ElataRppgProvider, type RppgProviderState } from './rppgProvider';
+import { RppgSignalGate } from './rppgSignalGate.ts';
+import { DEFAULT_RPPG_SIGNAL_SNAPSHOT, type RppgSignalSnapshot } from './rppgSignalTypes.ts';
 
 export interface NeuroState {
   source: 'eeg' | 'rppg' | 'mock' | 'none';
@@ -25,6 +28,7 @@ export interface NeuroState {
   calmnessState: string | null;
   alphaPeakFreq: number | null;
   alphaBumpState: string | null;
+  rppgSignal: RppgSignalSnapshot;
 }
 
 const DEFAULT_EEG_STATE: Readonly<EEGProviderState> = {
@@ -51,6 +55,9 @@ const DEFAULT_EEG_STATE: Readonly<EEGProviderState> = {
 
 const DEFAULT_RPPG_STATE: Readonly<RppgProviderState> = {
   active: false,
+  appSnapshot: null,
+  canPublish: false,
+  appStatus: null,
   bpm: null,
   displayBpm: null,
   rawBpm: null,
@@ -74,6 +81,8 @@ const DEFAULT_RPPG_STATE: Readonly<RppgProviderState> = {
 };
 
 const NEURO_EMA_ALPHA = 0.08;
+const EEG_ENABLED =
+  import.meta.env.VITE_NEUROFLIGHT_EEG_ENABLED === '1' || import.meta.env.VITE_NEUROFLIGHT_EEG_ENABLED === 'true';
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -104,12 +113,15 @@ export interface NeuroEventData {
 }
 
 export class NeuroManager {
-  private eegProvider: ElataEEGProvider;
+  private eegProvider: ElataEEGProvider | null = null;
+  private eegProviderLoad: Promise<ElataEEGProvider | null> | null = null;
   private rppgProvider: ElataRppgProvider;
-  private mockProvider: MockBCIProvider;
+  private mockProvider: MockBCIProvider | null;
+  private rppgSignalGate = new RppgSignalGate();
   private mockEnabled = false;
   private wasmReady = false;
   private previousSource: NeuroState['source'] = 'none';
+  private previousRppgSignalStatus = DEFAULT_RPPG_SIGNAL_SNAPSHOT.status;
   private smoothedCalm = 0;
   private smoothedArousal = 0;
 
@@ -138,17 +150,12 @@ export class NeuroManager {
     calmnessState: null,
     alphaPeakFreq: null,
     alphaBumpState: null,
+    rppgSignal: DEFAULT_RPPG_SIGNAL_SNAPSHOT,
   };
 
   constructor() {
-    this.eegProvider = new ElataEEGProvider();
     this.rppgProvider = new ElataRppgProvider();
-    this.mockProvider = new MockBCIProvider();
-
-    this.eegProvider.setCallbacks(
-      () => this.emitEvent({ type: 'disconnected', detail: { source: 'eeg' } }),
-      () => this.emitEvent({ type: 'reconnected', detail: { source: 'eeg' } }),
-    );
+    this.mockProvider = v1Flags.SIM_ENABLED ? new MockBCIProvider() : null;
 
     this.rppgProvider.setCallbacks(() => {
       this.emitEvent({ type: 'camera_quality_low' });
@@ -157,7 +164,13 @@ export class NeuroManager {
 
   async initWasm(): Promise<void> {
     try {
-      await this.eegProvider.initAsync();
+      const eegProvider = await this.loadEegProvider();
+      if (!eegProvider) {
+        this.wasmReady = false;
+        logger.info('Neuro', 'EEG features disabled for v1');
+        return;
+      }
+      await eegProvider.initAsync();
       this.wasmReady = true;
       logger.info('Neuro', 'WASM init succeeded — EEG features ready');
     } catch (err) {
@@ -169,6 +182,10 @@ export class NeuroManager {
   async connectHeadband(): Promise<boolean> {
     if (!this.wasmReady) {
       logger.warn('Neuro', 'WASM not ready, cannot connect headband');
+      return false;
+    }
+    if (!this.eegProvider) {
+      logger.warn('Neuro', 'EEG is disabled in v1');
       return false;
     }
     const success = await this.eegProvider.connect();
@@ -191,12 +208,20 @@ export class NeuroManager {
   }
 
   enableMock(): void {
+    if (!this.mockProvider) {
+      logger.warn('Neuro', 'Simulated signals are disabled in v1');
+      return;
+    }
     this.mockEnabled = true;
     this.mockProvider.init();
     this.notifySubscribers();
   }
 
   setMockPreset(preset: keyof typeof BCI_PRESETS): void {
+    if (!this.mockProvider) {
+      logger.warn('Neuro', 'Simulated signals are disabled in v1');
+      return;
+    }
     this.mockEnabled = true;
     this.mockProvider.init();
     this.mockProvider.applyPreset(preset);
@@ -217,7 +242,7 @@ export class NeuroManager {
   }
 
   getHeadbandErrorMessage(): string {
-    return this.eegProvider.getErrorMessage();
+    return this.eegProvider?.getErrorMessage() ?? 'EEG is disabled';
   }
 
   getCameraErrorMessage(): string {
@@ -229,14 +254,14 @@ export class NeuroManager {
   }
 
   update(dt: number): void {
-    this.eegProvider.update(dt);
+    this.eegProvider?.update(dt);
     this.rppgProvider.update(dt);
 
     let eegState: Readonly<EEGProviderState>;
     let rppgState: Readonly<RppgProviderState>;
 
     try {
-      eegState = this.eegProvider.getState();
+      eegState = this.eegProvider?.getState() ?? DEFAULT_EEG_STATE;
     } catch {
       eegState = DEFAULT_EEG_STATE;
     }
@@ -273,8 +298,8 @@ export class NeuroManager {
       this.state.alphaBumpState = null;
     } else if (this.mockEnabled) {
       source = 'mock';
-      rawCalm = this.mockProvider.getCurrentCalm();
-      rawArousal = this.mockProvider.getCurrentArousal();
+      rawCalm = this.mockProvider?.getCurrentCalm() ?? 0;
+      rawArousal = this.mockProvider?.getCurrentArousal() ?? 0;
       this.state.signalQuality = 1;
       this.state.alphaBump = false;
       this.state.calmnessState = null;
@@ -325,6 +350,21 @@ export class NeuroManager {
     this.state.source = source;
     this.state.eegConnected = eegState.connected;
     this.state.cameraActive = rppgState.active;
+    this.state.rppgSignal = this.rppgSignalGate.update(dt * 1000, rppgState.appSnapshot, {
+      cameraActive: rppgState.active,
+      cameraError: this.lastCameraErrorMessage(),
+      activeMs: rppgState.activeTime * 1000,
+      nowMs: performance.now(),
+    });
+    if (this.state.rppgSignal.status !== this.previousRppgSignalStatus) {
+      logger.info('rPPG', 'Signal status changed', {
+        from: this.previousRppgSignalStatus,
+        to: this.state.rppgSignal.status,
+        coverage: this.state.rppgSignal.coverageSession,
+        backendUnavailable: this.state.rppgSignal.backendUnavailable,
+      });
+      this.previousRppgSignalStatus = this.state.rppgSignal.status;
+    }
 
     if (source !== this.previousSource) {
       logger.info('Neuro', `Source changed: ${this.previousSource} -> ${source}`);
@@ -337,7 +377,7 @@ export class NeuroManager {
     }
 
     try {
-      this.mockProvider.update(dt);
+      this.mockProvider?.update(dt);
     } catch {
       /* swallow */
     }
@@ -384,7 +424,7 @@ export class NeuroManager {
     return this.state;
   }
 
-  getEEGProvider(): ElataEEGProvider {
+  getEEGProvider(): ElataEEGProvider | null {
     return this.eegProvider;
   }
 
@@ -396,15 +436,39 @@ export class NeuroManager {
     return this.rppgProvider.getVideoElement();
   }
 
-  getMockProvider(): MockBCIProvider {
+  getMockProvider(): MockBCIProvider | null {
     return this.mockProvider;
   }
 
   destroy(): void {
-    this.eegProvider.destroy();
+    this.eegProvider?.destroy();
     this.rppgProvider.destroy();
-    this.mockProvider.destroy();
+    this.mockProvider?.destroy();
     this.stateSubscribers.clear();
     this.eventListeners.clear();
+  }
+
+  private lastCameraErrorMessage(): string | null {
+    return this.rppgProvider.getLastError() ? this.rppgProvider.getErrorMessage() : null;
+  }
+
+  private async loadEegProvider(): Promise<ElataEEGProvider | null> {
+    if (!EEG_ENABLED) return null;
+    if (this.eegProvider) return this.eegProvider;
+    this.eegProviderLoad ??= import('./eegProvider')
+      .then(({ ElataEEGProvider }) => {
+        const provider = new ElataEEGProvider();
+        provider.setCallbacks(
+          () => this.emitEvent({ type: 'disconnected', detail: { source: 'eeg' } }),
+          () => this.emitEvent({ type: 'reconnected', detail: { source: 'eeg' } }),
+        );
+        this.eegProvider = provider;
+        return provider;
+      })
+      .catch((error) => {
+        logger.warn('Neuro', 'EEG provider failed to load', error);
+        return null;
+      });
+    return this.eegProviderLoad;
   }
 }

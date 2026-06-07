@@ -45,6 +45,23 @@ export class DogfightManager {
     this.shotsFired++;
   }
 
+  recordPlayerCrash(): void {
+    this.deaths++;
+    this.playerHealth = MAX_HEALTH;
+    console.warn(`[Dogfight] Player crash counted as loss — losses: ${this.deaths}`);
+    eventBus.emit('dogfight:player_death');
+  }
+
+  recordRivalCrash(): void {
+    if (this.aiDead) return;
+    this.kills++;
+    this.aiHealth = 0;
+    this.aiDead = true;
+    this.aiRespawnTimer = RESPAWN_DELAY * this.difficulty.respawnDelayMultiplier;
+    console.warn(`[Dogfight] Rival crash counted as win — wins: ${this.kills}`);
+    eventBus.emit('dogfight:ai_kill');
+  }
+
   applyDamage(target: 'player' | 'ai'): void {
     this.shotsHit++;
     if (target === 'player') {

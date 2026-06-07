@@ -1,3 +1,5 @@
+import logger from '@/neuro/logger.ts';
+
 export interface FlightInput {
   pitch: number;
   roll: number;
@@ -57,7 +59,14 @@ export class InputManager {
   private shouldIgnoreKeyboardEvent(e: KeyboardEvent): boolean {
     const target = e.target as HTMLElement | null;
     if (!(target instanceof HTMLElement)) return false;
-    return !!target.closest('input, textarea, select, button, a, [contenteditable="true"]');
+    const ignored = !!target.closest('input, textarea, select, [contenteditable="true"]');
+    if (ignored && this.isFlightKey(e.code)) {
+      logger.debug('Input', 'Ignored flight key from editable target', {
+        code: e.code,
+        tagName: target.tagName,
+      });
+    }
+    return ignored;
   }
 
   private isFlightKey(code: string): boolean {

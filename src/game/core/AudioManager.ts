@@ -1,4 +1,5 @@
 import type { AircraftDefinition } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 type AircraftAudioProfile = NonNullable<AircraftDefinition['audioProfile']>;
 
@@ -24,8 +25,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 118,
     filterBase: 230,
     filterRange: 460,
-    gainBase: 0.012,
-    gainRange: 0.022,
+    gainBase: 0.00065,
+    gainRange: 0.0012,
     detune: 8,
     fireBase: 170,
     fireEnd: 82,
@@ -37,8 +38,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 82,
     filterBase: 180,
     filterRange: 330,
-    gainBase: 0.01,
-    gainRange: 0.018,
+    gainBase: 0.0005,
+    gainRange: 0.001,
     detune: 14,
     fireBase: 145,
     fireEnd: 76,
@@ -50,8 +51,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 150,
     filterBase: 290,
     filterRange: 620,
-    gainBase: 0.013,
-    gainRange: 0.027,
+    gainBase: 0.0007,
+    gainRange: 0.0014,
     detune: 6,
     fireBase: 210,
     fireEnd: 96,
@@ -63,8 +64,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 78,
     filterBase: 440,
     filterRange: 900,
-    gainBase: 0.016,
-    gainRange: 0.03,
+    gainBase: 0.0007,
+    gainRange: 0.0013,
     detune: -11,
     fireBase: 190,
     fireEnd: 72,
@@ -76,8 +77,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 66,
     filterBase: 380,
     filterRange: 760,
-    gainBase: 0.017,
-    gainRange: 0.031,
+    gainBase: 0.00075,
+    gainRange: 0.0013,
     detune: -15,
     fireBase: 176,
     fireEnd: 68,
@@ -89,8 +90,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 72,
     filterBase: 350,
     filterRange: 700,
-    gainBase: 0.014,
-    gainRange: 0.026,
+    gainBase: 0.00065,
+    gainRange: 0.0012,
     detune: -9,
     fireBase: 160,
     fireEnd: 70,
@@ -102,8 +103,8 @@ const ENGINE_PROFILES: Record<
     frequencyRange: 120,
     filterBase: 640,
     filterRange: 1200,
-    gainBase: 0.01,
-    gainRange: 0.022,
+    gainBase: 0.0005,
+    gainRange: 0.001,
     detune: 18,
     fireBase: 260,
     fireEnd: 120,
@@ -131,6 +132,7 @@ export class AudioManager {
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
+      logger.info('AudioManager', 'Creating Web Audio context');
       this.ctx = new AudioContext();
     }
     return this.ctx;
@@ -140,12 +142,14 @@ export class AudioManager {
     if (this.started) return;
     const ctx = this.ensureContext();
     if (ctx.state === 'suspended') {
+      logger.info('AudioManager', 'Resuming suspended Web Audio context');
       ctx.resume();
     }
     this.started = true;
+    logger.info('AudioManager', 'Starting engine and wind beds', { enabled: this.enabled });
 
     this.engineGain = ctx.createGain();
-    this.engineGain.gain.value = this.enabled ? 0.02 : 0;
+    this.engineGain.gain.value = this.enabled ? 0.0008 : 0;
     this.engineGain.connect(ctx.destination);
 
     this.engineFilter = ctx.createBiquadFilter();
@@ -180,7 +184,7 @@ export class AudioManager {
 
     // Wind noise
     this.windGain = ctx.createGain();
-    this.windGain.gain.value = this.enabled ? 0.01 : 0;
+    this.windGain.gain.value = this.enabled ? 0.002 : 0;
     this.windGain.connect(ctx.destination);
 
     const bufferSize = ctx.sampleRate * 2;
@@ -226,14 +230,14 @@ export class AudioManager {
       return;
     }
     const ratio = speed / maxSpeed;
-    this.windGain.gain.value = ratio * 0.04;
+    this.windGain.gain.value = ratio * 0.008;
   }
 
   setBpm(bpm: number | null): void {
     if (!this.lfo || !this.lfoGain) return;
     if (this.enabled && bpm && bpm > 30 && bpm < 220) {
       this.lfo.frequency.value = bpm / 60;
-      this.lfoGain.gain.value = 0.008;
+      this.lfoGain.gain.value = 0.0012;
     } else {
       this.lfoGain.gain.value = 0;
     }
@@ -377,10 +381,14 @@ export class AudioManager {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+    logger.info('AudioManager', 'Set enabled', { enabled });
     if (!enabled) {
       if (this.engineGain) this.engineGain.gain.value = 0;
       if (this.windGain) this.windGain.gain.value = 0;
       if (this.lfoGain) this.lfoGain.gain.value = 0;
+      void this.ctx?.suspend();
+    } else {
+      void this.ctx?.resume();
     }
   }
 
@@ -389,6 +397,7 @@ export class AudioManager {
   }
 
   destroy(): void {
+    logger.info('AudioManager', 'Destroying audio manager');
     this.engineOsc1?.stop();
     this.engineOsc2?.stop();
     this.lfo?.stop();

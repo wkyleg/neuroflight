@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { WeatherBillboardLayerConfig, WeatherIdentityConfig } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface WeatherParticle {
   sprite: THREE.Sprite;
@@ -76,7 +78,11 @@ export class WeatherIdentitySystem {
   }
 
   private createBillboardLayer(layer: WeatherBillboardLayerConfig): void {
-    const texture = this.loader.load(layer.texturePath);
+    const url = resolveAssetUrl(layer.texturePath);
+    logger.info('Assets', 'Loading weather texture', { path: layer.texturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load weather texture', { path: layer.texturePath, url, error }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 
@@ -116,7 +122,15 @@ export class WeatherIdentitySystem {
   private createLightning(): void {
     if (!this.config?.lightning) return;
 
-    const texture = this.loader.load(this.config.lightning.texturePath);
+    const url = resolveAssetUrl(this.config.lightning.texturePath);
+    logger.info('Assets', 'Loading weather lightning texture', { path: this.config.lightning.texturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load weather lightning texture', {
+        path: this.config?.lightning?.texturePath,
+        url,
+        error,
+      }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 

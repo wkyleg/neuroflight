@@ -54,7 +54,7 @@ export const logger = {
   clear: () => {
     buffer.splice(0, buffer.length);
   },
-  download: (fileName = `neuro-chess-debug-${Date.now()}.json`) => {
+  download: (fileName = `neuroflight-debug-${Date.now()}.json`) => {
     try {
       const blob = new Blob([JSON.stringify(buffer, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

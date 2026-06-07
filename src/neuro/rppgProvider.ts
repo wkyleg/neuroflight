@@ -27,6 +27,9 @@ export interface RppgDebugMetrics {
 
 export interface RppgProviderState {
   active: boolean;
+  appSnapshot: RppgAppSnapshot | null;
+  canPublish: boolean;
+  appStatus: RppgAppSnapshot['status'] | null;
   bpm: number | null;
   displayBpm: number | null;
   rawBpm: number | null;
@@ -85,6 +88,9 @@ export class ElataRppgProvider {
   private stateSubscribers = new Set<(state: Readonly<RppgProviderState>) => void>();
   private state: RppgProviderState = {
     active: false,
+    appSnapshot: null,
+    canPublish: false,
+    appStatus: null,
     bpm: null,
     displayBpm: null,
     rawBpm: null,
@@ -236,6 +242,9 @@ export class ElataRppgProvider {
     this.bpmHistoryTimer = 0;
     this.state = {
       active: false,
+      appSnapshot: null,
+      canPublish: false,
+      appStatus: null,
       bpm: null,
       displayBpm: null,
       rawBpm: null,
@@ -307,6 +316,9 @@ export class ElataRppgProvider {
       if (this.session && this.appAdapter) {
         this.appSnapshot = this.appAdapter.getSnapshot(this.session);
       }
+      this.state.appSnapshot = this.appSnapshot;
+      this.state.canPublish = this.appSnapshot?.canPublish === true;
+      this.state.appStatus = this.appSnapshot?.status ?? null;
       const metrics = this.appSnapshot?.metrics ?? this.processor.getMetrics();
       const rawBpm = metrics.bpm ?? null;
       this.state.rawBpm = rawBpm;
@@ -346,7 +358,11 @@ export class ElataRppgProvider {
         preCorrectBpm,
       };
 
-      if (effectiveBpm !== null && effectiveBpm > 0) {
+      if (this.appSnapshot?.publishBpm !== null && this.appSnapshot?.publishBpm !== undefined) {
+        effectiveBpm = this.appSnapshot.publishBpm;
+      }
+
+      if (effectiveBpm !== null && effectiveBpm > 0 && (!this.appSnapshot || this.appSnapshot.canPublish)) {
         this.smoothedBpm = this.smoothedBpm
           ? this.smoothedBpm * (1 - EMA_ALPHA) + effectiveBpm * EMA_ALPHA
           : effectiveBpm;
@@ -365,7 +381,11 @@ export class ElataRppgProvider {
         this.state.displayBpm = this.computeDisplayBpm();
       }
 
-      if (this.state.quality >= QUALITY_THRESHOLD && this.state.bpm !== null) {
+      if (
+        this.state.quality >= QUALITY_THRESHOLD &&
+        this.state.bpm !== null &&
+        (!this.appSnapshot || this.appSnapshot.canPublish)
+      ) {
         this.lastValidBpm = this.state.bpm;
         this.lastValidBpmTime = Date.now();
         this.state.lastValidBpm = this.lastValidBpm;
@@ -387,6 +407,11 @@ export class ElataRppgProvider {
           this.state.arousal = null;
           this.onQualityLow?.();
         }
+      }
+
+      if (this.appSnapshot && !this.appSnapshot.canPublish) {
+        this.state.bpm = null;
+        this.state.displayBpm = null;
       }
 
       const qualityHigh = this.state.quality >= QUALITY_THRESHOLD;
@@ -475,6 +500,10 @@ export class ElataRppgProvider {
 
   getState(): Readonly<RppgProviderState> {
     return this.state;
+  }
+
+  getAppSnapshot(): RppgAppSnapshot | null {
+    return this.appSnapshot;
   }
 
   isActive(): boolean {

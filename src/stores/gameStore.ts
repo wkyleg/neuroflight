@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { DEFAULT_AIRCRAFT_ID } from '@/game/flight/AircraftRegistry.ts';
 import type { Game } from '@/game/Game.ts';
 import type { FlightEvent, FlightSample } from '@/game/gameplay/SessionRecorder.ts';
+import type { RecoveryWindowResult } from '@/game/session/RecoveryWindowTracker.ts';
+import type { InsightConfidenceLabel } from '@/game/session/SessionScoreBuilder.ts';
+import type { SessionPhase } from '@/game/session/sessionTypes.ts';
 import type { GameDifficulty, GameMode } from '@/game/types.ts';
 
 export interface SessionSummary {
@@ -46,6 +49,15 @@ export interface SessionSummary {
   avgLoad: number | null;
   avgFlow: number | null;
   signalCoveragePct: number;
+  tutorial: boolean;
+  sessionScore: number;
+  focusScore: number;
+  controlScore: number;
+  pressureScore: number;
+  recoveryBehaviorScore: number;
+  insightConfidence: number;
+  insightConfidenceLabel: InsightConfidenceLabel;
+  recoveryWindows: RecoveryWindowResult[];
 }
 
 export type FlightHudNoticeTone = 'hit' | 'win' | 'bonus' | 'reset';
@@ -96,6 +108,18 @@ export interface FlightHudState {
   signalCoverage: number;
   neuroPrompt: string;
   bonusNotice: FlightHudNotice | null;
+  sessionPhase: SessionPhase;
+  phaseChangeId: number;
+  sessionPhaseLabel: string;
+  sessionPhaseRemainingMs: number;
+  sessionPhaseElapsedMs: number;
+  sessionPhasePrompt: string;
+  tutorial: boolean;
+  tutorialStageTitle: string;
+  tutorialStagePrompt: string;
+  tutorialStageHint: string;
+  tutorialStageProgress: number;
+  tutorialStageComplete: boolean;
 }
 
 interface GameStoreState {
@@ -147,6 +171,18 @@ const DEFAULT_HUD: FlightHudState = {
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
+  sessionPhase: 'readiness',
+  phaseChangeId: 0,
+  sessionPhaseLabel: 'Readiness',
+  sessionPhaseRemainingMs: 0,
+  sessionPhaseElapsedMs: 0,
+  sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
+  tutorial: false,
+  tutorialStageTitle: 'Pitch',
+  tutorialStagePrompt: 'Hold W or Up to climb, then S or Down to descend.',
+  tutorialStageHint: 'Small holds work better than taps. The aircraft should settle into a gentle climb.',
+  tutorialStageProgress: 0,
+  tutorialStageComplete: false,
 };
 
 function loadPersistedSession(): SessionSummary | null {
@@ -165,7 +201,17 @@ export const useGameStore = create<GameStoreState>((set) => ({
   lastSession: loadPersistedSession(),
 
   setGame: (game) => set({ game }),
-  updateHud: (partial) => set((s) => ({ hud: { ...s.hud, ...partial } })),
+  updateHud: (partial) =>
+    set((s) => {
+      const phaseChanged = partial.sessionPhase !== undefined && partial.sessionPhase !== s.hud.sessionPhase;
+      return {
+        hud: {
+          ...s.hud,
+          ...partial,
+          phaseChangeId: phaseChanged ? s.hud.phaseChangeId + 1 : (partial.phaseChangeId ?? s.hud.phaseChangeId),
+        },
+      };
+    }),
   setLastSession: (session) => {
     try {
       sessionStorage.setItem('neuroflight_lastSession', JSON.stringify(session));

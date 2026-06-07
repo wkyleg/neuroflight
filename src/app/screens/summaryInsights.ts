@@ -110,7 +110,7 @@ function buildSignalStory(session: SessionSummary): DebriefInsight {
     return {
       id: 'signal-coverage',
       title: 'Flight-only debrief',
-      body: 'No camera or headset signal was used, so this report focuses on route progress, altitude, speed, and game events.',
+      body: 'No camera signal was used, so this report focuses on route progress, altitude, speed, and game events.',
       tone: 'signal',
     };
   }
@@ -124,11 +124,10 @@ function buildSignalStory(session: SessionSummary): DebriefInsight {
     };
   }
 
-  const source = session.neuroSource === 'eeg' ? 'EEG headset' : 'camera';
   return {
     id: 'signal-coverage',
-    title: `${source[0].toUpperCase()}${source.slice(1)} signal tracked`,
-    body: `Signal coverage reached ${Math.round(session.signalCoveragePct)}%, so the debrief can compare signal proxies with flight events.`,
+    title: 'Camera signal tracked',
+    body: `Signal coverage reached ${Math.round(session.signalCoveragePct)}%, so the debrief can compare camera-estimated trends with flight events.`,
     tone: 'signal',
   };
 }

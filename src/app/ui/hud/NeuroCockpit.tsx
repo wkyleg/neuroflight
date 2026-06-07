@@ -1,18 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNeuroConnection, useNeuroSignals } from '@/neuro/hooks.ts';
+import { useNeuroConnection, useNeuroSignals, useRppgSignal } from '@/neuro/hooks.ts';
+import type { RppgSignalSnapshot } from '@/neuro/rppgSignalTypes.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
-import { BandPowerBars } from './BandPowerBars.tsx';
 
-export type BiofeedbackDisplayStateKind =
-  | 'none'
-  | 'permission-denied'
-  | 'warming'
-  | 'low-confidence'
-  | 'ready'
-  | 'simulated'
-  | 'eeg-active';
+export type BiofeedbackDisplayStateKind = 'none' | 'permission-denied' | 'warming' | 'low-confidence' | 'ready';
 
-export type BiofeedbackDisplayTone = 'neutral' | 'warming' | 'ready' | 'warning' | 'simulated' | 'advanced';
+export type BiofeedbackDisplayTone = 'neutral' | 'warming' | 'ready' | 'warning';
 
 export interface BiofeedbackDisplayInput {
   source: string;
@@ -48,30 +41,6 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
   const signalQuality = Math.max(0, Math.min(1, input.signalQuality));
   const bpmQuality = Math.max(0, Math.min(1, input.bpmQuality));
 
-  if (input.source === 'mock' || input.mockEnabled) {
-    return {
-      state: 'simulated',
-      primaryLabel: 'SIM',
-      guidance: 'Simulated flight signals',
-      detail: 'Mock signals are driving ambience and debrief notes.',
-      tone: 'simulated',
-      showCameraMetrics: false,
-      showEegAdvanced: false,
-    };
-  }
-
-  if (input.source === 'eeg' || input.eegConnected) {
-    return {
-      state: 'eeg-active',
-      primaryLabel: 'EEG',
-      guidance: 'Advanced headset connected',
-      detail: 'Camera remains optional; EEG details are available in advanced view.',
-      tone: 'advanced',
-      showCameraMetrics: false,
-      showEegAdvanced: true,
-    };
-  }
-
   if (!input.cameraActive && isPermissionError(input.cameraError)) {
     return {
       state: 'permission-denied',
@@ -90,7 +59,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
         state: 'ready',
         primaryLabel: 'CAMERA',
         guidance: 'Signal ready',
-        detail: 'Signal proxies are tracking with useful confidence.',
+        detail: 'Camera signal quality is ready for debrief insights.',
         tone: 'ready',
         showCameraMetrics: true,
         showEegAdvanced: false,
@@ -111,7 +80,7 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
       state: 'low-confidence',
       primaryLabel: 'CAMERA',
       guidance: 'More light',
-      detail: 'Low-confidence moments stay out of signal insights.',
+      detail: 'Weak-signal moments stay out of camera insights.',
       tone: 'warning',
       showCameraMetrics: true,
       showEegAdvanced: false,
@@ -121,12 +90,80 @@ export function getBiofeedbackDisplayState(input: BiofeedbackDisplayInput): Biof
   return {
     state: 'none',
     primaryLabel: 'OPTIONAL',
-    guidance: 'Signals optional',
+    guidance: 'Behavior-only ready',
     detail: 'Fly normally; camera can add debrief notes later.',
     tone: 'neutral',
     showCameraMetrics: false,
     showEegAdvanced: false,
   };
+}
+
+export function getBiofeedbackDisplayStateFromGate(signal: RppgSignalSnapshot): BiofeedbackDisplayState {
+  switch (signal.status) {
+    case 'permission_needed':
+      return {
+        state: 'permission-denied',
+        primaryLabel: 'CAMERA',
+        guidance: 'Camera blocked',
+        detail: signal.userMessage,
+        tone: 'warning',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+    case 'ready':
+      return {
+        state: 'ready',
+        primaryLabel: 'CAMERA',
+        guidance: 'Signal ready',
+        detail: signal.userMessage,
+        tone: 'ready',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    case 'starting':
+    case 'warming':
+      return {
+        state: 'warming',
+        primaryLabel: 'CAMERA',
+        guidance: signal.status === 'starting' ? 'Starting camera' : 'Camera warming',
+        detail: signal.userMessage,
+        tone: 'warming',
+        showCameraMetrics: true,
+        showEegAdvanced: false,
+      };
+    case 'weak':
+    case 'degraded':
+    case 'failed':
+      return {
+        state: 'low-confidence',
+        primaryLabel: 'CAMERA',
+        guidance: signal.status === 'failed' ? 'Unavailable' : 'Weak signal',
+        detail: signal.userMessage,
+        tone: 'warning',
+        showCameraMetrics: signal.status !== 'failed',
+        showEegAdvanced: false,
+      };
+    case 'behavior_only':
+      return {
+        state: 'none',
+        primaryLabel: 'OPTIONAL',
+        guidance: 'Behavior-only ready',
+        detail: signal.userMessage,
+        tone: 'neutral',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+    default:
+      return {
+        state: 'none',
+        primaryLabel: 'OPTIONAL',
+        guidance: 'Behavior-only ready',
+        detail: signal.userMessage,
+        tone: 'neutral',
+        showCameraMetrics: false,
+        showEegAdvanced: false,
+      };
+  }
 }
 
 function toneColor(tone: BiofeedbackDisplayTone, value: number): string {
@@ -137,10 +174,6 @@ function toneColor(tone: BiofeedbackDisplayTone, value: number): string {
       return '#facc15';
     case 'warning':
       return '#fb7185';
-    case 'simulated':
-      return '#c4b5fd';
-    case 'advanced':
-      return '#5eead4';
     default:
       if (value >= 0.72) return '#42e9a8';
       if (value >= 0.38) return '#facc15';
@@ -206,7 +239,7 @@ function SignalBars({ value }: { value: number }) {
   );
 }
 
-function CameraPreview({ active, compact = false }: { active: boolean; compact?: boolean }) {
+export function CameraPreview({ active, compact = false }: { active: boolean; compact?: boolean }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -259,9 +292,7 @@ function signalHintForState(state: BiofeedbackDisplayState, signalQuality: numbe
   if (state.state === 'low-confidence') return 'More light or a steadier face';
   if (state.state === 'warming')
     return signalQuality < 0.45 ? 'Center face in the camera' : 'Hold steady while signal settles';
-  if (state.state === 'ready') return 'Signal proxies are tracking';
-  if (state.state === 'simulated') return 'Simulation is driving practice signals';
-  if (state.state === 'eeg-active') return 'Headset active; camera optional';
+  if (state.state === 'ready') return 'Camera signal is tracking';
   return 'Fly normally; camera optional';
 }
 
@@ -272,47 +303,27 @@ interface NeuroCockpitProps {
 export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
   const neuro = useNeuroSignals();
   const connection = useNeuroConnection();
+  const { signal } = useRppgSignal();
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const displaySignalQuality = useThrottledDisplayValue(neuro.signalQuality, 1000);
-  const displayBpm = useThrottledDisplayValue(neuro.bpm, 1000);
-  const displayBpmQuality = useThrottledDisplayValue(neuro.bpmQuality, 1000);
   const displayHrv = useThrottledDisplayValue(neuro.hrvRmssd, 1000);
   const displayResp = useThrottledDisplayValue(neuro.respirationRate, 1000);
 
-  const rawDisplayState = useMemo(
-    () =>
-      getBiofeedbackDisplayState({
-        source: neuro.source,
-        cameraActive: connection.cameraActive,
-        eegConnected: connection.eegConnected,
-        mockEnabled: connection.mockEnabled,
-        signalQuality: displaySignalQuality,
-        bpmQuality: displayBpmQuality,
-        cameraError: connection.error.camera,
-      }),
-    [
-      neuro.source,
-      connection.cameraActive,
-      connection.eegConnected,
-      connection.mockEnabled,
-      connection.error.camera,
-      displaySignalQuality,
-      displayBpmQuality,
-    ],
-  );
+  const rawDisplayState = useMemo(() => getBiofeedbackDisplayStateFromGate(signal), [signal]);
   const displayState = useThrottledDisplayValue(rawDisplayState, 900);
 
-  const tone = toneColor(displayState.tone, displaySignalQuality);
+  const signalQuality = signal.coverageTrailing || displaySignalQuality;
+  const tone = toneColor(displayState.tone, signalQuality);
   const activePreview = connection.cameraActive && !connection.error.camera;
   const previewExpanded = previewOpen && activePreview;
   const signalHint = signalHintForState(displayState, displaySignalQuality);
-  const bpm = displayBpm !== null ? Math.round(displayBpm).toString() : '--';
+  const bpm = signal.displayBpm !== null ? Math.round(signal.displayBpm).toString() : '--';
   const hrv = displayHrv !== null ? `${Math.round(displayHrv)}ms` : '--';
   const resp = displayResp !== null ? displayResp.toFixed(1) : '--';
   const delta =
     neuro.baselineDelta !== null ? `${neuro.baselineDelta > 0 ? '+' : ''}${Math.round(neuro.baselineDelta)}` : '--';
-  const showAdvanced = expanded || displayState.showEegAdvanced;
+  const showAdvanced = expanded && !embedded;
 
   return (
     <div
@@ -343,102 +354,107 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
           padding: embedded ? 0 : 13,
         }}
       >
-        <div className="flex items-center justify-between" style={{ gap: embedded ? 8 : 10 }}>
-          <div className="flex items-center" style={{ gap: embedded ? 8 : 10 }}>
-            <CameraPreview active={activePreview} compact={embedded && !previewExpanded} />
-            <div>
-              <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
-                Camera biofeedback
-              </div>
-              <div className="flex items-center" style={{ gap: 8 }}>
-                <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
-                  {displayState.primaryLabel}
-                </span>
-                <SignalBars value={displaySignalQuality} />
-              </div>
-              <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
-                {displayState.guidance}
-              </div>
-              <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                {embedded ? signalHint : displayState.detail}
-              </div>
-              {!embedded && (
-                <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  {signalHint}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen((v) => !v)}
-              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-              style={{
-                borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
-                color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
-              }}
-            >
-              {previewOpen ? 'MIN' : 'CAM'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-              style={{
-                borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
-                color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
-              }}
-            >
-              {showAdvanced ? 'LESS' : 'MORE'}
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-2 grid grid-cols-4" style={{ gap: embedded ? 4 : 8 }}>
-          <MetricChip
-            label="BPM"
-            value={displayState.showCameraMetrics ? bpm : '--'}
-            tone={displayState.showCameraMetrics && displayBpmQuality > 0.4 ? '#fb7185' : undefined}
-          />
-          <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
-          <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
-          <MetricChip label="Sig" value={pct(displaySignalQuality)} tone={tone} />
-        </div>
-
-        {showAdvanced && (
-          <div
-            className="mt-3 rounded-md border"
-            style={{
-              padding: 10,
-              background: 'rgba(0,0,0,0.18)',
-              borderColor: 'rgba(255,255,255,0.09)',
-            }}
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
-                Advanced signals
-              </span>
-              <span className="text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
-                Baseline delta {delta}
+        {embedded ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: tone }} />
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                style={{ color: 'rgba(240,236,224,0.72)' }}
+              >
+                {displayState.primaryLabel}
               </span>
             </div>
-            {neuro.source === 'eeg' ? (
-              <BandPowerBars
-                alpha={neuro.alphaPower}
-                beta={neuro.betaPower}
-                theta={neuro.thetaPower}
-                delta={neuro.deltaPower}
-                gamma={neuro.gammaPower}
-              />
-            ) : (
-              <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
-                EEG details stay tucked away unless a headband is active. Webcam play uses signal quality, heart-rate
-                trend, respiration proxy, and coverage for gentle flight notes.
-              </div>
+            {signal.displayBpm !== null && (
+              <span className="tabular-nums text-[10px] font-black" style={{ color: '#fb7185' }}>
+                {Math.round(signal.displayBpm)} bpm
+              </span>
             )}
           </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between" style={{ gap: 10 }}>
+              <div className="flex items-center" style={{ gap: 10 }}>
+                <CameraPreview active={activePreview} compact={previewExpanded} />
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
+                    Camera biofeedback
+                  </div>
+                  <div className="flex items-center" style={{ gap: 8 }}>
+                    <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
+                      {displayState.primaryLabel}
+                    </span>
+                    <SignalBars value={signalQuality} />
+                  </div>
+                  <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
+                    {displayState.guidance}
+                  </div>
+                  <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                    {displayState.detail}
+                  </div>
+                  <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                    {signalHint}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen((v) => !v)}
+                  className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                  style={{
+                    borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
+                    color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
+                  }}
+                >
+                  {previewOpen ? 'MIN' : 'CAM'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                  style={{
+                    borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
+                    color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
+                  }}
+                >
+                  {showAdvanced ? 'LESS' : 'MORE'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-4" style={{ gap: 8 }}>
+              <MetricChip
+                label="BPM"
+                value={signal.displayBpm !== null ? bpm : '--'}
+                tone={signal.displayBpm !== null ? '#fb7185' : undefined}
+              />
+              <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
+              <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
+              <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
+            </div>
+
+            {showAdvanced && (
+              <div
+                className="mt-3 rounded-md border"
+                style={{ padding: 10, background: 'rgba(0,0,0,0.18)', borderColor: 'rgba(255,255,255,0.09)' }}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
+                    Advanced signals
+                  </span>
+                  <span className="text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
+                    Baseline delta {delta}
+                  </span>
+                </div>
+                <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+                  Camera play uses signal quality, heart-rate trend, respiration proxy, and coverage for gentle flight
+                  notes. Weak-signal moments stay out of default insights.
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

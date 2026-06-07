@@ -6,14 +6,14 @@ settings:
 
 dependencies:
   '@elata-biosciences/eeg-web':
-    specifier: ^0.1.10
-    version: 0.1.12
+    specifier: ^0.7.0
+    version: 0.7.0
   '@elata-biosciences/eeg-web-ble':
-    specifier: ^0.1.10
-    version: 0.1.12(@elata-biosciences/eeg-web@0.1.12)
+    specifier: ^0.7.0
+    version: 0.7.0(@elata-biosciences/eeg-web@0.7.0)
   '@elata-biosciences/rppg-web':
-    specifier: ^0.1.10
-    version: 0.1.12
+    specifier: ^0.9.0
+    version: 0.9.0
   '@tailwindcss/vite':
     specifier: ^4.2.2
     version: 4.2.2(vite@8.0.3)
@@ -52,6 +52,9 @@ devDependencies:
   '@biomejs/biome':
     specifier: ^2.4.9
     version: 2.4.9
+  '@playwright/test':
+    specifier: ^1.60.0
+    version: 1.60.0
   '@testing-library/jest-dom':
     specifier: ^6.9.1
     version: 6.9.1
@@ -294,22 +297,22 @@ packages:
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
     dev: true
 
-  /@elata-biosciences/eeg-web-ble@0.1.12(@elata-biosciences/eeg-web@0.1.12):
-    resolution: {integrity: sha512-m0GgC8hwaKVoR9bCdaPI1wmrhgQbtLjCTJZ5XPbzO22noVpH6itx1yEPqy1D12SewPF898qqSy0wJxt5hCSimQ==}
+  /@elata-biosciences/eeg-web-ble@0.7.0(@elata-biosciences/eeg-web@0.7.0):
+    resolution: {integrity: sha512-fVbE87gX8UBPOtVU+4+h0wyjQUih9ZEGYO44yhy68ylRQn0hexlqeKwokcO4+2N0MoFjcsdKXSceKTbvGsR0Gw==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@elata-biosciences/eeg-web': ^0.1.0
+      '@elata-biosciences/eeg-web': ^0.2.1
     dependencies:
-      '@elata-biosciences/eeg-web': 0.1.12
+      '@elata-biosciences/eeg-web': 0.7.0
     dev: false
 
-  /@elata-biosciences/eeg-web@0.1.12:
-    resolution: {integrity: sha512-TbQEg3SPj8qijSZx2d8tb5MIOIcWZCEoLUIVIV/BOYpbQ0GVJmWGcH0ihXTGX5kKPpuc49o+gQ17ZW5rT+fsNw==}
+  /@elata-biosciences/eeg-web@0.7.0:
+    resolution: {integrity: sha512-JMKmE0HS4yQwLqdS0hmEmgyTi42hdaUdlsMTODXOvaFJSyQd+5/awPjIpif90hJySY7QPOCHR+B9DxJ6Ulwp8Q==}
     engines: {node: '>=20'}
     dev: false
 
-  /@elata-biosciences/rppg-web@0.1.12:
-    resolution: {integrity: sha512-lRL0GnEGJ4Xlap1XJ9KRERHKVPce6drRpS9Hfu8DVZUbQIYOk/cZ4fuKzzkfWcgQoUuyGPjRvcnwxCOPRCzIww==}
+  /@elata-biosciences/rppg-web@0.9.0:
+    resolution: {integrity: sha512-pxxE/jHMh5YvPpS/ruq3Xq0p4itA0aGhS/K7AFp9EkTOgOFF1Mfoell1hlgMIFFrILeFMXOjrVhq9y9S4wsu1A==}
     engines: {node: '>=20'}
     dev: false
 
@@ -593,6 +596,14 @@ packages:
 
   /@oxc-project/types@0.122.0:
     resolution: {integrity: sha512-oLAl5kBpV4w69UtFZ9xqcmTi+GENWOcPF7FCrczTiBbmC0ibXxCwyvZGbO39rCVEuLGAZM84DH0pUIyyv/YJzA==}
+
+  /@playwright/test@1.60.0:
+    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
+    engines: {node: '>=18'}
+    hasBin: true
+    dependencies:
+      playwright: 1.60.0
+    dev: true
 
   /@reduxjs/toolkit@2.11.2(react-redux@9.2.0)(react@19.2.4):
     resolution: {integrity: sha512-Kd6kAHTA6/nUpp8mySPqj3en3dm0tdMIgbttnQ1xFMVpufoj+ADi8pXLBsd4xzTRHQa7t/Jv8W5UnCuW4kuWMQ==}
@@ -1753,6 +1764,14 @@ packages:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
     dev: true
 
+  /fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+    requiresBuild: true
+    dev: true
+    optional: true
+
   /fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -1997,6 +2016,22 @@ packages:
   /picomatch@4.0.4:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
+
+  /playwright-core@1.60.0:
+    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
+    engines: {node: '>=18'}
+    hasBin: true
+    dev: true
+
+  /playwright@1.60.0:
+    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
+    engines: {node: '>=18'}
+    hasBin: true
+    dependencies:
+      playwright-core: 1.60.0
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
 
   /postcss@8.5.8:
     resolution: {integrity: sha512-OW/rX8O/jXnm82Ey1k44pObPtdblfiuWnrd8X7GJ7emImCOstunGbXUpp7HdBrFQX6rJzn3sPT397Wp5aCwCHg==}

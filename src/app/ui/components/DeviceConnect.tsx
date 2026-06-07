@@ -1,3 +1,4 @@
+import { v1Flags } from '@/config/v1Flags.ts';
 import { useNeuroConnection } from '@/neuro/hooks.ts';
 import { useNeuroStore } from '@/neuro/store.ts';
 
@@ -36,35 +37,13 @@ export function DeviceConnect() {
         className="text-xs tracking-widest uppercase font-semibold"
         style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
       >
-        Neuro Devices
+        Camera Biofeedback
       </h3>
 
       <div className="flex flex-col" style={{ gap: 12 }}>
         <div className="flex items-center justify-between">
           <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-            EEG Headband
-          </span>
-          <button
-            type="button"
-            onClick={connectHeadband}
-            disabled={!wasmReady || connecting.eeg || eegConnected}
-            className="text-xs border rounded-lg cursor-pointer disabled:cursor-not-allowed transition-all hover:scale-105"
-            style={{
-              fontFamily: 'var(--font-heading)',
-              borderColor: eegConnected ? 'rgba(255,200,100,0.4)' : 'rgba(255,255,255,0.25)',
-              color: eegConnected ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)',
-              background: eegConnected ? 'rgba(255,200,100,0.08)' : 'transparent',
-              padding: '10px 20px',
-              opacity: !wasmReady || connecting.eeg ? 0.4 : 1,
-            }}
-          >
-            {connecting.eeg ? 'Connecting...' : eegConnected ? 'Connected' : 'Connect'}
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-            Camera (rPPG)
+            Webcam
           </span>
           <button
             type="button"
@@ -84,25 +63,51 @@ export function DeviceConnect() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-            Mock Data
-          </span>
-          <button
-            type="button"
-            onClick={enableMock}
-            className="text-xs border rounded-lg cursor-pointer transition-all hover:scale-105"
-            style={{
-              fontFamily: 'var(--font-heading)',
-              borderColor: 'rgba(255,255,255,0.25)',
-              color: 'var(--color-text-secondary)',
-              background: 'transparent',
-              padding: '10px 20px',
-            }}
-          >
-            Simulate
-          </button>
-        </div>
+        {v1Flags.EEG_ENABLED && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              EEG Headband
+            </span>
+            <button
+              type="button"
+              onClick={connectHeadband}
+              disabled={!wasmReady || connecting.eeg || eegConnected}
+              className="text-xs border rounded-lg cursor-pointer disabled:cursor-not-allowed transition-all hover:scale-105"
+              style={{
+                fontFamily: 'var(--font-heading)',
+                borderColor: eegConnected ? 'rgba(255,200,100,0.4)' : 'rgba(255,255,255,0.25)',
+                color: eegConnected ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)',
+                background: eegConnected ? 'rgba(255,200,100,0.08)' : 'transparent',
+                padding: '10px 20px',
+                opacity: !wasmReady || connecting.eeg ? 0.4 : 1,
+              }}
+            >
+              {connecting.eeg ? 'Connecting...' : eegConnected ? 'Connected' : 'Connect'}
+            </button>
+          </div>
+        )}
+
+        {v1Flags.SIM_ENABLED && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              Mock Data
+            </span>
+            <button
+              type="button"
+              onClick={enableMock}
+              className="text-xs border rounded-lg cursor-pointer transition-all hover:scale-105"
+              style={{
+                fontFamily: 'var(--font-heading)',
+                borderColor: 'rgba(255,255,255,0.25)',
+                color: 'var(--color-text-secondary)',
+                background: 'transparent',
+                padding: '10px 20px',
+              }}
+            >
+              Simulate
+            </button>
+          </div>
+        )}
       </div>
 
       {error.eeg && (

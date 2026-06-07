@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { BCI_PRESETS } from './bciMock';
 import type { NeuroState } from './neuroManager';
 import { NeuroManager } from './neuroManager';
+import { DEFAULT_RPPG_SIGNAL_SNAPSHOT } from './rppgSignalTypes.ts';
 
 interface NeuroStoreState extends NeuroState {
   manager: NeuroManager | null;
@@ -47,6 +48,7 @@ const INITIAL_NEURO_STATE: NeuroState = {
   calmnessState: null,
   alphaPeakFreq: null,
   alphaBumpState: null,
+  rppgSignal: DEFAULT_RPPG_SIGNAL_SNAPSHOT,
 };
 
 function neuroStateChanged(prev: NeuroStoreState, next: NeuroState): boolean {
@@ -71,7 +73,8 @@ function neuroStateChanged(prev: NeuroStoreState, next: NeuroState): boolean {
     prev.baselineDelta !== next.baselineDelta ||
     prev.calmnessState !== next.calmnessState ||
     prev.alphaPeakFreq !== next.alphaPeakFreq ||
-    prev.alphaBumpState !== next.alphaBumpState
+    prev.alphaBumpState !== next.alphaBumpState ||
+    prev.rppgSignal !== next.rppgSignal
   );
 }
 

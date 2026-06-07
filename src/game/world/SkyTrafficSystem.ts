@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { LivingWorldEventConfig, SkyOrientationPreset } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface LoadedTrafficAsset {
   scene: THREE.Object3D;
@@ -183,8 +185,10 @@ export class SkyTrafficSystem {
 
   private async loadAsset(path: string): Promise<void> {
     if (this.assets.has(path)) return;
+    const url = resolveAssetUrl(path);
     try {
-      const gltf = await this.loader.loadAsync(path);
+      logger.info('Assets', 'Loading sky traffic asset', { path, url });
+      const gltf = await this.loader.loadAsync(url);
       const sourceBounds = new THREE.Box3().setFromObject(gltf.scene);
       const sourceSizeVec = sourceBounds.getSize(new THREE.Vector3());
       const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
@@ -196,7 +200,7 @@ export class SkyTrafficSystem {
         sourceSize,
       });
     } catch (error) {
-      console.warn(`[SkyTrafficSystem] Failed to load ${path}`, error);
+      logger.warn('Assets', 'Failed to load sky traffic asset', { path, url, error });
     }
   }
 

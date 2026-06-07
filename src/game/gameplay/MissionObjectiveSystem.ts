@@ -51,6 +51,7 @@ export class MissionObjectiveSystem {
   private displayHoldTimer = 0;
   private completionToast: string | null = null;
   private completionToastTimer = 0;
+  private recoveryMode = false;
 
   constructor(scene: THREE.Scene, waypoints: MissionWaypointConfig[]) {
     this.scene = scene;
@@ -71,7 +72,7 @@ export class MissionObjectiveSystem {
     const active = this.getActiveWaypoint();
     let distanceToActive: number | null = null;
 
-    if (active) {
+    if (active && !this.recoveryMode) {
       const activePos = new THREE.Vector3(...active.position);
       distanceToActive = activePos.distanceTo(playerPos);
       const radius = active.radius ?? 160;
@@ -120,6 +121,11 @@ export class MissionObjectiveSystem {
 
   getCompletedCount(): number {
     return this.completed.size;
+  }
+
+  setRecoveryMode(active: boolean): void {
+    this.recoveryMode = active;
+    this.updateVisualStates();
   }
 
   getTotalCount(): number {
@@ -218,18 +224,18 @@ export class MissionObjectiveSystem {
       const waypoint = this.waypoints[i];
       const active = this.getActiveWaypoint()?.id === waypoint.id;
       const done = this.completed.has(waypoint.id);
-      const pulse = active ? 0.76 + Math.sin(this.pulse * 3.4) * 0.2 : done ? 0.24 : 0.42;
+      const pulse = active && !this.recoveryMode ? 0.76 + Math.sin(this.pulse * 3.4) * 0.2 : done ? 0.24 : 0.42;
 
-      visual.rings[0].rotation.z += dt * (active ? 0.9 : 0.28);
-      visual.rings[1].rotation.x += dt * (active ? 0.65 : 0.22);
-      visual.light.intensity = active ? 2.4 + pulse : done ? 0.15 : 0.5;
+      visual.rings[0].rotation.z += dt * (active && !this.recoveryMode ? 0.9 : 0.28);
+      visual.rings[1].rotation.x += dt * (active && !this.recoveryMode ? 0.65 : 0.22);
+      visual.light.intensity = this.recoveryMode ? 0.36 : active ? 2.4 + pulse : done ? 0.15 : 0.5;
 
       const beamMaterial = visual.beam.material as THREE.MeshBasicMaterial;
-      beamMaterial.opacity = active ? 0.12 + pulse * 0.08 : done ? 0.025 : 0.06;
+      beamMaterial.opacity = this.recoveryMode ? 0.035 : active ? 0.12 + pulse * 0.08 : done ? 0.025 : 0.06;
 
       for (const ring of visual.rings) {
         const mat = ring.material as THREE.MeshBasicMaterial;
-        mat.opacity = active ? 0.62 + pulse * 0.22 : done ? 0.16 : 0.28;
+        mat.opacity = this.recoveryMode ? 0.18 : active ? 0.62 + pulse * 0.22 : done ? 0.16 : 0.28;
       }
     }
   }

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { type GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import logger from '@/neuro/logger.ts';
+import { resolveAssetUrl } from './assetUrl.ts';
 
 export class AssetManager {
   private loader = new GLTFLoader();
@@ -15,17 +17,21 @@ export class AssetManager {
     if (inflight) return inflight;
 
     const promise = new Promise<GLTF>((resolve, reject) => {
+      const url = resolveAssetUrl(path);
+      logger.info('Assets', 'Loading GLTF', { path, url });
       this.loader.load(
-        path,
+        url,
         (gltf) => {
           this.normalizeGLTF(gltf);
           this.cache.set(path, gltf);
           this.pending.delete(path);
+          logger.info('Assets', 'Loaded GLTF', { path, url });
           resolve(gltf);
         },
         undefined,
         (err) => {
           this.pending.delete(path);
+          logger.warn('Assets', 'Failed to load GLTF', { path, url, err });
           reject(err);
         },
       );
@@ -37,7 +43,20 @@ export class AssetManager {
 
   async loadTexture(path: string): Promise<THREE.Texture> {
     return new Promise((resolve, reject) => {
-      this.textureLoader.load(path, resolve, undefined, reject);
+      const url = resolveAssetUrl(path);
+      logger.info('Assets', 'Loading texture', { path, url });
+      this.textureLoader.load(
+        url,
+        (texture) => {
+          logger.info('Assets', 'Loaded texture', { path, url });
+          resolve(texture);
+        },
+        undefined,
+        (err) => {
+          logger.warn('Assets', 'Failed to load texture', { path, url, err });
+          reject(err);
+        },
+      );
     });
   }
 

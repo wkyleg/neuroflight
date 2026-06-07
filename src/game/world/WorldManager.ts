@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { FlightObstacle } from '@/game/gameplay/FlightSafetySystem.ts';
 import type { GroundPlaneConfig, MapDefinition } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 import { buildScatterLayers, type ScatterResult } from './ProceduralWorld.ts';
 
 export class WorldManager {
@@ -26,14 +28,16 @@ export class WorldManager {
       try {
         this.scatterResult = buildScatterLayers(this.scene, map.scatterLayers);
       } catch (err) {
-        console.error('[WorldManager] buildScatterLayers failed:', err);
+        logger.error('WorldManager', 'buildScatterLayers failed', err);
       }
     }
 
     if (map.landmarks && map.landmarks.length > 0) {
       for (const lm of map.landmarks) {
+        const url = resolveAssetUrl(lm.assetPath);
+        logger.info('Assets', 'Loading map landmark', { path: lm.assetPath, url });
         this.gltfLoader.load(
-          lm.assetPath,
+          url,
           (gltf) => {
             const obj = gltf.scene;
             obj.scale.setScalar(lm.scale);
@@ -41,9 +45,10 @@ export class WorldManager {
             if (lm.rotationY) obj.rotation.y = lm.rotationY;
             this.scene.add(obj);
             this.landmarkObjects.push(obj);
+            logger.info('Assets', 'Loaded map landmark', { path: lm.assetPath, url });
           },
           undefined,
-          (err) => console.warn(`Failed to load landmark ${lm.assetPath}`, err),
+          (err) => logger.warn('Assets', 'Failed to load map landmark', { path: lm.assetPath, url, err }),
         );
       }
     }

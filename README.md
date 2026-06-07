@@ -6,7 +6,7 @@
 
 **[Play Now](https://wkyleg.github.io/neuroflight/)** | [Elata Biosciences](https://elata.bio) | [Elata SDK Docs](https://docs.elata.bio/sdk/overview)
 
-A neuroadaptive 3D flight simulator built with Three.js and React. Engage in AI dogfights while EEG and webcam heart rate biofeedback track your cognitive state in real time. After each session, review an in-depth neurological performance analysis correlated with in-game flight activity.
+A camera-first biofeedback flight game built with Three.js and React. Fly bounded arcade sessions, use optional webcam rPPG for local pulse-trend insight, and review a behavior-first report after each run. NeuroFlight is a wellness game, not a medical device or diagnostic tool.
 
 ## Gameplay preview
 
@@ -18,19 +18,18 @@ More sizes and store metadata: [`docs/store-assets/`](docs/store-assets/).
 
 ## Features
 
-- **AI Dogfighting** -- Chase and shoot down an AI opponent in procedurally generated environments (desert, ocean, clouds)
-- **Real-time EEG integration** via Muse headband (Web Bluetooth) using the [Elata SDK](https://docs.elata.bio/sdk/overview)
-- **Webcam heart rate (rPPG)** -- heart rate and HRV via facial video analysis, no wearables needed
-- **Session analytics** -- post-flight reports with time-series charts correlating neural state (calm, arousal, heart rate, brain waves) with flight metrics (altitude, speed, combat events)
+- **Focus Flight, Expedition, and Dogfight** -- three scored modes with warmup, three waves, recovery breaks, and final recovery
+- **Unscored Tutorial** -- practice controls freely without saving a report
+- **Optional webcam rPPG** -- local camera-estimated pulse trends and signal-quality coverage, no account or history
+- **Behavior-first reports** -- Focus, Control, Pressure, Recovery, and Signal Quality cards; bad or missing camera signal never lowers Session Score
 - **Procedural environments** -- dynamically generated terrain and sky conditions across desert, ocean, and cloud biomes
 - **Browser native** -- runs entirely in the browser with Three.js rendering, bloom post-processing, and Web Audio spatial sound
 
 ## How It Works
 
-1. **Connect** -- Pair an EEG headband or webcam for biofeedback (optional)
-2. **Fly** -- Take off and engage the AI opponent in a procedurally generated sky
-3. **Fight** -- Track down and shoot the enemy while managing throttle, positioning, and combat timing
-4. **Review** -- Post-flight analytics correlate your neural state with every maneuver, showing when calm dropped during tight turns or focus peaked before a kill shot
+1. **Readiness** -- Start camera biofeedback or continue behavior-only.
+2. **Fly** -- Warm up, complete three waves, and use recovery breaks to settle your flight line.
+3. **Review** -- Session Score is calculated from flight behavior only; camera coverage only affects insight confidence.
 
 ## Controls
 
@@ -75,14 +74,25 @@ pnpm lint         # biome check (read-only)
 pnpm format       # biome format --write
 ```
 
-## Neurotech Devices
+## Debug Logs
 
-| Device | Protocol | Browser Support |
-|--------|----------|----------------|
-| Webcam (rPPG heart rate) | getUserMedia | All modern browsers |
-| Muse S headband (EEG) | Web Bluetooth | Chrome, Edge, Brave |
+In the browser console, `window.__ELATA_LOGGER__` exposes:
 
-Both sensors are optional. You can fly and fight without any hardware. Add biometrics to unlock neural analytics.
+- `getLogs()` -- read the in-memory log buffer
+- `download()` -- save `neuroflight-debug-<timestamp>.json`
+- `setLevel("DEBUG" | "INFO" | "WARN" | "ERROR")`
+
+Useful lifecycle tags include `GameScreen`, `Game`, `Renderer`, `Input`, `Audio`, `AudioManager`,
+`Assets`, `Session`, `rPPG`, `Neuro`, and `React`. For playtest triage, reproduce the issue, then run:
+
+```js
+window.__ELATA_LOGGER__.getLogs()
+window.__ELATA_LOGGER__.download()
+```
+
+The log buffer is intentionally verbose in production so lifecycle problems such as WebGL context loss,
+input focus, asset loading, audio mute state, readiness, and phase transitions can be diagnosed from a
+player console.
 
 ## Deployment
 

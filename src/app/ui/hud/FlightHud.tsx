@@ -1,11 +1,14 @@
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { getModeMeta } from '@/game/modes.ts';
+import type { SessionPhase } from '@/game/session/sessionTypes.ts';
 import type { GameMode } from '@/game/types.ts';
 import type { FlightHudNotice } from '@/stores/gameStore.ts';
 import { useGameStore } from '@/stores/gameStore.ts';
 import { nextStableNumber, type StableNumberOptions } from './displayStabilizers.ts';
 import { NeuroCockpit } from './NeuroCockpit.tsx';
-import { NeuroConnectBanner } from './NeuroConnectBanner.tsx';
+import { SessionPhaseBanner } from './SessionPhaseBanner.tsx';
+import { phasePosition } from './sessionPhaseUi.ts';
+import { TutorialOverlay } from './TutorialOverlay.tsx';
 
 const HELP_DISMISSED_COUNT_KEY = 'neuroflight.help.dismissedCount';
 const HELP_NEVER_SHOW_KEY = 'neuroflight.help.neverShow';
@@ -550,6 +553,94 @@ function InstrumentTile({
   );
 }
 
+function GuidanceMeter({ phase, focus, calm }: { phase: SessionPhase; focus: number; calm: number }) {
+  const recovery = phase.includes('recovery');
+  const label = recovery ? 'Calm / settle' : 'Focus / steadiness';
+  const value = Math.max(0, Math.min(1, recovery ? calm : focus));
+  const pct = Math.round(value * 100);
+  const color = recovery ? '#5eead4' : '#facc15';
+  return (
+    <div className="flight-cockpit-section">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: 'rgba(255,246,220,0.58)' }}>
+            Guidance only
+          </div>
+          <div className="truncate text-xs font-black" style={{ color }}>
+            {label}
+          </div>
+        </div>
+        <div className="text-lg font-black tabular-nums" style={{ color }}>
+          {pct}%
+        </div>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+      <div className="mt-1 text-[10px] leading-4" style={{ color: 'rgba(255,246,220,0.58)' }}>
+        Your score comes from flight performance. This meter is coaching, not scoring.
+      </div>
+    </div>
+  );
+}
+
+function SessionPhaseChip({
+  label,
+  phase,
+  remainingMs,
+  elapsedMs,
+  tutorial,
+  accent,
+}: {
+  label: string;
+  phase: SessionPhase;
+  remainingMs: number;
+  elapsedMs: number;
+  tutorial: boolean;
+  accent: string;
+}) {
+  const timeLabel = tutorial ? 'Practice' : `${Math.ceil(Math.max(0, remainingMs) / 1000)}s`;
+  const totalMs = Math.max(1, elapsedMs + remainingMs);
+  const pct = tutorial ? 1 : Math.max(0, Math.min(1, elapsedMs / totalMs));
+  return (
+    <div
+      className="premium-glass flight-score-panel rounded-xl border"
+      style={{
+        minWidth: 154,
+        background: 'linear-gradient(135deg, rgba(20,58,68,0.58), rgba(7,20,28,0.56))',
+        borderColor: 'rgba(255,255,255,0.18)',
+        backdropFilter: 'blur(24px) saturate(1.75)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.75)',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="grid h-10 w-10 place-items-center rounded-full"
+          style={{
+            background: `conic-gradient(${accent} ${pct * 360}deg, rgba(255,255,255,0.12) 0deg)`,
+          }}
+        >
+          <div className="h-7 w-7 rounded-full bg-black/45" />
+        </div>
+        <div className="min-w-0 text-left">
+          <div className="truncate text-[9px] uppercase tracking-[0.12em]" style={{ color: 'rgba(255,246,220,0.62)' }}>
+            {phasePosition(phase)}
+          </div>
+          <div className="truncate text-sm font-black leading-tight" style={{ color: accent }}>
+            {label}
+          </div>
+          <div className="text-[10px] tabular-nums" style={{ color: 'rgba(255,246,220,0.58)' }}>
+            {timeLabel}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ThrottleInstrument({ value }: { value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
@@ -845,6 +936,8 @@ export function FlightHud() {
   const displayKills = useThrottledDisplayValue(hud.kills, 260);
   const displayDeaths = useThrottledDisplayValue(hud.deaths, 260);
   const displayElapsedMs = useThrottledDisplayValue(hud.elapsedMs, 1000);
+  const displaySessionPhaseRemainingMs = useThrottledDisplayValue(hud.sessionPhaseRemainingMs, 1000);
+  const displaySessionPhaseElapsedMs = useThrottledDisplayValue(hud.sessionPhaseElapsedMs, 1000);
   const displayMissionSubtitle = useDwelledDisplayValue(hud.missionSubtitle, 800);
   const displayObjectiveText = useDwelledDisplayValue(hud.objectiveText, 850);
   const displayObjectiveSubtext = useDwelledDisplayValue(hud.objectiveSubtext, 1050);
@@ -855,6 +948,21 @@ export function FlightHud() {
   const displayEnemyDir = useSmoothedDirectionValue(hud.enemyDir);
   const speedKnots = Math.round(displaySpeed * 1.944);
   const isDogfight = hud.mode === 'dogfight';
+  const isRecoveryPhase = hud.sessionPhase.includes('recovery');
+  const showRivalHud = isDogfight && !isRecoveryPhase;
+  const focusGuidance = Math.max(
+    0,
+    Math.min(
+      1,
+      displayFlow * 0.52 +
+        (1 - Math.abs(displayLoad - 0.42)) * 0.22 +
+        (displayObjectiveProgress / Math.max(1, displayObjectiveGoal)) * 0.26,
+    ),
+  );
+  const calmGuidance = Math.max(
+    0,
+    Math.min(1, displayComposure * 0.58 + hud.recovery * 0.34 + (1 - displayLoad) * 0.08),
+  );
   const modeMeta = getModeMeta(hud.mode);
   const headingText = headingLabel(displayHeading);
 
@@ -863,6 +971,8 @@ export function FlightHud() {
       className="neuroflight-hud absolute inset-0 pointer-events-none select-none"
       style={{ fontFamily: 'var(--font-instrument)' }}
     >
+      <SessionPhaseBanner />
+      <TutorialOverlay />
       {showControls && <ControlsLegend mode={hud.mode} onDismiss={dismissControls} onNeverShow={neverShowControls} />}
       {showModeHint && !showControls && <ModeHint mode={hud.mode} onDone={hideModeHint} />}
 
@@ -876,7 +986,9 @@ export function FlightHud() {
           <DamageFlash playerHealth={hud.playerHealth} />
           <Crosshair />
           <FlightEventNotice notice={hud.bonusNotice} />
-          {displayEnemyDir && <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />}
+          {showRivalHud && displayEnemyDir && (
+            <DirectionIndicator dir={displayEnemyDir} color="#ff6b6b" label="RIVAL" />
+          )}
         </>
       )}
 
@@ -931,6 +1043,14 @@ export function FlightHud() {
               {Math.round(displayScore)}
             </div>
           </div>
+          <SessionPhaseChip
+            label={hud.sessionPhaseLabel}
+            phase={hud.sessionPhase}
+            remainingMs={displaySessionPhaseRemainingMs}
+            elapsedMs={displaySessionPhaseElapsedMs}
+            tutorial={hud.tutorial}
+            accent={modeMeta.accent}
+          />
           <button
             type="button"
             onPointerDown={stopHudPointer}
@@ -967,7 +1087,7 @@ export function FlightHud() {
               WebkitBackdropFilter: 'blur(22px) saturate(1.65)',
             }}
           >
-            END
+            DEBRIEF
           </button>
         </div>
       </div>
@@ -1149,7 +1269,7 @@ export function FlightHud() {
 
           <div className="flight-zone-instruments flex min-w-0 flex-col gap-2">
             <div className="flight-instrument-grid">
-              <InstrumentTile label="Speed" value={Math.round(displaySpeed)} unit={`${speedKnots}kt`} />
+              <InstrumentTile label="Speed" value={speedKnots} unit="kt" />
               <InstrumentTile label="Altitude" value={Math.round(displayAltitude)} unit="ft" />
               <InstrumentTile label="Direction" value={headingText} accent={modeMeta.accent} />
               <ThrottleInstrument value={displayThrottle} />
@@ -1170,7 +1290,8 @@ export function FlightHud() {
                 {displayPrompt}
               </div>
             </div>
-            {isDogfight && (
+            <GuidanceMeter phase={hud.sessionPhase} focus={focusGuidance} calm={calmGuidance} />
+            {showRivalHud && (
               <div className="flight-cockpit-section flight-health-strip">
                 <HealthBar value={hud.playerHealth} max={100} label="YOU" color="var(--color-accent-cyan)" />
                 <HealthBar value={hud.aiHealth} max={100} label="RIVAL" color="#ff6b6b" />
@@ -1179,7 +1300,6 @@ export function FlightHud() {
           </div>
 
           <div className="flight-zone-bio flex min-w-0 flex-col gap-2">
-            <NeuroConnectBanner variant="dock" />
             <NeuroCockpit embedded />
           </div>
         </div>

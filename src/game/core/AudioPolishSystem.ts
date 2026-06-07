@@ -1,4 +1,5 @@
 import type { AudioPolishClip, AudioPolishConfig } from '@/game/types.ts';
+import { resolveAssetUrl } from './assetUrl.ts';
 
 interface AmbientLoop {
   clip: AudioPolishClip;
@@ -37,14 +38,14 @@ export class AudioPolishSystem {
     this.config = config;
 
     for (const clip of config?.ambientLoops ?? []) {
-      const audio = new Audio(clip.path);
+      const audio = new Audio(resolveAssetUrl(clip.path));
       audio.loop = true;
       audio.preload = 'auto';
       audio.volume = clip.volume ?? 0.08;
       this.ambientLoops.push({ clip, audio });
     }
     for (const clip of config?.musicLoops ?? []) {
-      const audio = new Audio(clip.path);
+      const audio = new Audio(resolveAssetUrl(clip.path));
       audio.loop = true;
       audio.preload = 'auto';
       audio.volume = (clip.volume ?? 0.16) * this.musicVolume;
@@ -152,7 +153,7 @@ export class AudioPolishSystem {
   private playRandom(clips?: AudioPolishClip[]): void {
     if (!this.started || !this.masterEnabled || !clips?.length) return;
     const clip = clips[Math.floor(Math.random() * clips.length)];
-    const audio = new Audio(clip.path);
+    const audio = new Audio(resolveAssetUrl(clip.path));
     audio.preload = 'auto';
     audio.volume = clip.volume ?? 0.12;
     const rateRange = clip.rateRange ?? [0.96, 1.04];

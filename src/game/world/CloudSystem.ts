@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { CloudLayerProfileConfig, CloudProfileConfig } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 const DEFAULT_CULL_DISTANCE = 6200;
 const DEFAULT_RESPAWN_RADIUS = 5400;
@@ -168,8 +170,10 @@ export class CloudSystem {
   private loadRuntimeTexture(texturePath?: string): void {
     if (!texturePath) return;
     const loader = new THREE.TextureLoader();
+    const url = resolveAssetUrl(texturePath);
+    logger.info('Assets', 'Loading cloud texture', { path: texturePath, url });
     loader.load(
-      texturePath,
+      url,
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.needsUpdate = true;
@@ -179,11 +183,15 @@ export class CloudSystem {
           cloud.mesh.material.map = texture;
           cloud.mesh.material.needsUpdate = true;
         }
+        logger.info('Assets', 'Loaded cloud texture', { path: texturePath, url });
       },
       undefined,
-      () => {
-        console.warn(`[CloudSystem] Failed to load cloud texture ${texturePath}; using procedural cloud texture.`);
-      },
+      (error) =>
+        logger.warn('Assets', 'Failed to load cloud texture; using procedural fallback', {
+          path: texturePath,
+          url,
+          error,
+        }),
     );
   }
 

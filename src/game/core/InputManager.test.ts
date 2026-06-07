@@ -81,12 +81,20 @@ describe('InputManager', () => {
     expect(input.getInput().pitch).toBe(0);
   });
 
-  it('ignores gameplay key presses from focused buttons', () => {
+  it('keeps flight keys live after focused HUD buttons', () => {
     const button = document.createElement('button');
     document.body.appendChild(button);
     button.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
-    expect(input.wantsFire()).toBe(false);
+    expect(input.wantsFire()).toBe(true);
     button.remove();
+  });
+
+  it('still ignores gameplay key presses from editable fields', () => {
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    field.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+    expect(input.wantsFire()).toBe(false);
+    field.remove();
   });
 
   it('isUiFiring() reflects setUiFire()', () => {

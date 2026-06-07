@@ -40,6 +40,18 @@ const DEFAULT_HUD = {
   signalCoverage: 0,
   neuroPrompt: 'Signals optional',
   bonusNotice: null,
+  sessionPhase: 'readiness',
+  phaseChangeId: 0,
+  sessionPhaseLabel: 'Readiness',
+  sessionPhaseRemainingMs: 0,
+  sessionPhaseElapsedMs: 0,
+  sessionPhasePrompt: 'Camera optional. Behavior-only is ready.',
+  tutorial: false,
+  tutorialStageTitle: 'Pitch',
+  tutorialStagePrompt: 'Hold W or Up to climb, then S or Down to descend.',
+  tutorialStageHint: 'Small holds work better than taps. The aircraft should settle into a gentle climb.',
+  tutorialStageProgress: 0,
+  tutorialStageComplete: false,
 };
 
 function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary {
@@ -83,6 +95,15 @@ function minimalSession(overrides: Partial<SessionSummary> = {}): SessionSummary
     avgLoad: null,
     avgFlow: null,
     signalCoveragePct: 0,
+    tutorial: false,
+    sessionScore: 0,
+    focusScore: 0,
+    controlScore: 0,
+    pressureScore: 0,
+    recoveryBehaviorScore: 0,
+    insightConfidence: 0,
+    insightConfidenceLabel: 'behavior_only',
+    recoveryWindows: [],
     ...overrides,
   };
 }
@@ -111,6 +132,17 @@ describe('gameStore', () => {
     expect(hud.paused).toBe(true);
     expect(hud.altitude).toBe(0);
     expect(hud.aircraftId).toBe('storybook_biplane');
+  });
+
+  it('increments phaseChangeId only when the session phase changes', () => {
+    useGameStore.getState().updateHud({ sessionPhaseLabel: 'Ready' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(0);
+
+    useGameStore.getState().updateHud({ sessionPhase: 'warmup' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(1);
+
+    useGameStore.getState().updateHud({ sessionPhase: 'warmup', sessionPhaseLabel: 'Warmup' });
+    expect(useGameStore.getState().hud.phaseChangeId).toBe(1);
   });
 
   it('updateHud() accepts structured flight notices', () => {

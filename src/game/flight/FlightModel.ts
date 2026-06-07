@@ -120,9 +120,10 @@ export class FlightModel {
     const speedRatio = this.speed / t.maxSpeed;
     const liftForce = t.liftFactor * speedRatio;
     const gravityEffect = 3.5 * Math.max(0, 1 - liftForce * 1.5) * dt;
+    const beginnerClimbAssist = Math.max(0, input.pitch) * 1.8 * dt;
 
     this.object.position.x += _forward.x * this.speed * dt;
-    this.object.position.y += _forward.y * this.speed * dt - gravityEffect;
+    this.object.position.y += _forward.y * this.speed * dt - gravityEffect + beginnerClimbAssist;
     this.object.position.z += _forward.z * this.speed * dt;
 
     if (this.object.position.y < 5) {

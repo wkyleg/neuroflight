@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import type { AssetManager } from '@/game/core/AssetManager.ts';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { AircraftDefinition } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 import { FlightModel } from './FlightModel.ts';
 
 export class PlaneController {
@@ -50,7 +52,9 @@ export class PlaneController {
   }
 
   private async loadObjModel(assetManager: AssetManager): Promise<THREE.Object3D> {
-    const object = await this.objLoader.loadAsync(this.aircraft.modelPath);
+    const url = resolveAssetUrl(this.aircraft.modelPath);
+    logger.info('Assets', 'Loading OBJ aircraft', { path: this.aircraft.modelPath, url });
+    const object = await this.objLoader.loadAsync(url);
     if (this.aircraft.texturePath) {
       const texture = await assetManager.loadTexture(this.aircraft.texturePath);
       texture.colorSpace = THREE.SRGBColorSpace;

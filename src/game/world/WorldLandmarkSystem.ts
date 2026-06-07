@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { SkyOrientationPreset, WorldLandmarkLayerConfig, WorldLandmarkPlacementKind } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface WorldLandmarkInstance {
   root: THREE.Group;
@@ -80,8 +82,10 @@ export class WorldLandmarkSystem {
   }
 
   private async loadLayer(layer: WorldLandmarkLayerConfig): Promise<void> {
+    const url = resolveAssetUrl(layer.assetPath);
     try {
-      const gltf = await this.loader.loadAsync(layer.assetPath);
+      logger.info('Assets', 'Loading world landmark', { path: layer.assetPath, url });
+      const gltf = await this.loader.loadAsync(url);
       const sourceBounds = new THREE.Box3().setFromObject(gltf.scene);
       const sourceSize = sourceBounds.getSize(new THREE.Vector3());
       const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
@@ -159,7 +163,7 @@ export class WorldLandmarkSystem {
         this.instances.push(instance);
       }
     } catch (error) {
-      console.warn(`[WorldLandmarkSystem] Failed to load ${layer.assetPath}`, error);
+      logger.warn('Assets', 'Failed to load world landmark', { path: layer.assetPath, url, error });
     }
   }
 

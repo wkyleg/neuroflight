@@ -92,6 +92,25 @@ describe('logger', () => {
     expect(revoke).toHaveBeenCalled();
   });
 
+  it('uses a NeuroFlight default download filename', () => {
+    const click = vi.fn();
+    const anchors: HTMLAnchorElement[] = [];
+    const createEl = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = createEl(tag);
+      if (tag === 'a') {
+        anchors.push(el as HTMLAnchorElement);
+        el.click = click;
+      }
+      return el;
+    });
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    logger.download();
+
+    expect(anchors[0]?.download).toMatch(/^neuroflight-debug-\d+\.json$/);
+  });
+
   it('exposes devtools helpers on window when available', () => {
     const w = window as unknown as Record<string, unknown>;
     expect(w.__ELATA_LOGGER__).toBeDefined();

@@ -1,5 +1,12 @@
+import type { SessionPhase } from '@/game/session/sessionTypes.ts';
+import type { RppgSignalStatus } from '@/neuro/rppgSignalTypes.ts';
+
 export interface FlightSample {
   t: number;
+  phase: SessionPhase;
+  rppgStatus: RppgSignalStatus;
+  canPublish: boolean;
+  signalCoverageTrailing: number;
   speed: number;
   altitude: number;
   throttle: number;
@@ -34,6 +41,18 @@ export interface FlightSample {
 }
 
 export type FlightEventType =
+  | 'session_started'
+  | 'session_completed'
+  | 'session_ended_early'
+  | 'phase_started'
+  | 'phase_completed'
+  | 'recovery_started'
+  | 'recovery_completed'
+  | 'signal_ready'
+  | 'signal_lost'
+  | 'signal_recovered'
+  | 'camera_permission_denied'
+  | 'backend_unavailable'
   | 'ring_hit'
   | 'route_complete'
   | 'objective_complete'
@@ -53,6 +72,7 @@ export type FlightEventType =
 export interface FlightEvent {
   t: number;
   type: FlightEventType;
+  phase: SessionPhase;
   label?: string;
   score?: number;
 }
@@ -65,6 +85,7 @@ export class SessionRecorder {
   private sampleTimer = 0;
   private startTime = 0;
   private active = false;
+  private currentPhase: SessionPhase = 'readiness';
 
   start(): void {
     this.samples = [];
@@ -72,6 +93,11 @@ export class SessionRecorder {
     this.sampleTimer = 0;
     this.startTime = Date.now();
     this.active = true;
+    this.currentPhase = 'readiness';
+  }
+
+  setPhase(phase: SessionPhase): void {
+    this.currentPhase = phase;
   }
 
   sample(dt: number, data: Omit<FlightSample, 't'>): void {
@@ -86,11 +112,12 @@ export class SessionRecorder {
     });
   }
 
-  recordEvent(type: FlightEventType, detail?: { label?: string; score?: number }): void {
+  recordEvent(type: FlightEventType, detail?: { label?: string; score?: number; phase?: SessionPhase }): void {
     if (!this.active) return;
     this.events.push({
       t: (Date.now() - this.startTime) / 1000,
       type,
+      phase: detail?.phase ?? this.currentPhase,
       ...detail,
     });
   }
@@ -105,5 +132,6 @@ export class SessionRecorder {
     this.events = [];
     this.sampleTimer = 0;
     this.startTime = Date.now();
+    this.currentPhase = 'readiness';
   }
 }

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { resolveAssetUrl } from '@/game/core/assetUrl.ts';
 import type { AtmosphereVfxConfig } from '@/game/types.ts';
+import logger from '@/neuro/logger.ts';
 
 interface SpriteParticle {
   sprite: THREE.Sprite;
@@ -7,6 +9,7 @@ interface SpriteParticle {
   scaleRange: [number, number];
   altitudeRange: [number, number];
   radius: number;
+  baseOpacity: number;
 }
 
 function seededRng(seed: number) {
@@ -28,6 +31,7 @@ export class AtmosphereVfxSystem {
   private lightningLight: THREE.PointLight | null = null;
   private lightningTimer = 4;
   private lightningPulse = 0;
+  private adaptiveIntensity = 1;
 
   constructor(scene: THREE.Scene, config?: AtmosphereVfxConfig) {
     this.scene = scene;
@@ -67,9 +71,14 @@ export class AtmosphereVfxSystem {
     }
   }
 
+  setAdaptiveIntensity(multiplier: number): void {
+    this.adaptiveIntensity = THREE.MathUtils.clamp(multiplier, 0.92, 1.08);
+  }
+
   update(dt: number, cameraPos: THREE.Vector3): void {
     for (const particle of this.particles) {
       particle.sprite.position.addScaledVector(particle.velocity, dt);
+      particle.sprite.material.opacity = particle.baseOpacity * this.adaptiveIntensity;
       const dx = particle.sprite.position.x - cameraPos.x;
       const dz = particle.sprite.position.z - cameraPos.z;
       const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
@@ -95,8 +104,8 @@ export class AtmosphereVfxSystem {
 
       this.lightningPulse = Math.max(0, this.lightningPulse - dt * 3.5);
       const opacity = this.lightningPulse * this.lightningPulse;
-      this.lightningSprite.material.opacity = opacity * 0.8;
-      this.lightningLight.intensity = opacity * 8;
+      this.lightningSprite.material.opacity = opacity * 0.8 * this.adaptiveIntensity;
+      this.lightningLight.intensity = opacity * 8 * this.adaptiveIntensity;
     }
   }
 
@@ -121,15 +130,20 @@ export class AtmosphereVfxSystem {
     horizontalSpeed: number;
     rotation?: number;
   }): void {
-    const texture = this.loader.load(config.texturePath);
+    const url = resolveAssetUrl(config.texturePath);
+    logger.info('Assets', 'Loading atmosphere texture', { path: config.texturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load atmosphere texture', { path: config.texturePath, url, error }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 
     for (let i = 0; i < config.count; i++) {
+      const opacity = THREE.MathUtils.lerp(config.opacityRange[0], config.opacityRange[1], this.rng());
       const material = new THREE.SpriteMaterial({
         map: texture,
         color: config.color,
-        opacity: THREE.MathUtils.lerp(config.opacityRange[0], config.opacityRange[1], this.rng()),
+        opacity,
         transparent: true,
         depthWrite: false,
         fog: false,
@@ -144,6 +158,7 @@ export class AtmosphereVfxSystem {
         scaleRange: config.scaleRange,
         altitudeRange: config.altitudeRange,
         radius: config.radius,
+        baseOpacity: opacity,
       };
       this.placeParticle(particle, new THREE.Vector3());
       this.scene.add(sprite);
@@ -152,7 +167,15 @@ export class AtmosphereVfxSystem {
   }
 
   private createLightning(config: AtmosphereVfxConfig): void {
-    const texture = this.loader.load(config.lightningTexturePath);
+    const url = resolveAssetUrl(config.lightningTexturePath);
+    logger.info('Assets', 'Loading atmosphere lightning texture', { path: config.lightningTexturePath, url });
+    const texture = this.loader.load(url, undefined, undefined, (error) =>
+      logger.warn('Assets', 'Failed to load atmosphere lightning texture', {
+        path: config.lightningTexturePath,
+        url,
+        error,
+      }),
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(texture);
 

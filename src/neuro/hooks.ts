@@ -54,6 +54,19 @@ export function useNeuroConnection() {
   );
 }
 
+export function useRppgSignal() {
+  return useNeuroStore(
+    useShallow((s) => ({
+      signal: s.rppgSignal,
+      cameraActive: s.cameraActive,
+      connecting: s.connecting.camera,
+      cameraError: s.error.camera,
+      enableCamera: s.enableCamera,
+      disableCamera: s.disableCamera,
+    })),
+  );
+}
+
 export function useNeuroEeg() {
   return useNeuroStore(
     useShallow((s) => ({

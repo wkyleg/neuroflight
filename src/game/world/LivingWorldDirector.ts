@@ -18,6 +18,7 @@ export class LivingWorldDirector {
   private elapsed = 0;
   private nextEventAt = 0;
   private initialEventSpawned = false;
+  private ambientBias = 0;
 
   constructor(scene: THREE.Scene, config: LivingWorldConfig | undefined, mode: GameMode, mapId: string) {
     this.config = config;
@@ -29,6 +30,10 @@ export class LivingWorldDirector {
 
   async load(): Promise<void> {
     await this.trafficSystem.load(this.config?.events ?? []);
+  }
+
+  setAmbientBias(bias: number): void {
+    this.ambientBias = THREE.MathUtils.clamp(bias, -0.09, 0.09);
   }
 
   update(dt: number, cameraPos: THREE.Vector3): void {
@@ -78,14 +83,14 @@ export class LivingWorldDirector {
     if (this.mode === 'dogfight' && (event.targetable || event.behavior === 'ufo-dart')) {
       return event.weight * (event.dogfightWeightMultiplier ?? 2.8);
     }
-    return event.weight;
+    return event.weight * (1 + this.ambientBias);
   }
 
   private getChance(event: LivingWorldEventConfig): number {
     if (this.mode === 'dogfight' && (event.targetable || event.behavior === 'ufo-dart')) {
       return event.dogfightChance ?? event.chance ?? 1;
     }
-    return event.chance ?? 1;
+    return THREE.MathUtils.clamp((event.chance ?? 1) * (1 + this.ambientBias), 0, 1);
   }
 
   private getMaxActive(event: LivingWorldEventConfig): number {
