@@ -878,13 +878,13 @@ button:disabled,
   z-index: 72;
   left: 50%;
   right: auto;
-  bottom: max(10px, env(safe-area-inset-bottom));
+  bottom: max(8px, env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   width: min(980px, calc(100vw - 28px));
-  padding: 10px 12px 10px 16px;
+  padding: 7px 10px 7px 14px;
   border-color: rgba(255, 248, 226, 0.18);
   background: linear-gradient(135deg, rgba(12, 54, 64, 0.72), rgba(255, 255, 255, 0.08), rgba(5, 14, 18, 0.82));
   transform: translateX(-50%);
@@ -892,14 +892,6 @@ button:disabled,
 
 .menu-launch-summary {
   min-width: 0;
-}
-
-.menu-launch-summary p {
-  color: #5eead4;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .menu-launch-summary strong,
@@ -911,15 +903,14 @@ button:disabled,
 }
 
 .menu-launch-summary strong {
-  margin-top: 3px;
   color: #fff8e2;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .menu-launch-summary span {
-  margin-top: 2px;
-  color: rgba(240, 236, 224, 0.62);
-  font-size: 12px;
+  margin-top: 1px;
+  color: rgba(240, 236, 224, 0.58);
+  font-size: 11px;
 }
 
 .menu-footer-launch {
@@ -934,7 +925,12 @@ button:disabled,
   padding: calc(84px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-left))
     calc(64px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-right));
   color: var(--color-text-primary);
-  background: #071016;
+  background-color: #071016;
+  background-image:
+    radial-gradient(circle at 20% 12%, rgba(94, 234, 212, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(255, 184, 107, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(27, 53, 64, 0.82) 0%, rgba(7, 16, 22, 0.78) 58%, rgba(7, 16, 22, 0.97) 100%);
+  background-attachment: fixed;
 }
 
 .neuroflight-settings-panel {

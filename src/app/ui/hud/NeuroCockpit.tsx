@@ -354,98 +354,107 @@ export function NeuroCockpit({ embedded = false }: NeuroCockpitProps = {}) {
           padding: embedded ? 0 : 13,
         }}
       >
-        <div className="flex items-center justify-between" style={{ gap: embedded ? 8 : 10 }}>
-          <div className="flex items-center" style={{ gap: embedded ? 8 : 10 }}>
-            {!embedded && <CameraPreview active={activePreview} compact={previewExpanded} />}
-            <div>
-              <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
-                Camera biofeedback
-              </div>
-              <div className="flex items-center" style={{ gap: 8 }}>
-                <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
-                  {displayState.primaryLabel}
-                </span>
-                <SignalBars value={signalQuality} />
-              </div>
-              <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
-                {displayState.guidance}
-              </div>
-              {!embedded && (
-                <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  {displayState.detail}
-                </div>
-              )}
-              {!embedded && (
-                <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
-                  {signalHint}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {!embedded && (
-            <div className="flex items-center" style={{ gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => setPreviewOpen((v) => !v)}
-                className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-                style={{
-                  borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
-                  color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
-                }}
+        {embedded ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: tone }} />
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                style={{ color: 'rgba(240,236,224,0.72)' }}
               >
-                {previewOpen ? 'MIN' : 'CAM'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
-                style={{
-                  borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
-                  color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
-                }}
-              >
-                {showAdvanced ? 'LESS' : 'MORE'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {!embedded && (
-          <div className="mt-2 grid grid-cols-4" style={{ gap: 8 }}>
-            <MetricChip
-              label="BPM"
-              value={signal.displayBpm !== null ? bpm : '--'}
-              tone={signal.displayBpm !== null ? '#fb7185' : undefined}
-            />
-            <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
-            <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
-            <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
-          </div>
-        )}
-
-        {showAdvanced && (
-          <div
-            className="mt-3 rounded-md border"
-            style={{
-              padding: 10,
-              background: 'rgba(0,0,0,0.18)',
-              borderColor: 'rgba(255,255,255,0.09)',
-            }}
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
-                Advanced signals
-              </span>
-              <span className="text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
-                Baseline delta {delta}
+                {displayState.primaryLabel}
               </span>
             </div>
-            <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
-              Camera play uses signal quality, heart-rate trend, respiration proxy, and coverage for gentle flight
-              notes. Weak-signal moments stay out of default insights.
-            </div>
+            {signal.displayBpm !== null && (
+              <span className="tabular-nums text-[10px] font-black" style={{ color: '#fb7185' }}>
+                {Math.round(signal.displayBpm)} bpm
+              </span>
+            )}
           </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between" style={{ gap: 10 }}>
+              <div className="flex items-center" style={{ gap: 10 }}>
+                <CameraPreview active={activePreview} compact={previewExpanded} />
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.58)' }}>
+                    Camera biofeedback
+                  </div>
+                  <div className="flex items-center" style={{ gap: 8 }}>
+                    <span className="text-sm font-bold" style={{ color: tone, fontFamily: 'var(--font-instrument)' }}>
+                      {displayState.primaryLabel}
+                    </span>
+                    <SignalBars value={signalQuality} />
+                  </div>
+                  <div className="text-[11px]" style={{ color: 'rgba(240,236,224,0.72)' }}>
+                    {displayState.guidance}
+                  </div>
+                  <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                    {displayState.detail}
+                  </div>
+                  <div className="text-[10px]" style={{ color: 'rgba(240,236,224,0.52)' }}>
+                    {signalHint}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen((v) => !v)}
+                  className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                  style={{
+                    borderColor: previewOpen ? 'rgba(94,234,212,0.5)' : 'rgba(255,255,255,0.14)',
+                    color: previewOpen ? '#5eead4' : 'rgba(240,236,224,0.72)',
+                  }}
+                >
+                  {previewOpen ? 'MIN' : 'CAM'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="neuro-cockpit-action rounded-md border text-[10px] font-bold"
+                  style={{
+                    borderColor: showAdvanced ? 'rgba(250,204,21,0.52)' : 'rgba(255,255,255,0.14)',
+                    color: showAdvanced ? '#facc15' : 'rgba(240,236,224,0.72)',
+                  }}
+                >
+                  {showAdvanced ? 'LESS' : 'MORE'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-4" style={{ gap: 8 }}>
+              <MetricChip
+                label="BPM"
+                value={signal.displayBpm !== null ? bpm : '--'}
+                tone={signal.displayBpm !== null ? '#fb7185' : undefined}
+              />
+              <MetricChip label="HRV" value={displayState.showCameraMetrics ? hrv : '--'} />
+              <MetricChip label="Resp" value={displayState.showCameraMetrics ? resp : '--'} />
+              <MetricChip label="Sig" value={pct(signal.coverageTrailing)} tone={tone} />
+            </div>
+
+            {showAdvanced && (
+              <div
+                className="mt-3 rounded-md border"
+                style={{ padding: 10, background: 'rgba(0,0,0,0.18)', borderColor: 'rgba(255,255,255,0.09)' }}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(240,236,224,0.55)' }}>
+                    Advanced signals
+                  </span>
+                  <span className="text-[10px]" style={{ color: 'rgba(240,236,224,0.48)' }}>
+                    Baseline delta {delta}
+                  </span>
+                </div>
+                <div className="text-[11px] leading-5" style={{ color: 'rgba(240,236,224,0.68)' }}>
+                  Camera play uses signal quality, heart-rate trend, respiration proxy, and coverage for gentle flight
+                  notes. Weak-signal moments stay out of default insights.
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -27,9 +27,6 @@ export function SettingsScreen() {
 
   return (
     <main className="neuroflight-menu neuroflight-settings-screen">
-      <div className="neuroflight-menu-bg" />
-      <div className="neuroflight-menu-vignette" />
-
       <section className="neuroflight-settings-panel premium-glass-strong">
         <h1>Settings</h1>
 

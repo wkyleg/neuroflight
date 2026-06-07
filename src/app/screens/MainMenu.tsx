@@ -344,15 +344,10 @@ export function MainMenu() {
 
       <footer className="menu-launch-footer premium-glass-strong">
         <div className="menu-launch-summary">
-          <p>Ready to fly</p>
           <strong>
             {mode.title} · {map.storyName ?? map.name} · {aircraft.name} · {selectedDifficulty}
           </strong>
-          <span>
-            {sensorReady
-              ? `${sensorSummary} for adaptive ambience and debrief notes.`
-              : 'No camera setup required; behavior-only play is always available.'}
-          </span>
+          <span>{sensorReady ? sensorSummary : 'Behavior-only · no camera required'}</span>
         </div>
         <button
           type="button"
