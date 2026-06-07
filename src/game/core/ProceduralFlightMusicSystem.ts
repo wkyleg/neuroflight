@@ -54,7 +54,7 @@ const MUSIC_ENABLED_KEY = 'neuroflight.audio.musicEnabled';
 const MASTER_AUDIO_ENABLED_KEY = 'neuroflight.audio.masterEnabled';
 const MUSIC_VOLUME_KEY = 'neuroflight.audio.musicVolume';
 export const BINAURAL_ENABLED_KEY = 'neuroflight.audio.binauralEnabled';
-const DEFAULT_MUSIC_VOLUME = 0.15;
+const DEFAULT_MUSIC_VOLUME = 0.42;
 const CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const MODE_PROFILES: Record<GameMode, MusicProfile> = {
